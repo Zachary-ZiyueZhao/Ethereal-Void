@@ -1,0 +1,58 @@
+package com.mjzaymi.etherealvoid.registrations;
+
+import com.mjzaymi.etherealvoid.EtherealVoid;
+import com.mjzaymi.etherealvoid.items.BaseItem;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+
+public class ModItems {
+    public static final DeferredRegister<Item> ITEMS =
+            DeferredRegister.create(ForgeRegistries.ITEMS, EtherealVoid.MOD_ID);
+
+    //Block Items
+    public static final RegistryObject<Item> ANTI_CORROSION_GLASS_ITEM = registerBlockItem("anti_corrosion_glass", ModBlocks.ANTI_CORROSION_GLASS);
+    public static final RegistryObject<Item> ELECTRODE_PLATE_ITEM = registerBlockItem("electrode_plate", ModBlocks.ELECTRODE_PLATE);
+    public static final RegistryObject<Item> STEEL_CASING_ITEM = registerBlockItem("steel_casing", ModBlocks.STEEL_CASING);
+    public static final RegistryObject<Item> RESISTIVE_HEATER_ITEM = registerBlockItem("resistive_heater", ModBlocks.RESISTIVE_HEATER);
+
+
+    public static final RegistryObject<Item> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
+
+
+    //Items
+    public static final RegistryObject<Item> CRUSHED_IRON_ORE = ITEMS.register("crushed_iron_ore", BaseItem::new);
+    public static final RegistryObject<Item> POWDERED_CARBON = ITEMS.register("powdered_carbon", BaseItem::new);
+    public static final RegistryObject<Item> STEEL_POWDER = ITEMS.register("steel_powder", BaseItem::new);
+    public static final RegistryObject<Item> STEEL_INGOT = ITEMS.register("steel_ingot", BaseItem::new);
+    public static final RegistryObject<Item> BAUXITE = ITEMS.register("bauxite", BaseItem::new);
+    public static final RegistryObject<Item> ALUMINIUM_OXIDE = ITEMS.register("aluminium_oxide", BaseItem::new);
+    public static final RegistryObject<Item> CRYOLITE = ITEMS.register("cryolite", BaseItem::new);
+    public static final RegistryObject<Item> ALUMINIUM_INGOT = ITEMS.register("aluminum_ingot", BaseItem::new);
+    public static final RegistryObject<Item> CAUSTIC_SODA = ITEMS.register("caustic_soda", BaseItem::new);
+    public static final RegistryObject<Item> IMPURE_MAGNESIUM_SALT = ITEMS.register("impure_magnesium_salt", BaseItem::new);
+    public static final RegistryObject<Item> MATTE = ITEMS.register("matte", BaseItem::new);
+    public static final RegistryObject<Item> PURIFIED_COPPER_ORE = ITEMS.register("purified_copper_ore", BaseItem::new);
+    public static final RegistryObject<Item> ZINC_CONCENTRATE = ITEMS.register("zinc_concentrate", BaseItem::new);
+    public static final RegistryObject<Item> ZINC_OXIDE = ITEMS.register("zinc_oxide", BaseItem::new);
+    public static final RegistryObject<Item> ZINC_INGOT = ITEMS.register("zinc_ingot", BaseItem::new);
+    public static final RegistryObject<Item> DOLOMITE = ITEMS.register("dolomite", BaseItem::new);
+    public static final RegistryObject<Item> CALCINED_DOLOMITE = ITEMS.register("calcined_dolomite", BaseItem::new);
+    public static final RegistryObject<Item> IMPURE_MAGNESIUM = ITEMS.register("impure_magnesium", BaseItem::new);
+    public static final RegistryObject<Item> MAGNESIUM_INGOT = ITEMS.register("magnesium_ingot", BaseItem::new);
+
+
+
+
+    private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block) {
+        return ModItems.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
+    }
+
+    public static void register(IEventBus eventBus) {
+        ITEMS.register(eventBus);
+    }
+}
