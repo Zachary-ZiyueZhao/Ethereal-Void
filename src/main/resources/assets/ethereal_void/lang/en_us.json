@@ -1,6 +1,32 @@
 {
-  "item.ethereal_void.alexandrite": "Alexandrite Gem",
-
   "block.ethereal_void.anti_corrosion_glass": "Anti Corrosion Glass",
-  "block.ethereal_void.magnetic_sieve": "Magnetic Sieve"
+  "block.ethereal_void.electrode_plate": "Electrode Plate",
+  "block.ethereal_void.steel_casing": "Steel Casing",
+  "block.ethereal_void.resistive_heater": "Resistive Heater",
+  "block.ethereal_void.magnetic_sieve": "Magnetic Sieve",
+
+  "item.ethereal_void.crushed_iron_ore": "Crushed Iron Ore",
+  "item.ethereal_void.coal_powder": "Coal Powder",
+  "item.ethereal_void.raw_steel_powder": "Raw Steel Powder",
+  "item.ethereal_void.steel_ingot": "Steel Ingot",
+
+  "item.ethereal_void.bauxite": "Bauxite",
+  "item.ethereal_void.aluminium_oxide": "Aluminium Oxide",
+  "item.ethereal_void.cryolite": "Cryolite",
+  "item.ethereal_void.aluminium_ingot": "Aluminium Ingot",
+
+  "item.ethereal_void.caustic_soda": "Caustic Soda",
+  "item.ethereal_void.impure_magnesium_salt": "Impure Magnesium Salt",
+
+  "item.ethereal_void.matte": "Copper Matte",
+  "item.ethereal_void.purified_copper_ore": "Purified Copper Ore",
+
+  "item.ethereal_void.zinc_concentrate": "Zinc Concentrate",
+  "item.ethereal_void.zinc_oxide": "Zinc Oxide",
+  "item.ethereal_void.zinc_ingot": "Zinc Ingot",
+
+  "item.ethereal_void.dolomite": "Dolomite",
+  "item.ethereal_void.calcined_dolomite": "Calcined Dolomite",
+  "item.ethereal_void.impure_magnesium": "Impure Magnesium",
+  "item.ethereal_void.magnesium_ingot": "Magnesium Ingot"
 }

@@ -26,13 +26,13 @@ public class ModItems {
 
     //Items
     public static final RegistryObject<Item> CRUSHED_IRON_ORE = ITEMS.register("crushed_iron_ore", BaseItem::new);
-    public static final RegistryObject<Item> POWDERED_CARBON = ITEMS.register("powdered_carbon", BaseItem::new);
-    public static final RegistryObject<Item> STEEL_POWDER = ITEMS.register("steel_powder", BaseItem::new);
+    public static final RegistryObject<Item> COAL_POWDER = ITEMS.register("coal_powder", BaseItem::new);
+    public static final RegistryObject<Item> RAW_STEEL_POWDER = ITEMS.register("raw_steel_powder", BaseItem::new);
     public static final RegistryObject<Item> STEEL_INGOT = ITEMS.register("steel_ingot", BaseItem::new);
     public static final RegistryObject<Item> BAUXITE = ITEMS.register("bauxite", BaseItem::new);
     public static final RegistryObject<Item> ALUMINIUM_OXIDE = ITEMS.register("aluminium_oxide", BaseItem::new);
     public static final RegistryObject<Item> CRYOLITE = ITEMS.register("cryolite", BaseItem::new);
-    public static final RegistryObject<Item> ALUMINIUM_INGOT = ITEMS.register("aluminum_ingot", BaseItem::new);
+    public static final RegistryObject<Item> ALUMINIUM_INGOT = ITEMS.register("aluminium_ingot", BaseItem::new);
     public static final RegistryObject<Item> CAUSTIC_SODA = ITEMS.register("caustic_soda", BaseItem::new);
     public static final RegistryObject<Item> IMPURE_MAGNESIUM_SALT = ITEMS.register("impure_magnesium_salt", BaseItem::new);
     public static final RegistryObject<Item> MATTE = ITEMS.register("matte", BaseItem::new);
