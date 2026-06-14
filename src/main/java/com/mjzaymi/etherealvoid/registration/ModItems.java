@@ -15,15 +15,15 @@ public class ModItems {
             DeferredRegister.create(ForgeRegistries.ITEMS, EtherealVoid.MOD_ID);
 
     //Block Items
-    public static final RegistryObject<Item> ANTI_CORROSION_GLASS_ITEM = registerBlockItem("anti_corrosion_glass", ModBlocks.ANTI_CORROSION_GLASS);
-    public static final RegistryObject<Item> ELECTRODE_PLATE_ITEM = registerBlockItem("electrode_plate", ModBlocks.ELECTRODE_PLATE);
-    public static final RegistryObject<Item> STEEL_CASING_ITEM = registerBlockItem("steel_casing", ModBlocks.STEEL_CASING);
-    public static final RegistryObject<Item> RESISTIVE_HEATER_ITEM = registerBlockItem("resistive_heater", ModBlocks.RESISTIVE_HEATER);
+    public static final RegistryObject<BlockItem> ANTI_CORROSION_GLASS_ITEM = registerBlockItem("anti_corrosion_glass", ModBlocks.ANTI_CORROSION_GLASS);
+    public static final RegistryObject<BlockItem> ELECTRODE_PLATE_ITEM = registerBlockItem("electrode_plate", ModBlocks.ELECTRODE_PLATE);
+    public static final RegistryObject<BlockItem> STEEL_CASING_ITEM = registerBlockItem("steel_casing", ModBlocks.STEEL_CASING);
+    public static final RegistryObject<BlockItem> RESISTIVE_HEATER_ITEM = registerBlockItem("resistive_heater", ModBlocks.RESISTIVE_HEATER);
 
 
-    public static final RegistryObject<Item> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
+    public static final RegistryObject<BlockItem> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
 
-    public static final RegistryObject<Item> GEM_POLISHING_STATION_ITEM = registerBlockItem("gem_polishing_station", ModBlocks.GEM_POLISHING_STATION);
+    public static final RegistryObject<BlockItem> GEM_POLISHING_STATION_ITEM = registerBlockItem("gem_polishing_station", ModBlocks.GEM_POLISHING_STATION);
     //Items
     public static final RegistryObject<Item> CRUSHED_IRON_ORE = ITEMS.register("crushed_iron_ore", BaseItem::new);
     public static final RegistryObject<Item> COAL_POWDER = ITEMS.register("coal_powder", BaseItem::new);
@@ -48,7 +48,7 @@ public class ModItems {
 
 
 
-    private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block) {
+    private static <T extends Block> RegistryObject<BlockItem> registerBlockItem(String name, RegistryObject<T> block) {
         return ModItems.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
     }
 
