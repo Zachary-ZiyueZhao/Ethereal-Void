@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.registrations;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.blocks.*;
+import com.mjzaymi.etherealvoid.block.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;

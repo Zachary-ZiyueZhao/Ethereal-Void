@@ -1,5 +1,5 @@
-package com.mjzaymi.etherealvoid.blocks;
-import net.minecraft.world.level.block.Block;
+package com.mjzaymi.etherealvoid.block;
+
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.GlassBlock;
 import net.minecraft.world.level.block.SoundType;
