@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.registrations;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.items.BaseItem;
+import com.mjzaymi.etherealvoid.item.BaseItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;

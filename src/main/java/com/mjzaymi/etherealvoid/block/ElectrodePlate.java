@@ -1,12 +1,13 @@
-package com.mjzaymi.etherealvoid.blocks;
+package com.mjzaymi.etherealvoid.block;
+
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
-public class SteelCasing extends Block {
-    public SteelCasing() {
+public class ElectrodePlate extends Block {
+    public ElectrodePlate() {
         super(BlockBehaviour.Properties.of()
-                .strength(6f, 5f)
+                .strength(5f, 3f)
                 .sound(SoundType.METAL));
     }
 }

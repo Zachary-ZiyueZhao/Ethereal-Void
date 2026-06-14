@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.items;
+package com.mjzaymi.etherealvoid.item;
 
 import net.minecraft.world.item.Item;
 
