@@ -41,8 +41,8 @@ public class ModItems {
     public static final RegistryObject<Item> ZINC_OXIDE = ITEMS.register("zinc_oxide", BaseItem::new);
     public static final RegistryObject<Item> ZINC_INGOT = ITEMS.register("zinc_ingot", BaseItem::new);
     public static final RegistryObject<Item> DOLOMITE = ITEMS.register("dolomite", BaseItem::new);
-    public static final RegistryObject<Item> CALCINED_DOLOMITE = ITEMS.register("calcined_dolomite", BaseItem::new);
-    public static final RegistryObject<Item> IMPURE_MAGNESIUM = ITEMS.register("impure_magnesium", BaseItem::new);
+    // public static final RegistryObject<Item> CALCINED_DOLOMITE = ITEMS.register("calcined_dolomite", BaseItem::new);
+    public static final RegistryObject<Item> RAW_MAGNESIUM = ITEMS.register("raw_magnesium", BaseItem::new);
     public static final RegistryObject<Item> MAGNESIUM_INGOT = ITEMS.register("magnesium_ingot", BaseItem::new);
 
 
