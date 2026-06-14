@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = EtherealVoid.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ReactionPoolItemProcessor {
-    private static final String PROGRESS_TAG = "EtherealVoidFurnaceProgress";
+    private static final String PROGRESS_TAG = "EtherealVoidReactionProgress";
     private static final List<ReactionPoolItemRecipe> RECIPES = List.of(
             new ReactionPoolItemRecipe(
                     "raw_iron_with_coal",
@@ -44,7 +44,7 @@ public class ReactionPoolItemProcessor {
             return;
         }
 
-        Map<String, FurnaceContents> furnaces = new HashMap<>();
+        Map<String, PoolContents> pools = new HashMap<>();
         for (Entity entity : serverLevel.getAllEntities()) {
             if (!(entity instanceof ItemEntity itemEntity) || !itemEntity.isAlive() || itemEntity.getItem().isEmpty()) {
                 continue;
@@ -56,16 +56,16 @@ public class ReactionPoolItemProcessor {
                 continue;
             }
 
-            CuboidStructure furnace = structure.get();
-            furnaces.computeIfAbsent(key(furnace), ignored -> new FurnaceContents(furnace)).items.add(itemEntity);
+            CuboidStructure pool = structure.get();
+            pools.computeIfAbsent(key(pool), ignored -> new PoolContents(pool)).items.add(itemEntity);
         }
 
-        for (FurnaceContents contents : furnaces.values()) {
-            processFurnace(serverLevel, contents);
+        for (PoolContents contents : pools.values()) {
+            processReaction(serverLevel, contents);
         }
     }
 
-    private static void processFurnace(ServerLevel level, FurnaceContents contents) {
+    private static void processReaction(ServerLevel level, PoolContents contents) {
         for (ReactionPoolItemRecipe recipe : RECIPES) {
             ItemEntity first = findMatching(contents.items, recipe::matchesFirst);
             ItemEntity second = findMatching(contents.items, recipe::matchesSecond);
@@ -122,8 +122,8 @@ public class ReactionPoolItemProcessor {
         return min.getX() + "," + min.getY() + "," + min.getZ() + ":" + max.getX() + "," + max.getY() + "," + max.getZ();
     }
 
-    private record FurnaceContents(CuboidStructure structure, List<ItemEntity> items) {
-        private FurnaceContents(CuboidStructure structure) {
+    private record PoolContents(CuboidStructure structure, List<ItemEntity> items) {
+        private PoolContents(CuboidStructure structure) {
             this(structure, new ArrayList<>());
         }
     }

@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:directory",
+      "source": "block/anti_corrosion_glass",
+      "prefix": "block/anti_corrosion_glass/"
+    }
+  ]
+}
