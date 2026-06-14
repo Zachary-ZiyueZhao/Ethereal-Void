@@ -50,10 +50,11 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
         blockWithItem(ModBlocks.ANTI_CORROSION_GLASS);
         blockWithItem(ModBlocks.MAGNETIC_SIEVE);
-        blockWithItem(ModBlocks.RESISTIVE_HEATER);
         blockWithItem(ModBlocks.ELECTRODE_PLATE);
         blockWithItem(ModBlocks.STEEL_CASING);
 
+        simpleBlockWithItem(ModBlocks.RESISTIVE_HEATER.get(),
+                new ModelFile.UncheckedModelFile(modLoc("block/resistive_heater")));
         simpleBlockWithItem(ModBlocks.GEM_POLISHING_STATION.get(),
                 new ModelFile.UncheckedModelFile(modLoc("block/gem_polishing_station")));
     }

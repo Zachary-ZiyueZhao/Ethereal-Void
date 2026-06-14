@@ -1,4 +1,4 @@
-// 1.20.1	2026-06-14T21:46:59.6102939	Block States: ethereal_void
+// 1.20.1	2026-06-14T22:29:17.3223696	Block States: ethereal_void
 a3d2427473b98244f7867e6ac31501719280e3c6 assets/ethereal_void/blockstates/anti_corrosion_glass.json
 26de4ab1f7c9f282aa18b41154058f6bbb25d1ca assets/ethereal_void/blockstates/electrode_plate.json
 0ac363f21d6e034d5fc1acc67895ff9c5db98a7f assets/ethereal_void/blockstates/gem_polishing_station.json
@@ -8,7 +8,6 @@ ea70ce6acc99ba123909669611962a43180d63fd assets/ethereal_void/blockstates/steel_
 cfe6183e4ed197a145863e47671f734bce7ad2cc assets/ethereal_void/models/block/anti_corrosion_glass.json
 230edbf9e1cab828f3aa0474721a0a3ef51dfc6f assets/ethereal_void/models/block/electrode_plate.json
 f01ec8958b992079b073425210b83d3b4ac174bf assets/ethereal_void/models/block/magnetic_sieve.json
-a3279d764db48f30247733eec34dfc880148e661 assets/ethereal_void/models/block/resistive_heater.json
 0189067e59967c705b9cf296c45ae5b551dadae7 assets/ethereal_void/models/block/steel_casing.json
 72ad612258b1fe02afbd8e5716d6b79f833c8aef assets/ethereal_void/models/item/anti_corrosion_glass.json
 ac355862631f7230fb77e8b85f9c26868869e281 assets/ethereal_void/models/item/electrode_plate.json
