@@ -28,7 +28,22 @@ public class LyingItemRenderer extends EntityRenderer<ItemEntity> {
 
     @Override
     public void render(ItemEntity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        if (entity.level() == null || CuboidStructure.findFromInterior(entity.level(), entity.blockPosition()).isEmpty()) {
+        if (entity.level() == null) {
+            fallback.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
+            return;
+        }
+        var reactorOpt = CuboidStructure.findFromInterior(
+                entity.level(),
+                entity.blockPosition()
+        );
+        if (reactorOpt.isEmpty()) {
+            fallback.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
+            return;
+        }
+        // 只有靠近 reactor 底部才切换渲染引擎
+        CuboidStructure reactor = reactorOpt.get();
+        double interiorFloorY = reactor.min().getY() + 1.0D;
+        if (entity.getY() > interiorFloorY + 0.25D) {
             fallback.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
             return;
         }
