@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.client.model;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.registrations.ModBlocks;
+import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;

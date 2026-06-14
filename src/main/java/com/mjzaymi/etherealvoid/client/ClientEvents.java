@@ -3,7 +3,7 @@ package com.mjzaymi.etherealvoid.client;
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.client.model.ConnectedGlassModel;
 import com.mjzaymi.etherealvoid.client.renderer.LyingItemRenderer;
-import com.mjzaymi.etherealvoid.registrations.ModBlocks;
+import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
@@ -23,18 +23,12 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
         value = Dist.CLIENT
 )
 public class ClientEvents {
-
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-
-        event.enqueueWork(() -> {
-
-            ItemBlockRenderTypes.setRenderLayer(
-                    ModBlocks.ANTI_CORROSION_GLASS.get(),
-                    RenderType.translucent()
-            );
-
-        });
+        event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(
+                ModBlocks.ANTI_CORROSION_GLASS.get(),
+                RenderType.translucent()
+        ));
     }
 
     @SubscribeEvent

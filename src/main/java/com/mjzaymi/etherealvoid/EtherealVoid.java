@@ -1,9 +1,9 @@
 package com.mjzaymi.etherealvoid;
 
-import com.mjzaymi.etherealvoid.registrations.ModBlocks;
-import com.mjzaymi.etherealvoid.registrations.ModItems;
-import com.mjzaymi.etherealvoid.registrations.ModTabs;
+import com.mjzaymi.etherealvoid.registration.*;
+import com.mjzaymi.etherealvoid.screen.GemPolishingStationScreen;
 import com.mojang.logging.LogUtils;
+import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.world.item.*;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
@@ -38,6 +38,8 @@ public class EtherealVoid {
         ModTabs.register(modEventBus);
         ModBlocks.register(modEventBus);
         ModItems.register(modEventBus);
+        ModBlockEntities.register(modEventBus);
+        ModMenuTypes.register(modEventBus);
 
         // Register the item to a creative tab
         modEventBus.addListener(this::addCreative);
@@ -72,7 +74,8 @@ public class EtherealVoid {
     public static class ClientModEvents {
         @SubscribeEvent
         public static void onClientSetup(FMLClientSetupEvent event) {
-
+            //EntityRenderers.register(ModEntities.RHINO.get(), RhinoRenderer::new);
+            MenuScreens.register(ModMenuTypes.GEM_POLISHING_MENU.get(), GemPolishingStationScreen::new);
         }
     }
 }

@@ -1,0 +1,7 @@
+// 1.20.1	2026-06-14T21:42:28.9273031	Loot Tables
+2a2567c4d4db091664cabd0b64206a8fc265a12c data/ethereal_void/loot_tables/blocks/anti_corrosion_glass.json
+bb4077386933ecce7ee79d0380ff5851e1b3abe1 data/ethereal_void/loot_tables/blocks/electrode_plate.json
+4690de804899ca3a963e4a55f317fb96e2193191 data/ethereal_void/loot_tables/blocks/gem_polishing_station.json
+23cb07f65814f2f62ec44ffe79d68a5711018487 data/ethereal_void/loot_tables/blocks/magnetic_sieve.json
+4cf7f655fe0c787268594b6736181de785f5c19e data/ethereal_void/loot_tables/blocks/resistive_heater.json
+6b1c5957c753ac983605c18dba476a90e2c937a3 data/ethereal_void/loot_tables/blocks/steel_casing.json

@@ -1,8 +1,10 @@
-package com.mjzaymi.etherealvoid.registrations;
+package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.*;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -19,6 +21,9 @@ public class ModBlocks {
 
 
     public static final RegistryObject<Block> MAGNETIC_SIEVE = BLOCKS.register("magnetic_sieve", MagneticSieve::new);
+
+    public static final RegistryObject<Block> GEM_POLISHING_STATION = BLOCKS.register("gem_polishing_station",
+            () -> new GemPolishingStationBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
 
 
     public static void register(IEventBus eventBus) {

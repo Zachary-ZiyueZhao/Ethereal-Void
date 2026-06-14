@@ -52,9 +52,14 @@ public class ReactionPoolItemProcessor {
 
             Optional<CuboidStructure> structure = CuboidStructure.findFromInterior(serverLevel, itemEntity.blockPosition());
             if (structure.isEmpty()) {
+                itemEntity.setExtendedLifetime();
+                itemEntity.setDefaultPickUpDelay();
                 itemEntity.getPersistentData().remove(PROGRESS_TAG);
                 continue;
             }
+
+            itemEntity.setNeverPickUp();
+            itemEntity.setUnlimitedLifetime();
 
             CuboidStructure pool = structure.get();
             pools.computeIfAbsent(key(pool), ignored -> new PoolContents(pool)).items.add(itemEntity);
@@ -112,6 +117,8 @@ public class ReactionPoolItemProcessor {
         double y = min.getY() + 1.15;
         double z = (min.getZ() + max.getZ() + 1) / 2.0;
         ItemEntity output = new ItemEntity(level, x, y, z, result.copy());
+        output.setNeverPickUp();
+        output.setUnlimitedLifetime();
         output.setDeltaMovement(0.0, 0.0, 0.0);
         level.addFreshEntity(output);
     }

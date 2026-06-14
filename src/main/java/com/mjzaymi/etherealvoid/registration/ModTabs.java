@@ -1,7 +1,7 @@
-package com.mjzaymi.etherealvoid.registrations;
+package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.utils.ReflectUtil;
+import com.mjzaymi.etherealvoid.util.ReflectUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;

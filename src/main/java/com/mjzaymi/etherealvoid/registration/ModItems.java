@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.registrations;
+package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.item.BaseItem;
@@ -23,7 +23,7 @@ public class ModItems {
 
     public static final RegistryObject<Item> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
 
-
+    public static final RegistryObject<Item> GEM_POLISHING_STATION_ITEM = registerBlockItem("gem_polishing_station", ModBlocks.GEM_POLISHING_STATION);
     //Items
     public static final RegistryObject<Item> CRUSHED_IRON_ORE = ITEMS.register("crushed_iron_ore", BaseItem::new);
     public static final RegistryObject<Item> COAL_POWDER = ITEMS.register("coal_powder", BaseItem::new);

@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.multiblock;
 
-import com.mjzaymi.etherealvoid.registrations.ModBlocks;
+import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
