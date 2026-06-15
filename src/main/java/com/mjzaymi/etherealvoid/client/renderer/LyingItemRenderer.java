@@ -49,7 +49,15 @@ public class LyingItemRenderer extends EntityRenderer<ItemEntity> {
         }
 
         poseStack.pushPose();
-        poseStack.translate(0.0, 0.04, 0.0);
+        int stackIndex = getRenderStackIndex(entity);
+        double yOffset = stackIndex * 0.025;
+        long seed = entity.getId() * 734287L;
+        double randomOffset = (seed & 15) * 0.0020;
+        poseStack.translate(
+                0.0,
+                0.04 + yOffset + randomOffset,
+                0.0
+        );
         poseStack.mulPose(Axis.YP.rotationDegrees((entity.getId() * 37) % 360));
         poseStack.mulPose(Axis.XP.rotationDegrees(90.0f));
         itemRenderer.renderStatic(
@@ -64,6 +72,31 @@ public class LyingItemRenderer extends EntityRenderer<ItemEntity> {
         );
         poseStack.popPose();
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
+    }
+
+    private static final float CELL_SIZE = 0.30f;
+    private static final int MAX_STACK_LAYERS = 8;
+
+    private int getRenderStackIndex(ItemEntity entity) {
+        int cellX = (int)Math.floor(entity.getX() / CELL_SIZE);
+        int cellZ = (int)Math.floor(entity.getZ() / CELL_SIZE);
+        int index = 0;
+
+        for (ItemEntity other : entity.level().getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(CELL_SIZE))) {
+            if (other == entity) {
+                continue;
+            }
+            int otherCellX = (int)Math.floor(other.getX() / CELL_SIZE);
+            int otherCellZ = (int)Math.floor(other.getZ() / CELL_SIZE);
+
+            if (otherCellX == cellX && otherCellZ == cellZ) {
+                if (other.getId() < entity.getId()) {
+                    index++;
+                }
+            }
+        }
+
+        return Math.min(index, MAX_STACK_LAYERS);
     }
 
     @Override
