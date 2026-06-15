@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.multiblock;
+package com.mjzaymi.etherealvoid.reactionpool;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;

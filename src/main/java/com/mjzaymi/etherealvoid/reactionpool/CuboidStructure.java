@@ -1,9 +1,13 @@
-package com.mjzaymi.etherealvoid.multiblock;
+package com.mjzaymi.etherealvoid.reactionpool;
 
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.HashSet;
@@ -21,6 +25,8 @@ public class CuboidStructure {
 
     private final Set<BlockPos> members;
 
+    private final Set<BlockPos> interiors;
+
     public CuboidStructure(
             BlockPos min,
             BlockPos max,
@@ -29,6 +35,15 @@ public class CuboidStructure {
         this.min=min;
         this.max=max;
         this.members=members;
+        Set<BlockPos> blockPosSet = new HashSet<>();
+        for (int x = min.getX()+1; x < max.getX(); x++) {
+            for (int y = min.getY()+1; y <= max.getY(); y++) {
+                for (int z = min.getZ()+1; z < max.getZ(); z++) {
+                    blockPosSet.add(new BlockPos(x, y, z));
+                }
+            }
+        }
+        this.interiors=blockPosSet;
     }
 
     public static Optional<CuboidStructure> findFromInterior(Level level, BlockPos interiorPos) {
@@ -64,6 +79,35 @@ public class CuboidStructure {
         return structure.isValid(level) ? Optional.of(structure) : Optional.empty();
     }
 
+    public static Optional<CuboidStructure> findFromWall(Level level, BlockPos wallPos) {
+
+        BlockState state = level.getBlockState(wallPos);
+
+        if (!isWallPanel(state) && !isSteelCasing(state)) {
+            return Optional.empty();
+        }
+
+        for (Direction dir : Direction.values()) {
+
+            BlockPos adjacent = wallPos.relative(dir);
+
+            if (!isInterior(level, adjacent)) {
+                continue;
+            }
+
+            Optional<CuboidStructure> result =
+                    findFromInterior(level, adjacent);
+
+            if (result.isPresent()
+                    && result.get().members().contains(wallPos)) {
+
+                return result;
+            }
+        }
+
+        return Optional.empty();
+    }
+
     public int width() {
         return max.getX()-min.getX()+1;
     }
@@ -86,6 +130,10 @@ public class CuboidStructure {
 
     public Set<BlockPos> members() {
         return Set.copyOf(members);
+    }
+
+    public Set<BlockPos> interiors() {
+        return Set.copyOf(interiors);
     }
 
     public boolean containsInterior(BlockPos pos) {
@@ -216,7 +264,7 @@ public class CuboidStructure {
     }
 
     private static boolean isInterior(Level level, BlockPos pos) {
-        return level.getBlockState(pos).isAir();
+        return true;//level.getBlockState(pos).isAir();
     }
 
     private static boolean isWallPanel(BlockState state) {
@@ -226,5 +274,62 @@ public class CuboidStructure {
 
     private static boolean isSteelCasing(BlockState state) {
         return state.is(ModBlocks.STEEL_CASING.get());
+    }
+
+    public void dropInterior(Level level) {
+        for (BlockPos pos : interiors) {
+            BlockState blockState = level.getBlockState(pos);
+            if (blockState.isAir()) continue;
+            Block.dropResources(blockState, level, pos);
+            level.removeBlock(pos, false);
+        }
+    }
+
+    public CompoundTag serializeNBT() {
+        CompoundTag root = new CompoundTag();
+        CompoundTag minTag = new CompoundTag();
+        minTag.putInt("x", min.getX());
+        minTag.putInt("y", min.getY());
+        minTag.putInt("z", min.getZ());
+        root.put("min", minTag);
+        CompoundTag maxTag = new CompoundTag();
+        maxTag.putInt("x", max.getX());
+        maxTag.putInt("y", max.getY());
+        maxTag.putInt("z", max.getZ());
+        root.put("max", maxTag);
+        ListTag list = new ListTag();
+        for (BlockPos pos : members) {
+            CompoundTag tag = new CompoundTag();
+            tag.putInt("x", pos.getX());
+            tag.putInt("y", pos.getY());
+            tag.putInt("z", pos.getZ());
+            list.add(tag);
+        }
+        root.put("members", list);
+        return root;
+    }
+
+    public static CuboidStructure deserializeNBT(CompoundTag root) {
+        if (root == null || root.isEmpty())
+            return null;
+        Set<BlockPos> members = new HashSet<>();
+        ListTag list = root.getList("members", Tag.TAG_COMPOUND);
+        for (Tag t : list) {
+            CompoundTag tag = (CompoundTag) t;
+
+            members.add(new BlockPos(
+                    tag.getInt("x"),
+                    tag.getInt("y"),
+                    tag.getInt("z")
+            ));
+        }
+        return new CuboidStructure(
+                new BlockPos(root.getCompound("min").getInt("x"),
+                        root.getCompound("min").getInt("y"),
+                        root.getCompound("min").getInt("z")),
+                new BlockPos(root.getCompound("max").getInt("x"),
+                        root.getCompound("max").getInt("y"),
+                        root.getCompound("max").getInt("z")),
+                members);
     }
 }

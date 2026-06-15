@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.client.renderer;
 
-import com.mjzaymi.etherealvoid.multiblock.CuboidStructure;
+import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;

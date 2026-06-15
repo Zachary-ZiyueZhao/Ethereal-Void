@@ -1,5 +1,6 @@
 package com.mjzaymi.etherealvoid.block.entity;
 
+import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModItems;
 import com.mjzaymi.etherealvoid.screen.PoolMonitorMenu;
@@ -26,6 +27,8 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public class PoolMonitorBlockEntity extends BlockEntity implements MenuProvider {
     private final ItemStackHandler itemHandler = new ItemStackHandler(2);
@@ -103,6 +106,13 @@ public class PoolMonitorBlockEntity extends BlockEntity implements MenuProvider 
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int pContainerId, Inventory pPlayerInventory, Player pPlayer) {
+        Optional<CuboidStructure> structure = CuboidStructure.findFromWall(level, worldPosition);
+        System.out.println("ASDASD");
+        if(structure.isPresent()) {
+            System.out.println("123123");
+            this.data.set(0, 39);
+            this.data.set(1, 78);
+        }
         return new PoolMonitorMenu(pContainerId, pPlayerInventory, this, this.data);
     }
 

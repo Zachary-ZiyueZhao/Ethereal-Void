@@ -3,6 +3,7 @@ package com.mjzaymi.etherealvoid.registration;
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.entity.GemPolishingStationBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
+import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -22,6 +23,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("pool_monitor_be", () ->
                     BlockEntityType.Builder.of(PoolMonitorBlockEntity::new,
                             ModBlocks.POOL_MONITOR.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ReactionPoolBlockEntity>> REACTION_POOL_BE =
+            BLOCK_ENTITIES.register("reaction_pool_be", () ->
+                    BlockEntityType.Builder.of(ReactionPoolBlockEntity::new,
+                            ModBlocks.STEEL_CASING.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

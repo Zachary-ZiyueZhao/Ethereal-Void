@@ -1,6 +1,5 @@
-package com.mjzaymi.etherealvoid.multiblock;
+package com.mjzaymi.etherealvoid.reactionpool;
 
-import com.mjzaymi.etherealvoid.EtherealVoid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -9,9 +8,14 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@Mod.EventBusSubscriber(modid = EtherealVoid.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class ReactionPoolItemProcessor {
+//@Mod.EventBusSubscriber(modid = EtherealVoid.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+public class ReactionPoolItemProcessorOld {
     private static final String PROGRESS_TAG = "EtherealVoidReactionProgress";
     private static final List<ReactionPoolItemRecipe> RECIPES = List.of(
             new ReactionPoolItemRecipe(
@@ -34,7 +38,36 @@ public class ReactionPoolItemProcessor {
             )
     );
 
-    @SubscribeEvent
+    //@SubscribeEvent
+    public static void onBlockPlaced(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) {
+            return;
+        }
+        if (level.isClientSide()) return;
+        Optional<CuboidStructure> structure = CuboidStructure.findFromInterior(level, event.getPos());
+        if (structure.isPresent()) {
+            Block.dropResources(event.getPlacedBlock(), level, event.getPos());
+            level.removeBlock(event.getPos(), false);
+            return;
+        }
+        structure = CuboidStructure.findFromWall(level, event.getPos());
+        if (structure.isEmpty()) return;
+        BlockPos minPos = structure.get().min();
+        BlockPos maxPos = structure.get().max();
+        for (int x = minPos.getX()+1; x < maxPos.getX(); x++) {
+            for (int y = minPos.getY()+1; y < maxPos.getY(); y++) {
+                for (int z = minPos.getZ()+1; z < maxPos.getZ(); z++) {
+                    BlockPos pos = new BlockPos(x, y, z);
+                    BlockState blockState = level.getBlockState(pos);
+                    if (blockState.isAir()) continue;
+                    Block.dropResources(blockState, level, pos);
+                    level.removeBlock(pos, false);
+                }
+            }
+        }
+    }
+
+    //@SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END || event.level.isClientSide || event.level.getGameTime() % 20 != 0) {
             return;
@@ -57,6 +90,9 @@ public class ReactionPoolItemProcessor {
                 itemEntity.getPersistentData().remove(PROGRESS_TAG);
                 continue;
             }
+
+            FluidTank tank = new FluidTank(1000);
+            tank.fill(new FluidStack(Fluids.WATER, 1000), IFluidHandler.FluidAction.EXECUTE);
 
             itemEntity.setNeverPickUp();
             itemEntity.setUnlimitedLifetime();
