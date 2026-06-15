@@ -45,18 +45,21 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
         simpleBlockWithItem(ModBlocks.CATMINT.get(), models().cross(blockTexture(ModBlocks.CATMINT.get()).getPath(),
                 blockTexture(ModBlocks.CATMINT.get())).renderType("cutout"));
-        simpleBlockWithItem(ModBlocks.POTTED_CATMINT.get(), models().singleTexture("potted_catmint", new ResourceLocation("flower_pot_cross"), "plant",
+        simpleBlockWithItem(ModBlocks.POTTED_CATMINT.get(), models().singleTexture("potted_catmint", ResourceLocation.fromNamespaceAndPath("flower_pot_cross"), "plant",
                 blockTexture(ModBlocks.CATMINT.get())).renderType("cutout"));*/
 
-        blockWithItem(ModBlocks.ANTI_CORROSION_GLASS);
         blockWithItem(ModBlocks.MAGNETIC_SIEVE);
         blockWithItem(ModBlocks.ELECTRODE_PLATE);
         blockWithItem(ModBlocks.STEEL_CASING);
 
+        simpleBlockWithItem(ModBlocks.ANTI_CORROSION_GLASS.get(),
+                new ModelFile.UncheckedModelFile(modLoc("block/anti_corrosion_glass")));
         simpleBlockWithItem(ModBlocks.RESISTIVE_HEATER.get(),
                 new ModelFile.UncheckedModelFile(modLoc("block/resistive_heater")));
         simpleBlockWithItem(ModBlocks.GEM_POLISHING_STATION.get(),
                 new ModelFile.UncheckedModelFile(modLoc("block/gem_polishing_station")));
+        simpleBlockWithItem(ModBlocks.POOL_MONITOR.get(),
+                new ModelFile.UncheckedModelFile(modLoc("block/pool_monitor")));
     }
 
 
@@ -69,7 +72,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
     private ConfiguredModel[] strawberryStates(BlockState state, CropBlock block, String modelName, String textureName) {
         ConfiguredModel[] models = new ConfiguredModel[1];
         models[0] = new ConfiguredModel(models().crop(modelName + state.getValue(((StrawberryCropBlock) block).getAgeProperty()),
-                new ResourceLocation(TutorialMod.MOD_ID, "block/" + textureName + state.getValue(((StrawberryCropBlock) block).getAgeProperty()))).renderType("cutout"));
+                ResourceLocation.fromNamespaceAndPath(TutorialMod.MOD_ID, "block/" + textureName + state.getValue(((StrawberryCropBlock) block).getAgeProperty()))).renderType("cutout"));
 
         return models;
     }
@@ -83,7 +86,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
     private ConfiguredModel[] cornStates(BlockState state, CropBlock block, String modelName, String textureName) {
         ConfiguredModel[] models = new ConfiguredModel[1];
         models[0] = new ConfiguredModel(models().crop(modelName + state.getValue(((CornCropBlock) block).getAgeProperty()),
-                new ResourceLocation(TutorialMod.MOD_ID, "block/" + textureName + state.getValue(((CornCropBlock) block).getAgeProperty()))).renderType("cutout"));
+                ResourceLocation.fromNamespaceAndPath(TutorialMod.MOD_ID, "block/" + textureName + state.getValue(((CornCropBlock) block).getAgeProperty()))).renderType("cutout"));
 
         return models;
     }*/

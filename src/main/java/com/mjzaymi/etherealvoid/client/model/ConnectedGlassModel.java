@@ -57,7 +57,7 @@ public class ConnectedGlassModel extends BakedModelWrapper<BakedModel> {
 
     static {
         for (int i = 0; i < TILE_LOCATIONS.length; i++) {
-            TILE_LOCATIONS[i] = new ResourceLocation(EtherealVoid.MOD_ID, "block/anti_corrosion_glass/" + i);
+            TILE_LOCATIONS[i] = ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "block/anti_corrosion_glass/" + i);
         }
     }
 

@@ -25,6 +25,8 @@ public class ModBlocks {
     public static final RegistryObject<Block> GEM_POLISHING_STATION = BLOCKS.register("gem_polishing_station",
             () -> new GemPolishingStationBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
 
+    public static final RegistryObject<Block> POOL_MONITOR = BLOCKS.register("pool_monitor", PoolMonitor::new);
+
 
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);

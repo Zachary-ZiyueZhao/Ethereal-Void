@@ -2,6 +2,8 @@ package com.mjzaymi.etherealvoid;
 
 import com.mjzaymi.etherealvoid.registration.*;
 import com.mjzaymi.etherealvoid.screen.GemPolishingStationScreen;
+import com.mjzaymi.etherealvoid.screen.PoolMonitorMenu;
+import com.mjzaymi.etherealvoid.screen.PoolMonitorScreen;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.world.item.*;
@@ -76,6 +78,7 @@ public class EtherealVoid {
         public static void onClientSetup(FMLClientSetupEvent event) {
             //EntityRenderers.register(ModEntities.RHINO.get(), RhinoRenderer::new);
             MenuScreens.register(ModMenuTypes.GEM_POLISHING_MENU.get(), GemPolishingStationScreen::new);
+            MenuScreens.register(ModMenuTypes.POOL_MONITOR_MENU.get(), PoolMonitorScreen::new);
         }
     }
 }

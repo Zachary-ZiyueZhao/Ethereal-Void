@@ -24,6 +24,7 @@ public class ModItems {
     public static final RegistryObject<BlockItem> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
 
     public static final RegistryObject<BlockItem> GEM_POLISHING_STATION_ITEM = registerBlockItem("gem_polishing_station", ModBlocks.GEM_POLISHING_STATION);
+    public static final RegistryObject<BlockItem> POOL_MONITOR_ITEM = registerBlockItem("pool_monitor", ModBlocks.POOL_MONITOR);
     //Items
     public static final RegistryObject<Item> CRUSHED_IRON_ORE = ITEMS.register("crushed_iron_ore", BaseItem::new);
     public static final RegistryObject<Item> COAL_POWDER = ITEMS.register("coal_powder", BaseItem::new);

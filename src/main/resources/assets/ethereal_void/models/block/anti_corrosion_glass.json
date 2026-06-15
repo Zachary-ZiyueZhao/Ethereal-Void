@@ -1,4 +1,5 @@
 {
+  "render_type": "minecraft:translucent",
   "parent": "minecraft:block/cube_all",
   "textures": {
     "all": "ethereal_void:block/anti_corrosion_glass"

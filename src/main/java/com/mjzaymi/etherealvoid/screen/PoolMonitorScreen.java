@@ -9,11 +9,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-public class GemPolishingStationScreen extends AbstractContainerScreen<GemPolishingStationMenu> {
+public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> {
     private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "textures/gui/gem_polishing_station_gui.png");
+            ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "textures/gui/pool_monitor_gui.png");
 
-    public GemPolishingStationScreen(GemPolishingStationMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
+    public PoolMonitorScreen(PoolMonitorMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
     }
 

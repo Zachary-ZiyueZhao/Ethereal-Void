@@ -2,6 +2,7 @@ package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.screen.GemPolishingStationMenu;
+import com.mjzaymi.etherealvoid.screen.PoolMonitorMenu;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
@@ -17,6 +18,8 @@ public class ModMenuTypes {
 
     public static final RegistryObject<MenuType<GemPolishingStationMenu>> GEM_POLISHING_MENU =
             registerMenuType("gem_polishing_menu", GemPolishingStationMenu::new);
+    public static final RegistryObject<MenuType<PoolMonitorMenu>> POOL_MONITOR_MENU =
+            registerMenuType("pool_monitor_menu", PoolMonitorMenu::new);
 
 
     private static <T extends AbstractContainerMenu>RegistryObject<MenuType<T>> registerMenuType(String name, IContainerFactory<T> factory) {

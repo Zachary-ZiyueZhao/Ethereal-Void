@@ -2,6 +2,7 @@ package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.entity.GemPolishingStationBlockEntity;
+import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -16,6 +17,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("gem_polishing_be", () ->
                     BlockEntityType.Builder.of(GemPolishingStationBlockEntity::new,
                             ModBlocks.GEM_POLISHING_STATION.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<PoolMonitorBlockEntity>> POOL_MONITOR_BE =
+            BLOCK_ENTITIES.register("pool_monitor_be", () ->
+                    BlockEntityType.Builder.of(PoolMonitorBlockEntity::new,
+                            ModBlocks.POOL_MONITOR.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

@@ -1,4 +1,4 @@
-// 1.20.1	2026-06-14T22:05:35.389692	Item Models: ethereal_void
+// 1.20.1	2026-06-15T07:29:42.2351368	Item Models: ethereal_void
 0c78304e1c2e8c1352504d27e4f397476f91fdc7 assets/ethereal_void/models/item/aluminium_ingot.json
 9541df7713b32ff7185a9d6ea40944f3b18b98e7 assets/ethereal_void/models/item/aluminium_oxide.json
 72ad612258b1fe02afbd8e5716d6b79f833c8aef assets/ethereal_void/models/item/anti_corrosion_glass.json
@@ -14,6 +14,7 @@ ac355862631f7230fb77e8b85f9c26868869e281 assets/ethereal_void/models/item/electr
 2c3ff43d18c2187e68ccecee1e45ffa78248d1bb assets/ethereal_void/models/item/magnesium_ingot.json
 7073d6654ee69cb46f6d90f281274d8cfdeefc67 assets/ethereal_void/models/item/magnetic_sieve.json
 29f398bd3b1ab2008a31165fb0f70b76e8b06d30 assets/ethereal_void/models/item/matte.json
+03d2c1c2db6bfe078cc0b1a9fc826248d75cc142 assets/ethereal_void/models/item/pool_monitor.json
 aef6b437259755253ae62e5393f92e5e0147e779 assets/ethereal_void/models/item/purified_copper_ore.json
 ddb28ab9110d5b2c4c077bb132e9230a6af6e8a1 assets/ethereal_void/models/item/raw_magnesium.json
 bbae400e4a247ef2c1669b692f053324ef97cbfe assets/ethereal_void/models/item/raw_steel_powder.json

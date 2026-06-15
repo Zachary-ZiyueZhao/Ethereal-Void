@@ -220,7 +220,8 @@ public class CuboidStructure {
     }
 
     private static boolean isWallPanel(BlockState state) {
-        return isSteelCasing(state) || state.is(ModBlocks.ANTI_CORROSION_GLASS.get());
+        return isSteelCasing(state) || state.is(ModBlocks.ANTI_CORROSION_GLASS.get())
+                || state.is(ModBlocks.POOL_MONITOR.get());
     }
 
     private static boolean isSteelCasing(BlockState state) {

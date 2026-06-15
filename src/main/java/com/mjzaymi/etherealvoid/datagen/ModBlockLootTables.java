@@ -80,6 +80,7 @@ public class ModBlockLootTables extends BlockLootSubProvider {
         this.dropSelf(ModBlocks.RESISTIVE_HEATER.get());
         this.dropSelf(ModBlocks.STEEL_CASING.get());
         this.dropSelf(ModBlocks.GEM_POLISHING_STATION.get());
+        this.dropSelf(ModBlocks.POOL_MONITOR.get());
     }
 
     protected LootTable.Builder createCopperLikeOreDrops(Block pBlock, Item item) {
