@@ -5,6 +5,7 @@ import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -20,6 +21,8 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import java.util.Optional;
+
 public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlockEntity> {
 
     public ReactionPoolRenderer(BlockEntityRendererProvider.Context ctx) {
@@ -33,12 +36,17 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
                        int light,
                        int overlay) {
 
-        System.out.println("LLLL");
+        CuboidStructure s = be.getStructure();
+        if (s == null) return;
+        if (be.getLevel() == null) return;
 
-        if (be.getStructure() == null) return;
+        BlockPos min = s.min();
+        BlockPos max = s.max();
+        min = new BlockPos(min.offset(1, 1, 1));
+        max = new BlockPos(max.offset(-1, 0, -1));
         System.out.println("123");
-        System.out.println(be.getStructure().min());
-        System.out.println(be.getStructure().max());
+        System.out.println(min);
+        System.out.println(max);
 
         // 【警告】请把下面的 fill 逻辑移到 BlockEntity 的 server tick 中，不要放在渲染里！
         be.getTank().fill(new FluidStack(Fluids.WATER, 1000), IFluidHandler.FluidAction.EXECUTE);
@@ -46,35 +54,38 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
         FluidStack fluidStack = be.getTank().getFluid();
         if (fluidStack.isEmpty()) return;
 
-        CuboidStructure s = be.getStructure();
-        BlockPos min = s.min();
-        BlockPos max = s.max();
 
-        // 1. 计算当前流体占总容量 senior 比例，从而计算流体渲染的高度
+        // 1. 计算填充比例
         float capacity = be.getTank().getCapacity();
         float amount = fluidStack.getAmount();
         float fillPercentage = Math.min(1.0f, amount / capacity);
         if (fillPercentage <= 0) return;
 
-        // 2. 将绝对世界坐标转换为相对于当前 BlockEntity 的局部坐标
+        // 2. 将绝对坐标转换为相对 BlockEntity 的局部坐标，并计算方块范围
         BlockPos bePos = be.getBlockPos();
+        float epsilon = 0.005f; // 防止 Z-Fighting 的微小缩进
 
-        // 稍微往内缩一点（例如 0.005f），防止流体渲染面与方块内壁重叠导致闪烁 (Z-Fighting)
-        float epsilon = 0.005f;
+        int minX_i = min.getX() - bePos.getX();
+        int minY_i = min.getY() - bePos.getY();
+        int minZ_i = min.getZ() - bePos.getZ();
+        int maxX_i = max.getX() - bePos.getX();
+        int maxY_i = max.getY() - bePos.getY();
+        int maxZ_i = max.getZ() - bePos.getZ();
 
-        float minX = min.getX() - bePos.getX() + epsilon;
-        float minY = min.getY() - bePos.getY() + epsilon;
-        float minZ = min.getZ() - bePos.getZ() + epsilon;
+        // 计算流体覆盖的物理边界
+        float totalMinX = minX_i + epsilon;
+        float totalMinY = minY_i + epsilon;
+        float totalMinZ = minZ_i + epsilon;
+        float totalMaxX = maxX_i + 1.0f - epsilon;
+        float totalMaxY = maxY_i + 1.0f - epsilon;
+        float totalMaxZ = maxZ_i + 1.0f - epsilon;
 
-        // max 坐标由于是方块坐标，实际几何边界需要 +1.0f
-        float maxX = max.getX() - bePos.getX() + 1.0f - epsilon;
-        float maxY = max.getY() - bePos.getY() + 1.0f - epsilon;
-        float maxZ = max.getZ() - bePos.getZ() + 1.0f - epsilon;
+        // 计算最高处 Y 轴
+        float vanillaWaterFullHeight = 0.88f;
+        float totalRenderableHeight = (totalMaxY - totalMinY) * vanillaWaterFullHeight;
+        float currentMaxY = totalMinY + totalRenderableHeight * fillPercentage;
 
-        // 根据蓄水比例动态调整最高处的 Y 轴坐标
-        float currentMaxY = minY + (maxY - minY) * fillPercentage;
-
-        // 3. 获取流体的纹理和颜色 (Forge API)
+        // 3. 获取纹理和颜色
         Fluid fluid = fluidStack.getFluid();
         IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);
         TextureAtlasSprite sprite = Minecraft.getInstance()
@@ -86,11 +97,11 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
         int red = (tintColor >> 16) & 0xFF;
         int green = (tintColor >> 8) & 0xFF;
         int blue = tintColor & 0xFF;
+        light = LevelRenderer.getLightColor(be.getLevel(), min);
+        System.out.println(light);
 
-        // 4. 获取顶点构建器（流体通常使用 Translucent 半透明渲染类型）
+        // 4. 获取顶点构建器 (使用 Translucent 透明层)
         VertexConsumer builder = buffer.getBuffer(RenderType.translucent());
-
-        // 5. 渲染流体盒子的 6 个面
         Matrix4f posMatrix = poseStack.last().pose();
         Matrix3f normalMatrix = poseStack.last().normal();
 
@@ -99,54 +110,78 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
         float v0 = sprite.getV0();
         float v1 = sprite.getV1();
 
-        // 顶面 (Top)
-        renderFace(builder, posMatrix, normalMatrix, minX, currentMaxY, minZ, maxX, currentMaxY, maxZ, u0, v0, u1, v1, red, green, blue, alpha, light, 0, 1, 0);
-        // 底面 (Bottom)
-        renderFace(builder, posMatrix, normalMatrix, minX, minY, maxZ, maxX, minY, minZ, u0, v0, u1, v1, red, green, blue, alpha, light, 0, -1, 0);
-        // 北面 (North)
-        renderFace(builder, posMatrix, normalMatrix, maxX, currentMaxY, minZ, minX, minY, minZ, u0, v0, u1, v1, red, green, blue, alpha, light, 0, 0, -1);
-        // 南面 (South)
-        renderFace(builder, posMatrix, normalMatrix, minX, currentMaxY, maxZ, maxX, minY, maxZ, u0, v0, u1, v1, red, green, blue, alpha, light, 0, 0, 1);
-        // 西面 (West)
-        renderFace(builder, posMatrix, normalMatrix, minX, currentMaxY, minZ, minX, minY, maxZ, u0, v0, u1, v1, red, green, blue, alpha, light, -1, 0, 0);
-        // 东面 (East)
-        renderFace(builder, posMatrix, normalMatrix, maxX, currentMaxY, maxZ, maxX, minY, minZ, u0, v0, u1, v1, red, green, blue, alpha, light, 1, 0, 0);
-    }
+        // 5. 遍历渲染 (平铺纹理 + 修正了所有面的 CCW 逆时针渲染顺序防止剔除)
 
-    private void renderFace(VertexConsumer builder, Matrix4f posMat, Matrix3f normMat,
-                            float x1, float y1, float z1, float x2, float y2, float z2,
-                            float u0, float v0, float u1, float v1,
-                            int r, int g, int b, int a, int light,
-                            float nx, float ny, float nz) {
+        // 5. 遍历渲染 (平铺纹理 + 彻底修正顶点环绕顺序，确保从“外部”看为正)
 
-        // 简易地根据面向对 4 个顶点进行正交展开
-        if (ny != 0) { // 顶面或底面 (XZ平面)
-            addVertex(builder, posMat, normMat, x1, y1, z1, u0, v0, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x1, y1, z2, u0, v1, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x2, y2, z2, u1, v1, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x2, y2, z1, u1, v0, r, g, b, a, light, nx, ny, nz);
-        } else if (nx != 0) { // 东面或西面 (YZ平面)
-            addVertex(builder, posMat, normMat, x1, y1, z1, u0, v0, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x1, y2, z1, u0, v1, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x1, y2, z2, u1, v1, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x1, y1, z2, u1, v0, r, g, b, a, light, nx, ny, nz);
-        } else { // 北面或南面 (XY平面)
-            addVertex(builder, posMat, normMat, x1, y1, z1, u0, v0, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x2, y1, z1, u0, v1, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x2, y2, z1, u1, v1, r, g, b, a, light, nx, ny, nz);
-            addVertex(builder, posMat, normMat, x1, y2, z1, u1, v0, r, g, b, a, light, nx, ny, nz);
+        // --- A. 顶面 (Top) 和 底面 (Bottom) ---
+        for (int x = minX_i; x <= maxX_i; x++) {
+            for (int z = minZ_i; z <= maxZ_i; z++) {
+                float startX = (x == minX_i) ? totalMinX : (float) x;
+                float endX = (x == maxX_i) ? totalMaxX : (float) (x + 1);
+                float startZ = (z == minZ_i) ? totalMinZ : (float) z;
+                float endZ = (z == maxZ_i) ? totalMaxZ : (float) (z + 1);
+
+                // 顶面 (Top, 向 +Y)
+                builder.vertex(posMatrix, startX, currentMaxY, endZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 0, 1, 0).endVertex();
+                builder.vertex(posMatrix, endX, currentMaxY, endZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 0, 1, 0).endVertex();
+                builder.vertex(posMatrix, endX, currentMaxY, startZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 0, 1, 0).endVertex();
+                builder.vertex(posMatrix, startX, currentMaxY, startZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 0, 1, 0).endVertex();
+
+                // 底面 (Bottom, 向 -Y)
+                builder.vertex(posMatrix, startX, totalMinY, startZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 0, -1, 0).endVertex();
+                builder.vertex(posMatrix, endX, totalMinY, startZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 0, -1, 0).endVertex();
+                builder.vertex(posMatrix, endX, totalMinY, endZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 0, -1, 0).endVertex();
+                builder.vertex(posMatrix, startX, totalMinY, endZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 0, -1, 0).endVertex();
+            }
         }
-    }
 
-    private void addVertex(VertexConsumer builder, Matrix4f posMat, Matrix3f normMat,
-                           float x, float y, float z, float u, float v,
-                           int r, int g, int b, int a, int light,
-                           float nx, float ny, float nz) {
-        builder.vertex(posMat, x, y, z)
-                .color(r, g, b, a)
-                .uv(u, v)
-                .uv2(light)
-                .normal(normMat, nx, ny, nz)
-                .endVertex();
+        // --- B. 北面 (North, 向 -Z) 和 南面 (South, 向 +Z) ---
+        for (int x = minX_i; x <= maxX_i; x++) {
+            for (int y = minY_i; y <= maxY_i; y++) {
+                float startX = (x == minX_i) ? totalMinX : (float) x;
+                float endX = (x == maxX_i) ? totalMaxX : (float) (x + 1);
+
+                float startY = (y == minY_i) ? totalMinY : (float) y;
+                if (startY >= currentMaxY) continue;
+                float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
+
+                // 北面 (North, -Z)
+                builder.vertex(posMatrix, endX, startY, totalMinZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
+                builder.vertex(posMatrix, startX, startY, totalMinZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
+                builder.vertex(posMatrix, startX, endY, totalMinZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
+                builder.vertex(posMatrix, endX, endY, totalMinZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
+
+                // 南面 (South, +Z)
+                builder.vertex(posMatrix, startX, startY, totalMaxZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
+                builder.vertex(posMatrix, endX, startY, totalMaxZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
+                builder.vertex(posMatrix, endX, endY, totalMaxZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
+                builder.vertex(posMatrix, startX, endY, totalMaxZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
+            }
+        }
+
+        // --- C. 西面 (West, 向 -X) 和 东面 (East, 向 +X) ---
+        for (int z = minZ_i; z <= maxZ_i; z++) {
+            for (int y = minY_i; y <= maxY_i; y++) {
+                float startZ = (z == minZ_i) ? totalMinZ : (float) z;
+                float endZ = (z == maxZ_i) ? totalMaxZ : (float) (z + 1);
+
+                float startY = (y == minY_i) ? totalMinY : (float) y;
+                if (startY >= currentMaxY) continue;
+                float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
+
+                // 西面 (West, -X)
+                builder.vertex(posMatrix, totalMinX, startY, startZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
+                builder.vertex(posMatrix, totalMinX, startY, endZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
+                builder.vertex(posMatrix, totalMinX, endY, endZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
+                builder.vertex(posMatrix, totalMinX, endY, startZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
+
+                // 东面 (East, +X)
+                builder.vertex(posMatrix, totalMaxX, startY, endZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
+                builder.vertex(posMatrix, totalMaxX, startY, startZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
+                builder.vertex(posMatrix, totalMaxX, endY, startZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
+                builder.vertex(posMatrix, totalMaxX, endY, endZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
+            }
+        }
     }
 }
