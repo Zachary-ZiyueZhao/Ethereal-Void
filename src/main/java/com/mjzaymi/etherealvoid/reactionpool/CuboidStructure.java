@@ -79,6 +79,12 @@ public class CuboidStructure {
         return structure.isValid(level) ? Optional.of(structure) : Optional.empty();
     }
 
+    public static Optional<CuboidStructure> findFromWallAndCorner(Level level, BlockPos pos) {
+        var result = findFromWall(level, pos);
+        if (result.isPresent()) return result;
+        return findFromCorner(level, pos);
+    }
+
     public static Optional<CuboidStructure> findFromWall(Level level, BlockPos wallPos) {
 
         BlockState state = level.getBlockState(wallPos);
@@ -104,6 +110,33 @@ public class CuboidStructure {
                 return result;
             }
         }
+
+        return Optional.empty();
+    }
+
+    public static Optional<CuboidStructure> findFromCorner(Level level, BlockPos pos) {
+
+        BlockState state = level.getBlockState(pos);
+
+        if (!isWallPanel(state) && !isSteelCasing(state)) {
+            return Optional.empty();
+        }
+
+        for (int i=-1;i<1;i+=2)
+            for (int j=-1;j<1;j+=2)
+                for (int k=-1;k<1;k+=2) {
+                    BlockPos adjacent = pos.offset(-i, -j, -k);
+                    if (!isInterior(level, adjacent)) continue;
+
+                    Optional<CuboidStructure> result =
+                            findFromInterior(level, adjacent);
+
+                    if (result.isPresent()
+                            && result.get().members().contains(pos)) {
+
+                        return result;
+                    }
+                }
 
         return Optional.empty();
     }
@@ -331,5 +364,11 @@ public class CuboidStructure {
                         root.getCompound("max").getInt("y"),
                         root.getCompound("max").getInt("z")),
                 members);
+    }
+
+    public boolean isEqual(CuboidStructure cuboidStructure) {
+        return cuboidStructure != null &&
+                cuboidStructure.max.compareTo(max) == 0 &&
+                cuboidStructure.min.compareTo(min) == 0;
     }
 }

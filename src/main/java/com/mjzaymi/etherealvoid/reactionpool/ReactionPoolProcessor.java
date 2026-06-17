@@ -49,10 +49,9 @@ public class ReactionPoolProcessor {
 
     @SubscribeEvent
     public static void onBlockPlaced(BlockEvent.EntityPlaceEvent event) {
-
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-
         if (level.isClientSide()) return;
+
         BlockState placedBlock = event.getPlacedBlock();
         boolean isPoolBlock = placedBlock.is(ModBlocks.ANTI_CORROSION_GLASS.get())
                 || placedBlock.is(ModBlocks.POOL_MONITOR.get())
@@ -60,12 +59,8 @@ public class ReactionPoolProcessor {
         if (!isPoolBlock) return;
 
         BlockPos pos = event.getPos();
-
         level.getServer().execute(() -> {
-
-            Optional<CuboidStructure> opt =
-                    CuboidStructure.findFromWall(level, pos);
-
+            Optional<CuboidStructure> opt = CuboidStructure.findFromWallAndCorner(level, pos);
             if (opt.isEmpty()) return;
 
             CuboidStructure structure = opt.get();
@@ -78,10 +73,8 @@ public class ReactionPoolProcessor {
             BlockEntity be = level.getBlockEntity(anchor);
 
             if (be instanceof ReactionPoolBlockEntity pool) {
-
                 pool.setStructure(structure);
                 pool.setChanged();
-                System.out.println(pool.getStructure()==null);
                 level.sendBlockUpdated(anchor,
                         level.getBlockState(anchor),
                         level.getBlockState(anchor),

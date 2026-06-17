@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid.block.entity;
 
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.reactionpool.ReactionPoolProcessor;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModFluids;
 import com.mjzaymi.etherealvoid.util.fluid.MultiFluidTank;
@@ -10,6 +11,8 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -17,10 +20,15 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 
 import javax.annotation.Nullable;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class ReactionPoolBlockEntity extends BlockEntity {
 
@@ -75,16 +83,24 @@ public class ReactionPoolBlockEntity extends BlockEntity {
     public void setStructure(CuboidStructure structure) {
         this.structure = structure;
         if (structure==null) {
-            tank.drainAll();
+            tank.setCapacity(0);
         } else {
             tank.setCapacity(structure.interiors().size() * 1000);
-            //tank.fill(new FluidStack(Fluids.WATER, 5000), IFluidHandler.FluidAction.EXECUTE);
-            //tank.fill(new FluidStack(ModFluids.SOURCE_SOAP_WATER.get(), 3000), IFluidHandler.FluidAction.EXECUTE);
-            //tank.fill(new FluidStack(Fluids.FLOWING_WATER, 2000), IFluidHandler.FluidAction.EXECUTE);
-            //tank.fill(new FluidStack(Fluids.LAVA, 3000), IFluidHandler.FluidAction.EXECUTE);
-            //tank.fill(new FluidStack(Fluids.FLOWING_LAVA, 2000), IFluidHandler.FluidAction.EXECUTE);
         }
     }
+
+    @Override
+    public AABB getRenderBoundingBox() {
+        if (structure==null)
+            return super.getRenderBoundingBox();
+        BlockPos min = getStructure().min();
+        BlockPos max = getStructure().max();
+        return new AABB(
+                min.getX(), min.getY(), min.getZ(),
+                max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0
+        );
+    }
+
 
     public CuboidStructure getStructure() {
         return structure;
@@ -97,19 +113,30 @@ public class ReactionPoolBlockEntity extends BlockEntity {
         CuboidStructure structure = getStructure();
         if (structure == null) return;
 
-        // 扫描内部
+        var realStructureOpt = CuboidStructure.findFromCorner(level, getBlockPos());
+        if (realStructureOpt.isEmpty()) {
+            setStructure(null);
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+            return;
+        } else if (!structure.isEqual(realStructureOpt.get())){
+            setStructure(realStructureOpt.get());
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+            return;
+        }
+
         for (BlockPos p : structure.interiors()) {
-
             BlockState s = level.getBlockState(p);
-
             FluidState fluid = s.getFluidState();
-            if (!fluid.isEmpty()) {
-                getTank().fill(
+            if (!fluid.isEmpty() && fluid.isSource()) {
+                tank.fill(
                         new FluidStack(fluid.getType(), 1000),
                         IFluidHandler.FluidAction.EXECUTE
                 );
-
                 level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+                setChanged();
+                level.updateNeighborsAt(getBlockPos(), getBlockState().getBlock());
+                level.updateNeighborsAt(p, Blocks.AIR.defaultBlockState().getBlock());
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
                 continue;
             }
 
@@ -118,5 +145,38 @@ public class ReactionPoolBlockEntity extends BlockEntity {
                 level.removeBlock(p, false);
             }
         }
+        BlockPos min = structure.min();
+        BlockPos max = structure.max();
+        AABB area = new AABB(
+                min.getX(), min.getY(), min.getZ(),
+                max.getX() + 1.0D, max.getY() + 1.0D, max.getZ() + 1.0D
+        );
+        var entities = level.getEntitiesOfClass(ItemEntity.class, area);
+
+
+        //Map<String, ReactionPoolProcessor.PoolContents> pools = new HashMap<>();
+        for (ItemEntity entity : entities) {
+            if (!entity.isAlive() || entity.getItem().isEmpty()) {
+                continue;
+            }
+
+            /*Optional<CuboidStructure> structure = CuboidStructure.findFromInterior(serverLevel, entity.blockPosition());
+            if (structure.isEmpty()) {
+                entity.setExtendedLifetime();
+                entity.setDefaultPickUpDelay();
+                entity.getPersistentData().remove(PROGRESS_TAG);
+                continue;
+            }
+
+            entity.setNeverPickUp();
+            entity.setUnlimitedLifetime();
+
+            CuboidStructure pool = structure.get();
+            pools.computeIfAbsent(key(pool), ignored -> new ReactionPoolProcessor.PoolContents(pool)).items.add(entity);*/
+        }
+
+        //for (ReactionPoolProcessor.PoolContents contents : pools.values()) {
+        //    processReaction(serverLevel, contents);
+        //}
     }
 }

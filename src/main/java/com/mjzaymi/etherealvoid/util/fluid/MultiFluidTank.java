@@ -18,8 +18,8 @@ public class MultiFluidTank {
         this.capacity = capacity;
     }
 
-    public MultiFluidTank setCapacity(int capacity)
-    {
+    public MultiFluidTank setCapacity(int capacity) {
+        if (getFluidsAmount() > capacity) drainAll();
         this.capacity = capacity;
         return this;
     }

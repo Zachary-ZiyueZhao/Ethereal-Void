@@ -56,10 +56,10 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
             float fillPercentage = Math.min(1.0f, amount / capacity);
             if (fillPercentage <= 0) continue;
             float height = fillPercentage * totalHeight;
-            System.out.println("amount:" + amount);
-            System.out.println("capacity:" + capacity);
-            System.out.println("fillPercentage:" + fillPercentage);
-            System.out.println("height:"+height);
+            //System.out.println("amount:" + amount);
+            //System.out.println("capacity:" + capacity);
+            //System.out.println("fillPercentage:" + fillPercentage);
+            //System.out.println("height:"+height);
 
             Fluid fluid = fluidStack.getFluid();
             IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);

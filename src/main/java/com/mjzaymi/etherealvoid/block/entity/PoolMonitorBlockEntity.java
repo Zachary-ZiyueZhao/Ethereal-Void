@@ -23,11 +23,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class PoolMonitorBlockEntity extends BlockEntity implements MenuProvider {
@@ -103,6 +106,18 @@ public class PoolMonitorBlockEntity extends BlockEntity implements MenuProvider 
         return Component.translatable("block.ethereal_void.pool_monitor");
     }
 
+    public boolean isInStructure() {
+        return CuboidStructure.findFromWall(level, worldPosition).isPresent();
+    }
+
+    public ReactionPoolBlockEntity getBlockEntity() {
+        Optional<CuboidStructure> structure = CuboidStructure.findFromWall(level, worldPosition);
+        if (structure.isEmpty()) return null;
+        BlockEntity be = level.getBlockEntity(structure.get().min());
+        if (!(be instanceof ReactionPoolBlockEntity pool)) return null;
+        return pool;
+    }
+
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int pContainerId, Inventory pPlayerInventory, Player pPlayer) {
@@ -132,7 +147,7 @@ public class PoolMonitorBlockEntity extends BlockEntity implements MenuProvider 
     }
 
     public void tick(Level pLevel, BlockPos pPos, BlockState pState) {
-        if(hasRecipe()) {
+        /*if(hasRecipe()) {
             increaseCraftingProgress();
             setChanged(pLevel, pPos, pState);
 
@@ -142,7 +157,7 @@ public class PoolMonitorBlockEntity extends BlockEntity implements MenuProvider 
             }
         } else {
             resetProgress();
-        }
+        }*/
     }
 
     private void resetProgress() {

@@ -38,6 +38,7 @@ public class RenderUtil {
                 float startX = (x == minX_i) ? totalMinX : (float) x;
                 float endX = (x == maxX_i) ? totalMaxX : (float) (x + 1);
 
+                if (y <= totalMinY-1.0f) continue;
                 float startY = (y <= totalMinY) ? totalMinY : (float) y;
                 if (startY >= currentMaxY) continue;
                 float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
@@ -65,6 +66,7 @@ public class RenderUtil {
                 float startZ = (z == minZ_i) ? totalMinZ : (float) z;
                 float endZ = (z == maxZ_i) ? totalMaxZ : (float) (z + 1);
 
+                if (y <= totalMinY-1.0f) continue;
                 float startY = (y <= totalMinY) ? totalMinY : (float) y;
                 if (startY >= currentMaxY) continue;
                 float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));

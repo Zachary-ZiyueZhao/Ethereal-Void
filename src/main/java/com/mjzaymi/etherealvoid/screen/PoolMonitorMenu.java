@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid.screen;
 
 import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
+import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import com.mjzaymi.etherealvoid.registration.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -11,7 +12,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.SlotItemHandler;
+
+import java.util.List;
 
 public class PoolMonitorMenu extends AbstractContainerMenu {
     public final PoolMonitorBlockEntity blockEntity;
@@ -33,11 +37,18 @@ public class PoolMonitorMenu extends AbstractContainerMenu {
         addPlayerHotbar(inv);
 
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
-            this.addSlot(new SlotItemHandler(iItemHandler, 0, 80, 11));
-            this.addSlot(new SlotItemHandler(iItemHandler, 1, 80, 59));
+            this.addSlot(new SlotItemHandler(iItemHandler, 0, 122, 106));
         });
 
         addDataSlots(data);
+    }
+
+    public boolean isInStructure() {
+        return blockEntity.isInStructure();
+    }
+
+    public ReactionPoolBlockEntity getBlockEntity() {
+        return blockEntity.getBlockEntity();
     }
 
     public boolean isCrafting() {
@@ -68,7 +79,7 @@ public class PoolMonitorMenu extends AbstractContainerMenu {
     private static final int TE_INVENTORY_FIRST_SLOT_INDEX = VANILLA_FIRST_SLOT_INDEX + VANILLA_SLOT_COUNT;
 
     // THIS YOU HAVE TO DEFINE!
-    private static final int TE_INVENTORY_SLOT_COUNT = 2;  // must be the number of slots you have!
+    private static final int TE_INVENTORY_SLOT_COUNT = 1;  // must be the number of slots you have!
     @Override
     public ItemStack quickMoveStack(Player playerIn, int pIndex) {
         Slot sourceSlot = slots.get(pIndex);
@@ -111,14 +122,14 @@ public class PoolMonitorMenu extends AbstractContainerMenu {
     private void addPlayerInventory(Inventory playerInventory) {
         for (int i = 0; i < 3; ++i) {
             for (int l = 0; l < 9; ++l) {
-                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 138 + i * 18));
             }
         }
     }
 
     private void addPlayerHotbar(Inventory playerInventory) {
         for (int i = 0; i < 9; ++i) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
+            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 196));
         }
     }
 }
