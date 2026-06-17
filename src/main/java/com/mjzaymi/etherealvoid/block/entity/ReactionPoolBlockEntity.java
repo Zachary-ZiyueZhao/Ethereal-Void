@@ -2,6 +2,8 @@ package com.mjzaymi.etherealvoid.block.entity;
 
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
+import com.mjzaymi.etherealvoid.registration.ModFluids;
+import com.mjzaymi.etherealvoid.util.fluid.MultiFluidTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
@@ -14,10 +16,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraftforge.fluids.capability.templates.FluidTank;
-import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
 
@@ -25,7 +26,7 @@ public class ReactionPoolBlockEntity extends BlockEntity {
 
     private CuboidStructure structure;
 
-    private final FluidTank tank = new FluidTank(10000);
+    private final MultiFluidTank tank = new MultiFluidTank(0);
 
     public ReactionPoolBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.REACTION_POOL_BE.get(), pos, state);
@@ -34,6 +35,7 @@ public class ReactionPoolBlockEntity extends BlockEntity {
     @Override
     protected void saveAdditional(CompoundTag pTag) {
         if (structure!=null) pTag.put("structure", structure.serializeNBT());
+        pTag.put("tank", tank.writeToNBT(new CompoundTag()));
         super.saveAdditional(pTag);
     }
 
@@ -41,43 +43,44 @@ public class ReactionPoolBlockEntity extends BlockEntity {
     public void load(CompoundTag pTag) {
         super.load(pTag);
         structure = CuboidStructure.deserializeNBT(pTag.getCompound("structure"));
+        tank.readFromNBT(pTag.getCompound("tank"));
     }
 
     @Override
     public void handleUpdateTag(CompoundTag tag) {
-        if (tag!=null)
-            load(tag);
+        if (tag!=null) load(tag);
     }
 
     @Override
     public CompoundTag getUpdateTag() {
-        CompoundTag tag = saveWithoutMetadata();
-        System.out.println(tag);
         return saveWithFullMetadata();
     }
 
     @Nullable
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
-        // 创建一个包含当前 BE 数据的 vanilla 数据包
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
         CompoundTag tag = pkt.getTag();
-        if (tag != null) {
-            this.load(tag); // 客户端加载新数据
-        }
+        if (tag != null) this.load(tag);
     }
 
-    public FluidTank getTank() {
+    public MultiFluidTank getTank() {
         return tank;
     }
 
     public void setStructure(CuboidStructure structure) {
         this.structure = structure;
-        setChanged();
+        if (structure==null) {
+            tank.drainAll();
+        } else {
+            tank.setCapacity(structure.interiors().size() * 1000);
+            //tank.fill(new FluidStack(Fluids.WATER, 5000), IFluidHandler.FluidAction.EXECUTE);
+            //tank.fill(new FluidStack(ModFluids.SOURCE_SOAP_WATER.get(), 3000), IFluidHandler.FluidAction.EXECUTE);
+        }
     }
 
     public CuboidStructure getStructure() {
