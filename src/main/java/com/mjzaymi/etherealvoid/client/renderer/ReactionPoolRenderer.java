@@ -2,7 +2,7 @@ package com.mjzaymi.etherealvoid.client.renderer;
 
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
-import com.mjzaymi.etherealvoid.registration.ModFluids;
+import com.mjzaymi.etherealvoid.util.fluid.FluidSorter;
 import com.mjzaymi.etherealvoid.util.render.RenderFace;
 import com.mjzaymi.etherealvoid.util.render.RenderUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -17,12 +17,8 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.level.material.Fluid;
-import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
-import org.joml.Matrix3f;
-import org.joml.Matrix4f;
 
 import java.util.List;
 
@@ -43,22 +39,16 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
         if (s == null) return;
         if (be.getLevel() == null) return;
 
+        BlockPos bePos = be.getBlockPos();
         BlockPos min = s.min().offset(1, 1, 1);
         BlockPos max = s.max().offset(-1, 0, -1);
 
         light = LevelRenderer.getLightColor(be.getLevel(), min);
-        System.out.println(light);
-
-
 
         float capacity = be.getTank().getCapacity();
 
-
-
-        BlockPos bePos = be.getBlockPos();
-
         List<FluidStack> fluids =  be.getTank().getFluids();
-        //fluids.sort();
+        fluids.sort(FluidSorter.DENSITY_SORTER);
         float totalHeight = max.getY() - min.getY() + 0.88f;
         float currentHeight = 0;
         for (FluidStack fluidStack : fluids) {

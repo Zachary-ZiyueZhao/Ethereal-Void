@@ -84,8 +84,6 @@ public class MultiFluidTank {
         int space = getSpace();
         if (resource.isEmpty()) return 0;
         if (action.simulate()) return Math.min(space, resource.getAmount());
-
-        System.out.println("FILL AMOUNT: "+resource.getAmount());
         for (FluidStack fluid : fluids) {
             if (!fluid.isFluidEqual(resource)) continue;
             int filled = space;
