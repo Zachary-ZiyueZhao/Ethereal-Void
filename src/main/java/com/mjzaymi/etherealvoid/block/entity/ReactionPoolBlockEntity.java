@@ -78,8 +78,11 @@ public class ReactionPoolBlockEntity extends BlockEntity {
             tank.drainAll();
         } else {
             tank.setCapacity(structure.interiors().size() * 1000);
-            tank.fill(new FluidStack(Fluids.WATER, 5000), IFluidHandler.FluidAction.EXECUTE);
-            tank.fill(new FluidStack(ModFluids.SOURCE_SOAP_WATER.get(), 3000), IFluidHandler.FluidAction.EXECUTE);
+            //tank.fill(new FluidStack(Fluids.WATER, 5000), IFluidHandler.FluidAction.EXECUTE);
+            //tank.fill(new FluidStack(ModFluids.SOURCE_SOAP_WATER.get(), 3000), IFluidHandler.FluidAction.EXECUTE);
+            //tank.fill(new FluidStack(Fluids.FLOWING_WATER, 2000), IFluidHandler.FluidAction.EXECUTE);
+            //tank.fill(new FluidStack(Fluids.LAVA, 3000), IFluidHandler.FluidAction.EXECUTE);
+            //tank.fill(new FluidStack(Fluids.FLOWING_LAVA, 2000), IFluidHandler.FluidAction.EXECUTE);
         }
     }
 

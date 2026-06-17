@@ -78,7 +78,7 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
 
             RenderUtil.render(builder, poseStack, RenderFace.ALL,
                     bePos, min, max,
-                    0.001f, height, currentHeight,
+                    0.005f, height, currentHeight,
                     tintColor, light,
                     u0, u1, v0, v1);
             currentHeight += height;

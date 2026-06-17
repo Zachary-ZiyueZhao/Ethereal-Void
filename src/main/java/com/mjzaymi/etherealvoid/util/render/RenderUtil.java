@@ -23,11 +23,11 @@ public class RenderUtil {
 
         float totalMinX = minX_i + epsilon;
         float totalMinZ = minZ_i + epsilon;
-        float totalMinY = minY_i + epsilon;
+        float totalMinY = minY_i;
         totalMinY += fromBottom;
         float totalMaxX = maxX_i + 1.0f - epsilon;
         float totalMaxZ = maxZ_i + 1.0f - epsilon;
-        float currentMaxY = totalMinY + height - 2*epsilon;
+        float currentMaxY = totalMinY + height;
 
         int alpha = (tintColor >> 24) & 0xFF;
         int red = (tintColor >> 16) & 0xFF;
@@ -38,7 +38,7 @@ public class RenderUtil {
                 float startX = (x == minX_i) ? totalMinX : (float) x;
                 float endX = (x == maxX_i) ? totalMaxX : (float) (x + 1);
 
-                float startY = (y == minY_i) ? totalMinY : (float) y;
+                float startY = (y <= totalMinY) ? totalMinY : (float) y;
                 if (startY >= currentMaxY) continue;
                 float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
 
@@ -65,7 +65,7 @@ public class RenderUtil {
                 float startZ = (z == minZ_i) ? totalMinZ : (float) z;
                 float endZ = (z == maxZ_i) ? totalMaxZ : (float) (z + 1);
 
-                float startY = (y == minY_i) ? totalMinY : (float) y;
+                float startY = (y <= totalMinY) ? totalMinY : (float) y;
                 if (startY >= currentMaxY) continue;
                 float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
 
