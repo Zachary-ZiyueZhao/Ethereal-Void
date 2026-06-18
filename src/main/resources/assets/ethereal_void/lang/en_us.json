@@ -4,6 +4,8 @@
   "block.ethereal_void.steel_casing": "Steel Casing",
   "block.ethereal_void.resistive_heater": "Resistive Heater",
   "block.ethereal_void.magnetic_sieve": "Magnetic Sieve",
+  "block.ethereal_void.pool_monitor": "Reaction Pool Monitor",
+
 
   "item.ethereal_void.crushed_iron_ore": "Crushed Iron Ore",
   "item.ethereal_void.coal_powder": "Coal Powder",
@@ -28,5 +30,11 @@
   "item.ethereal_void.dolomite": "Dolomite",
   "item.ethereal_void.calcined_dolomite": "Calcined Dolomite",
   "item.ethereal_void.raw_magnesium": "Raw Magnesium",
-  "item.ethereal_void.magnesium_ingot": "Magnesium Ingot"
+  "item.ethereal_void.magnesium_ingot": "Magnesium Ingot",
+
+
+  "tooltip.ethereal_void.pool_not_found": "Pool not found",
+  "tooltip.ethereal_void.temperature": "Temperature",
+  "tooltip.ethereal_void.pressure": "Pressure",
+  "tooltip.ethereal_void.precipitates": "Precipitates"
 }

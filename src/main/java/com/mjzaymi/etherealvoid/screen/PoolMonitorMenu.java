@@ -12,10 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.SlotItemHandler;
-
-import java.util.List;
 
 public class PoolMonitorMenu extends AbstractContainerMenu {
     public final PoolMonitorBlockEntity blockEntity;
@@ -47,8 +44,8 @@ public class PoolMonitorMenu extends AbstractContainerMenu {
         return blockEntity.isInStructure();
     }
 
-    public ReactionPoolBlockEntity getBlockEntity() {
-        return blockEntity.getBlockEntity();
+    public ReactionPoolBlockEntity getPoolBlockEntity() {
+        return blockEntity.getPoolBlockEntity();
     }
 
     public boolean isCrafting() {

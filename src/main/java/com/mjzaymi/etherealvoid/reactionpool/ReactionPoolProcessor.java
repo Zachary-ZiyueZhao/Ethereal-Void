@@ -74,12 +74,7 @@ public class ReactionPoolProcessor {
 
             if (be instanceof ReactionPoolBlockEntity pool) {
                 pool.setStructure(structure);
-                pool.setChanged();
-                level.sendBlockUpdated(anchor,
-                        level.getBlockState(anchor),
-                        level.getBlockState(anchor),
-                        3);
-                level.updateNeighborsAt(be.getBlockPos(), be.getBlockState().getBlock());
+                pool.updateChangeState(true);
             }
         });
     }
