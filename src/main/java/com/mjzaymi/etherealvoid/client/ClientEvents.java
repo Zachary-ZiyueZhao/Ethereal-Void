@@ -2,17 +2,12 @@ package com.mjzaymi.etherealvoid.client;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.client.model.ConnectedGlassModel;
-import com.mjzaymi.etherealvoid.client.renderer.LyingItemRenderer;
 import com.mjzaymi.etherealvoid.client.renderer.ReactionPoolRenderer;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
-import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
@@ -36,7 +31,6 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerEntityRenderer(EntityType.ITEM, LyingItemRenderer::new);
         event.registerBlockEntityRenderer(
                 ModBlockEntities.REACTION_POOL_BE.get(),
                 ReactionPoolRenderer::new

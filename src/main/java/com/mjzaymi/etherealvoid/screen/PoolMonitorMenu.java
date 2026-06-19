@@ -17,18 +17,16 @@ import net.minecraftforge.items.SlotItemHandler;
 public class PoolMonitorMenu extends AbstractContainerMenu {
     public final PoolMonitorBlockEntity blockEntity;
     private final Level level;
-    private final ContainerData data;
 
     public PoolMonitorMenu(int pContainerId, Inventory inv, FriendlyByteBuf extraData) {
-        this(pContainerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(2));
+        this(pContainerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()));
     }
 
-    public PoolMonitorMenu(int pContainerId, Inventory inv, BlockEntity entity, ContainerData data) {
+    public PoolMonitorMenu(int pContainerId, Inventory inv, BlockEntity entity) {
         super(ModMenuTypes.POOL_MONITOR_MENU.get(), pContainerId);
         checkContainerSize(inv, 2);
         blockEntity = ((PoolMonitorBlockEntity) entity);
         this.level = inv.player.level();
-        this.data = data;
 
         addPlayerInventory(inv);
         addPlayerHotbar(inv);
@@ -36,28 +34,10 @@ public class PoolMonitorMenu extends AbstractContainerMenu {
         this.blockEntity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(iItemHandler -> {
             this.addSlot(new SlotItemHandler(iItemHandler, 0, 122, 106));
         });
-
-        addDataSlots(data);
-    }
-
-    public boolean isInStructure() {
-        return blockEntity.isInStructure();
     }
 
     public ReactionPoolBlockEntity getPoolBlockEntity() {
         return blockEntity.getPoolBlockEntity();
-    }
-
-    public boolean isCrafting() {
-        return data.get(0) > 0;
-    }
-
-    public int getScaledProgress() {
-        int progress = this.data.get(0);
-        int maxProgress = this.data.get(1);  // Max Progress
-        int progressArrowSize = 26; // This is the height in pixels of your arrow
-
-        return maxProgress != 0 && progress != 0 ? progress * progressArrowSize / maxProgress : 0;
     }
 
     // CREDIT GOES TO: diesieben07 | https://github.com/diesieben07/SevenCommons

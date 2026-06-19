@@ -7,6 +7,13 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 public class RenderUtil {
+    public static int getRenderedAmount(int count) {
+        if (count > 48) return 5;
+        if (count > 32) return 4;
+        if (count > 15) return 3;
+        if (count > 1) return 2;
+        return 1;
+    }
     public static void render(VertexConsumer builder, PoseStack poseStack, RenderFace renderFace,
                        BlockPos bePos, BlockPos min, BlockPos max,
                        float epsilon, float height, float fromBottom,

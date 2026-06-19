@@ -132,4 +132,16 @@ public class MultiFluidTank {
     public int getSpace() {
         return Math.max(0, capacity - getFluidsAmount());
     }
+
+    public MultiFluidTank copy() {
+        var copy = new MultiFluidTank(capacity);
+        for (var fluidStack : fluids) copy.fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+        return copy;
+    }
+
+    public void copyFrom(MultiFluidTank tank) {
+        setCapacity(tank.getCapacity());
+        drainAll();
+        for (var fluidStack : tank.getFluids()) fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+    }
 }

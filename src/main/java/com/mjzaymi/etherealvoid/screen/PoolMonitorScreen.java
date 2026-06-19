@@ -2,7 +2,7 @@ package com.mjzaymi.etherealvoid.screen;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.util.CalculateUtil;
+import com.mjzaymi.etherealvoid.util.GameUtil;
 import com.mjzaymi.etherealvoid.util.fluid.FluidSorter;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
@@ -38,14 +38,15 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         this.imageHeight = 220;
         this.inventoryLabelY = this.imageHeight - 94;
         this.poolBlockEntity = pMenu.getPoolBlockEntity();
-        if (poolBlockEntity ==null) {
+        if (poolBlockEntity == null) {
             this.fluids = new ArrayList<>();
             this.precipitates = new ArrayList<>();
             return;
         }
-        this.fluids = poolBlockEntity.getTank().getFluids();
+        this.fluids = poolBlockEntity.getTankAll().getFluids();
         this.fluids.sort(FluidSorter.DENSITY_SORTER);
-        this.precipitates = poolBlockEntity.getPrecipitates();
+        this.precipitates = poolBlockEntity.getPrecipitatesAll();
+        System.out.println(this.precipitates);
     }
 
     @Override
@@ -66,14 +67,14 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
 
         //Thermometer bar
         final float temperatureTotalHeight = 97f;
-        final float totalTemperature = CalculateUtil.getPreferredTotalTemperature(temperature);
+        final float totalTemperature = GameUtil.getPreferredTotalTemperature(temperature);
         int temperatureHeight = Math.round((temperature / totalTemperature) * temperatureTotalHeight);
         guiGraphics.fill(leftPos+163, topPos+114-temperatureHeight+1, leftPos+164, topPos+115, 0xffeb3822);
 
 
         //Barometer bar
         final float pressureTotalHeight = 106f;
-        final float totalPressure = CalculateUtil.getPreferredTotalPressure(pressure);
+        final float totalPressure = GameUtil.getPreferredTotalPressure(pressure);
         int pressureHeight = Math.round((pressure / totalPressure) * pressureTotalHeight);
 
         FluidStack fluid = new FluidStack(Fluids.WATER, 1000);
@@ -94,12 +95,12 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         if (!precipitates.isEmpty()) {
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             guiGraphics.fill(leftPos+8, topPos+currentY-6+1, leftPos+8+110, topPos+currentY+1, 0xffFAEBD7);
-            currentY -= 6f;
+            currentY -= 6;
         }
 
         //Fluids
         final float fluidsTotalHeight = currentY-15f;
-        final float capacity = poolBlockEntity.getTank().getCapacity();
+        final float capacity = poolBlockEntity.getTankAll().getCapacity();
         for (FluidStack fluidStack : fluids) {
             fluid = fluidStack;
             ext = IClientFluidTypeExtensions.of(fluid.getFluid());
@@ -145,13 +146,12 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         //Fluids and precipitates
         final int barX = leftPos + 8;
         final int barWidth = 110;
-        final int fluidsTotalHeight = 106;
         //No structure
         final String noStructureKey = "tooltip."+EtherealVoid.MOD_ID+".pool_not_found";
 
 
         //Temperature
-        final float totalTemperature = CalculateUtil.getPreferredTotalTemperature(temperature);
+        final float totalTemperature = GameUtil.getPreferredTotalTemperature(temperature);
         if (mouseX >= temperatureBarX && mouseX < temperatureBarX + temperatureBarWidth &&
                 mouseY >= temperatureBarY && mouseY < temperatureBarY + temperatureBarHeight) {
             guiGraphics.fill(temperatureBarX, temperatureBarY, temperatureBarX + temperatureBarWidth,
@@ -172,7 +172,7 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
 
 
         //Pressure
-        final float totalPressure = CalculateUtil.getPreferredTotalPressure(pressure);
+        final float totalPressure = GameUtil.getPreferredTotalPressure(pressure);
         if (mouseX >= pressureBarX && mouseX < pressureBarX + pressureBarWidth &&
                 mouseY >= pressureBarY && mouseY < pressureBarY + pressureBarHeight) {
             guiGraphics.fill(pressureBarX, pressureBarY, pressureBarX + pressureBarWidth,
@@ -193,12 +193,13 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
 
 
         //Precipitates
+        int fluidsTotalHeight = 106;
         int currentY = topPos + 121;
         if (poolBlockEntity==null) {
-            if (mouseX >= barX && mouseX < barX + barWidth &&
-                    mouseY >= currentY-fluidsTotalHeight+1 && mouseY < currentY) {
+            if (mouseX >= barX && mouseX < barX+barWidth &&
+                    mouseY >= currentY-fluidsTotalHeight+1 && mouseY < currentY+1) {
                 guiGraphics.fill(barX, currentY-fluidsTotalHeight+1,
-                        barX+barWidth, currentY, 0x40FFFFFF);
+                        barX+barWidth, currentY+1, 0x40FFFFFF);
                 List<Component> tooltip = new ArrayList<>();
                 Component fluidName = Component.translatable(noStructureKey);
                 tooltip.add(fluidName.copy().withStyle(ChatFormatting.GOLD));
@@ -208,10 +209,10 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
             return;
         }
         if (!precipitates.isEmpty()) {
-            if (mouseX >= barX && mouseX < barX + barWidth &&
-                    mouseY >= currentY - 6 + 1 && mouseY < currentY) {
-                guiGraphics.fill(barX, currentY - 6 + 1,
-                        barX + barWidth, currentY, 0x40FFFFFF);
+            if (mouseX >= barX && mouseX < barX+barWidth &&
+                    mouseY >= currentY-6+1 && mouseY < currentY+1) {
+                guiGraphics.fill(barX, currentY-6+1,
+                        barX+barWidth, currentY+1, 0x40FFFFFF);
                 List<Component> tooltip = new ArrayList<>();
                 Component fluidName = Component.translatable("tooltip."+EtherealVoid.MOD_ID+".precipitates");
                 tooltip.add(fluidName.copy().withStyle(ChatFormatting.GOLD));
@@ -223,18 +224,19 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
                 guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
                 return;
             }
-            currentY -= 6;
+            fluidsTotalHeight-=6;
+            currentY-=6;
         }
 
 
         //Fluids
-        final int capacity = poolBlockEntity.getTank().getCapacity();
+        final int capacity = poolBlockEntity.getTankAll().getCapacity();
         for (FluidStack fluid : fluids) {
             int fluidHeight = Math.round(((float)fluid.getAmount() / (float)capacity) * (float)fluidsTotalHeight);
-            if (mouseX >= barX && mouseX < barX + barWidth &&
-                    mouseY >= currentY-fluidHeight+1 && mouseY < currentY) {
+            if (mouseX >= barX && mouseX < barX+barWidth &&
+                    mouseY >= currentY-fluidHeight+1 && mouseY < currentY+1) {
                 guiGraphics.fill(barX, currentY-fluidHeight+1,
-                        barX+barWidth, currentY, 0x40FFFFFF);
+                        barX+barWidth, currentY+1, 0x40FFFFFF);
 
                 List<Component> tooltip = new ArrayList<>();
                 Component fluidName = Component.translatable(fluid.getTranslationKey());

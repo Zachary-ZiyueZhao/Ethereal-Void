@@ -81,19 +81,15 @@ public class ReactionPoolProcessor {
 
     @SubscribeEvent
     public static void onLevelTick(TickEvent.LevelTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.level.isClientSide || event.level.getGameTime() % 20 != 0) {
-            return;
-        }
+        if (event.phase != TickEvent.Phase.END || event.level.isClientSide ||
+                event.level.getGameTime() % 20 != 0) return;
 
-        if (!(event.level instanceof ServerLevel serverLevel)) {
-            return;
-        }
+        if (!(event.level instanceof ServerLevel serverLevel)) return;
 
         Map<String, PoolContents> pools = new HashMap<>();
         for (Entity entity : serverLevel.getAllEntities()) {
-            if (!(entity instanceof ItemEntity itemEntity) || !itemEntity.isAlive() || itemEntity.getItem().isEmpty()) {
-                continue;
-            }
+            if (!(entity instanceof ItemEntity itemEntity) || !itemEntity.isAlive() ||
+                    itemEntity.getItem().isEmpty()) continue;
 
             Optional<CuboidStructure> structure = CuboidStructure.findFromInterior(serverLevel, itemEntity.blockPosition());
             if (structure.isEmpty()) {
@@ -102,9 +98,6 @@ public class ReactionPoolProcessor {
                 itemEntity.getPersistentData().remove(PROGRESS_TAG);
                 continue;
             }
-
-            FluidTank tank = new FluidTank(1000);
-            tank.fill(new FluidStack(Fluids.WATER, 1000), IFluidHandler.FluidAction.EXECUTE);
 
             itemEntity.setNeverPickUp();
             itemEntity.setUnlimitedLifetime();

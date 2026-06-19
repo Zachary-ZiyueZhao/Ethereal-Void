@@ -1,5 +1,6 @@
 package com.mjzaymi.etherealvoid.block;
 
+import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -36,6 +37,14 @@ public class SteelCasing extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(BlockState pState) {
         return RenderShape.MODEL;
+    }
+
+    @Override
+    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
+        if (pState.getBlock() != pNewState.getBlock() &&
+                pLevel.getBlockEntity(pPos) instanceof ReactionPoolBlockEntity be)
+            be.setStructure(null);
+        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
     }
 
     @Nullable

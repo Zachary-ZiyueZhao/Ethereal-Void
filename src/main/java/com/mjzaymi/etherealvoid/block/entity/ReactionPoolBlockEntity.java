@@ -1,8 +1,11 @@
 package com.mjzaymi.etherealvoid.block.entity;
 
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
+import com.mjzaymi.etherealvoid.reactionpool.recipe.SyncType;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
-import com.mjzaymi.etherealvoid.util.NBTUtil;
+import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
+import com.mjzaymi.etherealvoid.util.GameUtil;
 import com.mjzaymi.etherealvoid.util.fluid.MultiFluidTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -12,18 +15,13 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -35,8 +33,15 @@ public class ReactionPoolBlockEntity extends BlockEntity {
 
     private CuboidStructure structure;
 
-    private final MultiFluidTank tank = new MultiFluidTank(0);
+    //Idle
     private final List<ItemStack> precipitates = new ArrayList<>();
+    private final MultiFluidTank tank = new MultiFluidTank(0);
+    //All
+    private final List<ItemStack> precipitatesAll = new ArrayList<>();
+    private final MultiFluidTank tankAll = new MultiFluidTank(0);
+    private final List<ReactionRecipe> activeTasks = new ArrayList<>();
+    private float temperature = 273.15f+20f;
+    private float pressure = 1;
 
     public ReactionPoolBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.REACTION_POOL_BE.get(), pos, state);
@@ -46,9 +51,18 @@ public class ReactionPoolBlockEntity extends BlockEntity {
     protected void saveAdditional(CompoundTag pTag) {
         if (structure!=null) pTag.put("structure", structure.serializeNBT());
         pTag.put("tank", tank.writeToNBT(new CompoundTag()));
-        ListTag list = new ListTag();
-        for (ItemStack itemStack : precipitates) list.add(itemStack.save(new CompoundTag()));
+        var list = new ListTag();
+        synchronized (precipitates) {
+            for (ItemStack itemStack : precipitates) list.add(itemStack.save(new CompoundTag()));
+        }
         pTag.put("precipitates", list);
+        list = new ListTag();
+        synchronized (activeTasks) {
+            for (ReactionRecipe task : activeTasks) list.add(task.save(new CompoundTag()));
+        }
+        pTag.put("activeTasks", list);
+        pTag.putFloat("temperature", temperature);
+        pTag.putFloat("pressure", pressure);
         super.saveAdditional(pTag);
     }
 
@@ -59,10 +73,17 @@ public class ReactionPoolBlockEntity extends BlockEntity {
         tank.readFromNBT(pTag.getCompound("tank"));
         synchronized (precipitates) {
             precipitates.clear();
-            for (Tag t : pTag.getList("precipitates", Tag.TAG_COMPOUND)) {
+            for (Tag t : pTag.getList("precipitates", Tag.TAG_COMPOUND))
                 precipitates.add(ItemStack.of((CompoundTag) t));
-            }
         }
+        synchronized (activeTasks) {
+            activeTasks.clear();
+            for (Tag t : pTag.getList("activeTasks", Tag.TAG_COMPOUND))
+                activeTasks.add(ReactionRecipe.of((CompoundTag) t));
+        }
+        temperature = pTag.getFloat("temperature");
+        pressure = pTag.getFloat("pressure");
+        updateContentsAll();
     }
 
     @Override
@@ -83,29 +104,31 @@ public class ReactionPoolBlockEntity extends BlockEntity {
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        CompoundTag tag = pkt.getTag();
+        var tag = pkt.getTag();
         if (tag != null) this.load(tag);
     }
 
-    public MultiFluidTank getTank() {
-        return tank;
-    }
-
     public void setStructure(CuboidStructure structure) {
-        this.structure = structure;
         if (structure==null) {
             tank.setCapacity(0);
+            if (this.structure!=null) {
+                GameUtil.spawnItemRandomlyInArea(level,
+                        this.structure.interiorFloorMin(), this.structure.interiorFloorMax(),
+                        precipitates);
+            }
+            precipitates.clear();
+            activeTasks.clear();
         } else {
             tank.setCapacity(structure.interiors().size() * 1000);
         }
+        this.structure = structure;
     }
 
     @Override
     public AABB getRenderBoundingBox() {
-        if (structure==null)
-            return super.getRenderBoundingBox();
-        BlockPos min = getStructure().min();
-        BlockPos max = getStructure().max();
+        if (structure==null) return super.getRenderBoundingBox();
+        var min = getStructure().min();
+        var max = getStructure().max();
         return new AABB(
                 min.getX(), min.getY(), min.getZ(),
                 max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0
@@ -117,11 +140,12 @@ public class ReactionPoolBlockEntity extends BlockEntity {
         return structure;
     }
 
-    public void tick(Level pLevel, BlockPos pPos, BlockState pState) {
+    public static final int PROCESS_TICK = 20;
 
+    public void tick(Level pLevel, BlockPos pPos, BlockState pState) {
         if (pLevel.isClientSide) return;
 
-        CuboidStructure structure = getStructure();
+        var structure = getStructure();
         if (structure == null) return;
 
         var realStructureOpt = CuboidStructure.findFromCorner(pLevel, getBlockPos());
@@ -138,8 +162,8 @@ public class ReactionPoolBlockEntity extends BlockEntity {
         }
 
         for (BlockPos p : structure.interiors()) {
-            BlockState s = pLevel.getBlockState(p);
-            FluidState fluid = s.getFluidState();
+            var s = pLevel.getBlockState(p);
+            var fluid = s.getFluidState();
             if (!fluid.isEmpty() && fluid.isSource()) {
                 tank.fill(
                         new FluidStack(fluid.getType(), 1000),
@@ -157,56 +181,131 @@ public class ReactionPoolBlockEntity extends BlockEntity {
                 pLevel.removeBlock(p, false);
             }
         }
-        BlockPos min = structure.min();
-        BlockPos max = structure.max();
+
+
+        var min = structure.min();
+        var max = structure.max();
         AABB area = new AABB(
                 min.getX(), min.getY(), min.getZ(),
                 max.getX() + 1.0D, max.getY() + 1.0D, max.getZ() + 1.0D
         );
+        GameUtil.mergeItemsInArea(pLevel, area);
         var entities = pLevel.getEntitiesOfClass(ItemEntity.class, area);
-        final List<ItemStack> original = new ArrayList<>(precipitates);
-        synchronized (precipitates) {
-            precipitates.clear();
-
-
-            //Map<String, ReactionPoolProcessor.PoolContents> pools = new HashMap<>();
-            for (ItemEntity entity : entities) {
-                if (!entity.isAlive() || entity.getItem().isEmpty()) {
-                    continue;
+        if (!entities.isEmpty()) {
+            synchronized (precipitates) {
+                for (var entity : entities) {
+                    if (!entity.isAlive() || entity.getItem().isEmpty()) continue;
+                    GameUtil.addItemToList(precipitates, entity.getItem());
+                    entity.discard();
                 }
-                precipitates.add(entity.getItem());
-
-            /*Optional<CuboidStructure> structure = CuboidStructure.findFromInterior(serverLevel, entity.blockPosition());
-            if (structure.isEmpty()) {
-                entity.setExtendedLifetime();
-                entity.setDefaultPickUpDelay();
-                entity.getPersistentData().remove(PROGRESS_TAG);
-                continue;
             }
-
-            entity.setNeverPickUp();
-            entity.setUnlimitedLifetime();
-
-            CuboidStructure pool = structure.get();
-            pools.computeIfAbsent(key(pool), ignored -> new ReactionPoolProcessor.PoolContents(pool)).items.add(entity);*/
-            }
+            updateChangeState(true);
         }
-        if (!precipitates.equals(original)) updateChangeState(true);
 
-        //for (ReactionPoolProcessor.PoolContents contents : pools.values()) {
-        //    processReaction(serverLevel, contents);
-        //}
+        if (pLevel.getGameTime() % PROCESS_TICK != 0) return;
+        processReaction();
     }
 
-    public void updateChangeState(boolean sendBlockUpdate) {
+    public void registerReaction(ReactionRecipe recipe) {
+        recipe.cost(precipitates, tank);
+        activeTasks.add(recipe.copyNew());
+    }
+
+    public void processReaction() {
+        boolean changed = false;
+        //Check for recipes and register them.
+        FOR:
+        for (var recipe : ModReactionRecipes.registeredRecipes) {
+            if (!recipe.costsEnough(precipitates, tank.getFluids())) continue;
+            if (!recipe.matchCondition(this)) continue;
+            boolean emptyTasks = activeTasks.isEmpty();
+            boolean containsType = GameUtil.findById(activeTasks, recipe.id)!=null;
+            switch (recipe.syncType) {
+                case SyncType.SYNC -> {
+                    if (!emptyTasks) continue;
+                    registerReaction(recipe);
+                    break FOR;
+                }
+                case SyncType.RECIPE_SYNC -> {
+                    if (containsType) continue;
+                    registerReaction(recipe);
+                }
+                case SyncType.RECIPE_ASYNC -> {
+                    if (!(emptyTasks || containsType)) continue;
+                    while (recipe.costsEnough(precipitates, tank.getFluids())) registerReaction(recipe);
+                    break FOR;
+                }
+                case SyncType.ASYNC -> {
+                    while (recipe.costsEnough(precipitates, tank.getFluids())) registerReaction(recipe);
+                }
+            }
+        }
+        synchronized (activeTasks) {
+            synchronized (precipitates) {
+                synchronized (tank) {
+                    Iterator<ReactionRecipe> taskIterator = activeTasks.listIterator();
+                    while (taskIterator.hasNext()) {
+                        ReactionRecipe task = taskIterator.next();
+                        if (task.tick(PROCESS_TICK)) {
+                            task.result(precipitates, tank);
+                            taskIterator.remove();
+                            changed = true;
+                        }
+                        if (!task.matchCondition(this)) {
+                            task.returnCost(precipitates, tank);
+                            taskIterator.remove();
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        if (changed) updateChangeState(true);
+    }
+
+    public void updateChangeState(boolean update) {
+        updateChangeState(level, update);
+    }
+
+    public void updateChangeState(Level level, boolean update) {
         setChanged();
-        if (level!=null) {
-            level.updateNeighborsAt(getBlockPos(), getBlockState().getBlock());
-            if (sendBlockUpdate) level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+        updateContentsAll();
+        if (level==null) return;
+        level.updateNeighborsAt(getBlockPos(), getBlockState().getBlock());
+        if (update) level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+    }
+
+    public void updateContentsAll() {
+        var pCopy = new ArrayList<>(precipitates);
+        for (ReactionRecipe task : activeTasks) GameUtil.addItemsToList(pCopy, task.cost.ingredients);
+        synchronized (precipitatesAll) {
+            precipitatesAll.clear();
+            precipitatesAll.addAll(pCopy);
+        }
+        synchronized (tankAll) {
+            tankAll.copyFrom(tank);
+            for (var task : activeTasks)
+                for (Object o : task.cost.ingredients) {
+                    if (!(o instanceof FluidStack fluidStack)) continue;
+                    tankAll.fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+                }
         }
     }
 
-    public List<ItemStack> getPrecipitates() {
-        return precipitates;
+    public List<ItemStack> getPrecipitatesAll() {
+        return precipitatesAll;
+    }
+    public MultiFluidTank getTankAll() {
+        return tankAll;
+    }
+    public float getTemperature() {
+        return temperature;
+    }
+    public float getPressure() {
+        return pressure;
+    }
+
+    public void addItem(ItemStack item) {
+        GameUtil.addItemToList(precipitates, item);
     }
 }

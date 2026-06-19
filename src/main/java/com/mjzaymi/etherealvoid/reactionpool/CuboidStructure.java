@@ -161,6 +161,22 @@ public class CuboidStructure {
         return max;
     }
 
+    public BlockPos interiorMin() {
+        return min.offset(1 ,1 ,1);
+    }
+
+    public BlockPos interiorMax() {
+        return max.offset(-1, 0, -1);
+    }
+
+    public BlockPos interiorFloorMin() {
+        return interiorMin();
+    }
+
+    public BlockPos interiorFloorMax() {
+        return interiorMax().atY(interiorFloorMin().getY());
+    }
+
     public Set<BlockPos> members() {
         return Set.copyOf(members);
     }
