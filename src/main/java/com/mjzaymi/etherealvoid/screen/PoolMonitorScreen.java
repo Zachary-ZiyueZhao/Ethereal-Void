@@ -46,7 +46,6 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         this.fluids = poolBlockEntity.getTankAll().getFluids();
         this.fluids.sort(FluidSorter.DENSITY_SORTER);
         this.precipitates = poolBlockEntity.getPrecipitatesAll();
-        System.out.println(this.precipitates);
     }
 
     @Override

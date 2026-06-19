@@ -49,7 +49,6 @@ public class ReactionRecipe {
     }
 
     public boolean matchCondition(ReactionPoolBlockEntity blockEntity) {
-        System.out.println(id + "MATCH???");
         return condition.match(blockEntity);
     }
 
