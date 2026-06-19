@@ -2,6 +2,7 @@ package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.entity.GemPolishingStationBlockEntity;
+import com.mjzaymi.etherealvoid.block.entity.FluidPipeBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -28,6 +29,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("reaction_pool_be", () ->
                     BlockEntityType.Builder.of(ReactionPoolBlockEntity::new,
                             ModBlocks.STEEL_CASING.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE_BE =
+            BLOCK_ENTITIES.register("fluid_pipe_be", () ->
+                    BlockEntityType.Builder.of(FluidPipeBlockEntity::new,
+                            ModBlocks.FLUID_PIPE.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

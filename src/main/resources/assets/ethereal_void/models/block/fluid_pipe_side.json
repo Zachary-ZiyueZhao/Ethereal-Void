@@ -1,0 +1,20 @@
+{
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "particle": "ethereal_void:block/fluid_pipe",
+    "pipeTex": "ethereal_void:block/fluid_pipe"
+  },
+  "elements": [
+    {
+      "__comment": "North",
+      "from": [ 6, 6, 0 ],
+      "to": [ 10, 10, 6 ],
+      "faces": {
+        "down":  { "uv": [ 6, 0, 10, 6 ], "texture": "#pipeTex" },
+        "up":    { "uv": [ 6, 0, 10, 6 ], "texture": "#pipeTex" },
+        "west":  { "uv": [ 6, 0, 10, 6 ], "rotation": 90, "texture": "#pipeTex" },
+        "east":  { "uv": [ 6, 0, 10, 6 ], "rotation": 90, "texture": "#pipeTex" }
+      }
+    }
+  ]
+}

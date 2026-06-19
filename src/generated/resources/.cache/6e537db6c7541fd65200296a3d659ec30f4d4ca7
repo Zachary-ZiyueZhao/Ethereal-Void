@@ -1,4 +1,4 @@
-// 1.20.1	2026-06-15T07:29:42.2351368	Item Models: ethereal_void
+// 1.20.1	2026-06-20T00:08:54.0120436	Item Models: ethereal_void
 0c78304e1c2e8c1352504d27e4f397476f91fdc7 assets/ethereal_void/models/item/aluminium_ingot.json
 9541df7713b32ff7185a9d6ea40944f3b18b98e7 assets/ethereal_void/models/item/aluminium_oxide.json
 72ad612258b1fe02afbd8e5716d6b79f833c8aef assets/ethereal_void/models/item/anti_corrosion_glass.json
@@ -9,6 +9,7 @@
 76c7521ea583fe5b8949cc8eb258a5ade0e81ba0 assets/ethereal_void/models/item/cryolite.json
 f311a82eafd4520bd55e4536fed964a2f38e90f2 assets/ethereal_void/models/item/dolomite.json
 ac355862631f7230fb77e8b85f9c26868869e281 assets/ethereal_void/models/item/electrode_plate.json
+607dc2706d3757edc0ae95bd01aa8109eea2a46b assets/ethereal_void/models/item/fluid_pipe.json
 0ff391d1d250201c9f69f4dc577c07ab371f0eb7 assets/ethereal_void/models/item/gem_polishing_station.json
 7d2701d03b3b5c150d21cb604b2ab0b3e8d53a91 assets/ethereal_void/models/item/impure_magnesium_salt.json
 2c3ff43d18c2187e68ccecee1e45ffa78248d1bb assets/ethereal_void/models/item/magnesium_ingot.json

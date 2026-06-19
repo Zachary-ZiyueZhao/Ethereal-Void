@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.reactionpool.recipe;
 
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.Condition;
+import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.Checker;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.util.GameUtil;
 import com.mjzaymi.etherealvoid.util.fluid.MultiFluidTank;
@@ -19,15 +19,15 @@ public class ReactionRecipe {
     public final int cookTicks;
     public final ResultOrCost cost;
     public final ResultOrCost result;
-    public final Condition condition;
+    public final Checker checker;
     public int ticksRemained;
-    public ReactionRecipe(String id, int syncType, int cookTicks, ResultOrCost cost, ResultOrCost result, Condition condition) {
+    public ReactionRecipe(String id, int syncType, int cookTicks, ResultOrCost cost, ResultOrCost result, Checker checker) {
         this.id = id;
         this.syncType = syncType;
         this.cookTicks = cookTicks;
         this.cost = cost;
         this.result = result;
-        this.condition = condition;
+        this.checker = checker;
         this.ticksRemained = cookTicks;
     }
 
@@ -49,7 +49,7 @@ public class ReactionRecipe {
     }
 
     public boolean matchCondition(ReactionPoolBlockEntity blockEntity) {
-        return condition.match(blockEntity);
+        return checker.match(blockEntity);
     }
 
     public boolean costsEnough(List<ItemStack> items, List<FluidStack> fluids) {
@@ -103,6 +103,6 @@ public class ReactionRecipe {
     }
 
     public ReactionRecipe copyNew() {
-        return new ReactionRecipe(id, syncType, cookTicks, cost, result, condition);
+        return new ReactionRecipe(id, syncType, cookTicks, cost, result, checker);
     }
 }

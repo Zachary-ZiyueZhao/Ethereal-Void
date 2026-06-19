@@ -78,6 +78,7 @@ public class ModBlockLootTables extends BlockLootSubProvider {
         this.dropSelf(ModBlocks.ELECTRODE_PLATE.get());
         this.dropSelf(ModBlocks.MAGNETIC_SIEVE.get());
         this.dropSelf(ModBlocks.RESISTIVE_HEATER.get());
+        this.dropSelf(ModBlocks.FLUID_PIPE.get());
         this.dropSelf(ModBlocks.STEEL_CASING.get());
         this.dropSelf(ModBlocks.GEM_POLISHING_STATION.get());
         this.dropSelf(ModBlocks.POOL_MONITOR.get());

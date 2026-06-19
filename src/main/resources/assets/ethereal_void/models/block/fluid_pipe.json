@@ -1,0 +1,58 @@
+{
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "particle": "ethereal_void:block/fluid_pipe",
+    "pipeTex": "ethereal_void:block/fluid_pipe"
+  },
+  "elements": [
+    {
+      "from": [ 6, 6, 6 ],
+      "to": [ 10, 10, 10 ],
+      "faces": {
+        "down":  { "uv": [ 6, 6, 10, 10 ], "texture": "#pipeTex" },
+        "up":    { "uv": [ 6, 6, 10, 10 ], "texture": "#pipeTex" },
+        "north": { "uv": [ 6, 6, 10, 10 ], "texture": "#pipeTex" },
+        "south": { "uv": [ 6, 6, 10, 10 ], "texture": "#pipeTex" },
+        "west":  { "uv": [ 6, 6, 10, 10 ], "texture": "#pipeTex" },
+        "east":  { "uv": [ 6, 6, 10, 10 ], "texture": "#pipeTex" }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [ 30, 225, 0 ],
+      "translation": [ 0, 0, 0 ],
+      "scale": [ 1.125, 1.125, 1.125 ]
+    },
+    "ground": {
+      "rotation": [ 0, 0, 0 ],
+      "translation": [ 0, 3, 0 ],
+      "scale": [ 0.45, 0.45, 0.45 ]
+    },
+    "fixed": {
+      "rotation": [ 0, 0, 0 ],
+      "translation": [ 0, 0, 0 ],
+      "scale": [ 0.9, 0.9, 0.9 ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [ 75, 45, 0 ],
+      "translation": [ 0, 2.5, 0 ],
+      "scale": [ 0.675, 0.675, 0.675 ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [ 75, 45, 0 ],
+      "translation": [ 0, 2.5, 0 ],
+      "scale": [ 0.675, 0.675, 0.675 ]
+    },
+    "firstperson_righthand": {
+      "rotation": [ 0, 45, 0 ],
+      "translation": [ 0, 0, 0 ],
+      "scale": [ 0.72, 0.72, 0.72 ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [ 0, 225, 0 ],
+      "translation": [ 0, 0, 0 ],
+      "scale": [ 0.72, 0.72, 0.72 ]
+    }
+  }
+}

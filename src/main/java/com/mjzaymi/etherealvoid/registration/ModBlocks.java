@@ -18,6 +18,7 @@ public class ModBlocks {
     public static final RegistryObject<Block> ELECTRODE_PLATE = BLOCKS.register("electrode_plate", ElectrodePlate::new);
     public static final RegistryObject<Block> STEEL_CASING = BLOCKS.register("steel_casing", SteelCasing::new);
     public static final RegistryObject<Block> RESISTIVE_HEATER = BLOCKS.register("resistive_heater", ResistiveHeater::new);
+    public static final RegistryObject<Block> FLUID_PIPE = BLOCKS.register("fluid_pipe", FluidPipe::new);
 
 
     public static final RegistryObject<Block> MAGNETIC_SIEVE = BLOCKS.register("magnetic_sieve", MagneticSieve::new);

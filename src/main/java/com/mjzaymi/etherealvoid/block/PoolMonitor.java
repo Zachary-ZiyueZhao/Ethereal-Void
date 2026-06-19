@@ -25,7 +25,7 @@ import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 public class PoolMonitor extends BaseEntityBlock {
-    public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 12, 16);
+    public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
 
     public PoolMonitor() {
         super(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion());

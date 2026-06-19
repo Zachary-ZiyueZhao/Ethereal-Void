@@ -19,10 +19,10 @@ public class ModItems {
     public static final RegistryObject<BlockItem> ELECTRODE_PLATE_ITEM = registerBlockItem("electrode_plate", ModBlocks.ELECTRODE_PLATE);
     public static final RegistryObject<BlockItem> STEEL_CASING_ITEM = registerBlockItem("steel_casing", ModBlocks.STEEL_CASING);
     public static final RegistryObject<BlockItem> RESISTIVE_HEATER_ITEM = registerBlockItem("resistive_heater", ModBlocks.RESISTIVE_HEATER);
+    public static final RegistryObject<BlockItem> PIPE_ITEM = registerBlockItem("fluid_pipe", ModBlocks.FLUID_PIPE);
 
 
     public static final RegistryObject<BlockItem> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
-
     public static final RegistryObject<BlockItem> GEM_POLISHING_STATION_ITEM = registerBlockItem("gem_polishing_station", ModBlocks.GEM_POLISHING_STATION);
     public static final RegistryObject<BlockItem> POOL_MONITOR_ITEM = registerBlockItem("pool_monitor", ModBlocks.POOL_MONITOR);
     //Items
