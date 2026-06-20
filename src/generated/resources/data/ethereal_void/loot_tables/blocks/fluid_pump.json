@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "ethereal_void:fluid_pipe"
+          "name": "ethereal_void:fluid_pump"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "ethereal_void:blocks/fluid_pipe"
+  "random_sequence": "ethereal_void:blocks/fluid_pump"
 }

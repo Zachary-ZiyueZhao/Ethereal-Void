@@ -81,6 +81,12 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         updateContentsAll();
     }
 
+    @Override
+    public void updateChangeState(Level level, boolean update) {
+        super.updateChangeState(level, update);
+        updateContentsAll();
+    }
+
     public void setStructure(CuboidStructure structure) {
         if (structure==null) {
             tank.setCapacity(0);
@@ -234,18 +240,6 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             }
         }
         if (changed) updateChangeState(true);
-    }
-
-    public void updateChangeState(boolean update) {
-        updateChangeState(level, update);
-    }
-
-    public void updateChangeState(Level level, boolean update) {
-        setChanged();
-        updateContentsAll();
-        if (level==null) return;
-        level.updateNeighborsAt(getBlockPos(), getBlockState().getBlock());
-        if (update) level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
     }
 
     public void updateContentsAll() {

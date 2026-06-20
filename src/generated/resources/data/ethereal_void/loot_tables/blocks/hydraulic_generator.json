@@ -11,7 +11,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "minecraft:air"
+          "name": "ethereal_void:hydraulic_generator"
         }
       ],
       "rolls": 1.0

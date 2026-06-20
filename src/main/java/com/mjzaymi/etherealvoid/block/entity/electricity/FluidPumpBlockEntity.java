@@ -1,18 +1,16 @@
 package com.mjzaymi.etherealvoid.block.entity.electricity;
 
-import com.mjzaymi.etherealvoid.block.electricity.HydraulicGenerator;
+import com.mjzaymi.etherealvoid.block.electricity.FluidPump;
 import com.mjzaymi.etherealvoid.common.block.entity.UpdateBaseBlockEntity;
 import com.mjzaymi.etherealvoid.common.electricity.CurrentType;
 import com.mjzaymi.etherealvoid.common.electricity.ElectricalSpec;
 import com.mjzaymi.etherealvoid.common.electricity.IElectricalTerminal;
 import com.mjzaymi.etherealvoid.common.electricity.WireRole;
-import com.mjzaymi.etherealvoid.common.util.fluid.FluidUtils;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.material.FluidState;
@@ -20,7 +18,7 @@ import net.minecraft.world.level.material.FluidState;
 import java.util.Collections;
 import java.util.List;
 
-public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
+public class FluidPumpBlockEntity extends UpdateBaseBlockEntity {
 
     // 1. 定义发电机的输出规格：标准单相交流电 220V
     public static final ElectricalSpec SPEC_LIVE = new ElectricalSpec(CurrentType.AC, WireRole.LIVE, 220.0);
@@ -56,8 +54,8 @@ public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
         @Override public double getCurrent() { return 0; }
     };
 
-    public HydraulicGeneratorBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.HYDRAULIC_GENERATOR_BE.get(), pos, state);
+    public FluidPumpBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.FLUID_PUMP_BE.get(), pos, state);
     }
 
     // 🌟 3. 核心修改：将单引脚变更为“引脚集合（端口）”
@@ -76,37 +74,19 @@ public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
     public void tick(Level level, BlockPos pos, BlockState state) {
         if (level.isClientSide) return;
 
-        if (level.getGameTime() % 20 != 2) return;
+        if (level.getGameTime() % 20 != 1) return;
 
         boolean wasSpinning = isSpinning;
 
         BlockPos posAbove = pos.above();
         FluidState fluidAbove = level.getFluidState(posAbove);
 
-        boolean hasWaterPower = fluidAbove.is(Fluids.WATER) && !fluidAbove.isSource();
-        if (!hasWaterPower) {
-            if (!wasSpinning)
-                return;
-            isSpinning = false;
-            level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, false), 3);
-            updateChangeState(true);
-            return;
-        }
+        boolean hasWaterPower = fluidAbove.is(Fluids.WATER);
 
-        BlockPos sourcePos = FluidUtils.findWaterSource(level, posAbove);
-        if (sourcePos==null) {
-            if (!wasSpinning)
-                return;
-            isSpinning = false;
-            level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, false), 3);
-            updateChangeState(true);
-            return;
-        }
         if (hasWaterPower != wasSpinning) {
             isSpinning = hasWaterPower;
-            setChanged();
-            level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, isSpinning), 3);
-            level.sendBlockUpdated(pos, getBlockState(), getBlockState(), 3);
+            level.setBlock(pos, state.setValue(FluidPump.ACTIVE, isSpinning), 3);
+            updateChangeState(true);
         }
     }
 }

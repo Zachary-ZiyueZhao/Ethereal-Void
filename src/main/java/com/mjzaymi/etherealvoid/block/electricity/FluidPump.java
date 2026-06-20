@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.block.electricity;
 
-import com.mjzaymi.etherealvoid.block.entity.electricity.HydraulicGeneratorBlockEntity;
+import com.mjzaymi.etherealvoid.block.entity.electricity.FluidPumpBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
@@ -20,7 +20,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
-public class HydraulicGenerator extends BaseEntityBlock {
+public class FluidPump extends BaseEntityBlock {
     public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
     // 定义一个名为 "active" 的布尔属性
     public static final BooleanProperty ACTIVE = BooleanProperty.create("active");
@@ -32,7 +32,7 @@ public class HydraulicGenerator extends BaseEntityBlock {
         super.createBlockStateDefinition(builder);
     }
 
-    public HydraulicGenerator() {
+    public FluidPump() {
         super(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion());
         this.registerDefaultState(this.stateDefinition.any().setValue(ACTIVE, false));
     }
@@ -50,7 +50,7 @@ public class HydraulicGenerator extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
-        return new HydraulicGeneratorBlockEntity(pPos, pState);
+        return new FluidPumpBlockEntity(pPos, pState);
     }
 
     @Nullable
@@ -60,7 +60,7 @@ public class HydraulicGenerator extends BaseEntityBlock {
             return null;
         }
 
-        return createTickerHelper(pBlockEntityType, ModBlockEntities.HYDRAULIC_GENERATOR_BE.get(),
+        return createTickerHelper(pBlockEntityType, ModBlockEntities.FLUID_PUMP_BE.get(),
                 (pLevel1, pPos, pState1, pBlockEntity) -> pBlockEntity.tick(pLevel1, pPos, pState1));
     }
 }

@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=true": {
+      "model": "ethereal_void:block/fluid_pump_active"
+    },
+    "active=false": {
+      "model": "ethereal_void:block/fluid_pump"
+    }
+  }
+}

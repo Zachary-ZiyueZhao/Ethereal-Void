@@ -22,6 +22,7 @@ public class ModItems {
     public static final RegistryObject<BlockItem> RESISTIVE_HEATER_ITEM = registerBlockItem("resistive_heater", ModBlocks.RESISTIVE_HEATER);
     public static final RegistryObject<BlockItem> FLUID_PIPE_ITEM = registerBlockItem("fluid_pipe", ModBlocks.FLUID_PIPE);
     public static final RegistryObject<BlockItem> HYDRAULIC_GENERATOR_ITEM = registerBlockItem("hydraulic_generator", ModBlocks.HYDRAULIC_GENERATOR);
+    public static final RegistryObject<BlockItem> FLUID_PUMP_ITEM = registerBlockItem("fluid_pump", ModBlocks.FLUID_PUMP);
 
 
     public static final RegistryObject<BlockItem> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
