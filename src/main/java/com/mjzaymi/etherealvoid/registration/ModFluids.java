@@ -17,12 +17,18 @@ public class ModFluids {
             () -> new ForgeFlowingFluid.Source(ModFluids.SOAP_WATER_FLUID_PROPERTIES));
     public static final RegistryObject<FlowingFluid> FLOWING_SOAP_WATER = FLUIDS.register("flowing_soap_water",
             () -> new ForgeFlowingFluid.Flowing(ModFluids.SOAP_WATER_FLUID_PROPERTIES));
-
-
     public static final ForgeFlowingFluid.Properties SOAP_WATER_FLUID_PROPERTIES = new ForgeFlowingFluid.Properties(
             ModFluidTypes.SOAP_WATER_FLUID_TYPE, SOURCE_SOAP_WATER, FLOWING_SOAP_WATER)
             .slopeFindDistance(2).levelDecreasePerBlock(2);//.block(ModBlocks.SOAP_WATER_BLOCK);
             //.bucket(ModItems.SOAP_WATER_BUCKET);
+
+    public static final RegistryObject<FlowingFluid> SOURCE_MOLTEN_ALUMINIUM = FLUIDS.register("molten_aluminium",
+            () -> new ForgeFlowingFluid.Source(ModFluids.MOLTEN_ALUMINIUM_PROPERTIES));
+    public static final RegistryObject<FlowingFluid> FLOWING_MOLTEN_ALUMINIUM = FLUIDS.register("flowing_molten_aluminium",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.MOLTEN_ALUMINIUM_PROPERTIES));
+    public static final ForgeFlowingFluid.Properties MOLTEN_ALUMINIUM_PROPERTIES = new ForgeFlowingFluid.Properties(
+            ModFluidTypes.MOLTEN_ALUMINIUM_TYPE, SOURCE_MOLTEN_ALUMINIUM, FLOWING_MOLTEN_ALUMINIUM)
+            .slopeFindDistance(1).levelDecreasePerBlock(2);
 
 
     public static void register(IEventBus eventBus) {
