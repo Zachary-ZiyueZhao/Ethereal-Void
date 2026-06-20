@@ -133,13 +133,13 @@ public class ModReactionRecipes {
     public static ReactionRecipe BRINE_ELECTROLYSIS = register(new ReactionRecipe(
             "brine_electrolysis",
             SyncType.RECIPE_SYNC,
-            100,
+            20,
             new ResultOrCost(List.of(
-                    new FluidStack(Fluids.WATER, 1000))),
+                    new FluidStack(Fluids.WATER, 200))),
             new ResultOrCost(List.of(
-                    new FluidStack(ModFluids.SOURCE_HYDROGEN.get(), 100),
-                    new FluidStack(ModFluids.SOURCE_CHLORINE.get(), 200),
-                    new FluidStack(ModFluids.SOURCE_SODIUM_HYDROXIDE_SOLUTION.get(), 500))),
+                    new FluidStack(ModFluids.SOURCE_HYDROGEN.get(), 20),
+                    new FluidStack(ModFluids.SOURCE_CHLORINE.get(), 50),
+                    new FluidStack(ModFluids.SOURCE_SODIUM_HYDROXIDE_SOLUTION.get(), 100))),
             Condition.ALWAYS_TRUE.and(
                     new TemperatureCondition(new Range(273.15, 373.15)))
     )); // 这是电解配方！
