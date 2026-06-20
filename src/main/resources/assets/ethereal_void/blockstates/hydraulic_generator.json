@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "active=true": {
+      "model": "ethereal_void:block/hydraulic_generator_active"
+    },
+    "active=false": {
+      "model": "ethereal_void:block/hydraulic_generator"
+    }
+  }
+}

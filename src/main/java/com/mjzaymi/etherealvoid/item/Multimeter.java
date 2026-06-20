@@ -2,8 +2,8 @@ package com.mjzaymi.etherealvoid.item;
 
 import com.mjzaymi.etherealvoid.block.entity.electricity.HydraulicGeneratorBlockEntity;
 import com.mjzaymi.etherealvoid.common.electricity.CurrentType;
-import com.mjzaymi.etherealvoid.common.electricity.ElectricalSpec;
 import com.mjzaymi.etherealvoid.common.electricity.IElectricalTerminal;
+import com.mjzaymi.etherealvoid.common.electricity.WireRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -14,11 +14,12 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.List;
+
 public class Multimeter extends Item {
 
     public Multimeter() {
-        super(new Item.Properties()
-                .stacksTo(1));
+        super(new Item.Properties().stacksTo(1));
     }
 
     @Override
@@ -28,52 +29,63 @@ public class Multimeter extends Item {
         BlockPos pos = context.getClickedPos();
         Direction clickedFace = context.getClickedFace();
 
-        // 仅在服务端进行逻辑运算，避免客户端和服务端数据不同步
         if (level.isClientSide || player == null) {
             return InteractionResult.SUCCESS;
         }
 
         BlockEntity be = level.getBlockEntity(pos);
         if (be != null) {
-            // 这里假设你用的是自定义接口直接强转（如果你用的是 Forge Capability，请替换为 getCapability 逻辑）
-            IElectricalTerminal terminal = null;
+            List<IElectricalTerminal> terminals = null;
 
-            // 比如我们之前写的水力发电机，通过 getTerminal(点击的面) 来获取接口
             if (be instanceof HydraulicGeneratorBlockEntity generator) {
-                terminal = generator.getTerminal(clickedFace);
+                terminals = generator.getTerminals(clickedFace);
             }
-            // 这里可以继续写 else if 判断电线、变压器等其他设备...
+            // 后续添加变压器、电线等...
+            // else if (be instanceof WireBlockEntity wire) { ... }
 
-            if (terminal != null) {
-                // 1. 获取规格信息
-                ElectricalSpec spec = terminal.getSpec();
-                String typeStr = spec.getCurrentType() == CurrentType.AC ? "交流(AC)" : "直流(DC)";
-                String roleStr = spec.getRole().name(); // 比如 LIVE, NEUTRAL
+            if (terminals != null && !terminals.isEmpty()) {
+                // 用于存储解析后的聚合数据
+                double vLiveOrPositive = 0.0;
+                double vNeutralOrNegative = 0.0;
+                double current = 0.0;
+                CurrentType type = CurrentType.AC; // 默认给个类型
 
-                // 2. 获取实时物理数据
-                double voltage = terminal.getPotential();
-                double resistance = terminal.getResistance();
-                double current = terminal.getCurrent();
+                // 遍历所有引脚，提取高低电势和电流
+                for (IElectricalTerminal terminal : terminals) {
+                    WireRole role = terminal.getSpec().getRole();
+                    type = terminal.getSpec().getCurrentType();
 
-                // 3. 计算功率 (P = U * I)
-                double power = voltage * current;
+                    // 如果是火线或正极，记录其电势，并以这根线上的电流作为整体工作电流
+                    if (role == WireRole.LIVE || role == WireRole.POSITIVE) {
+                        vLiveOrPositive = terminal.getPotential();
+                        current = terminal.getCurrent();
+                    }
+                    // 如果是零线或负极，记录其电势作为参考基准
+                    else if (role == WireRole.NEUTRAL || role == WireRole.NEGATIVE) {
+                        vNeutralOrNegative = terminal.getPotential();
+                    }
+                }
 
-                // 4. 拼装成友好的文本信息
-                // 格式：[交流 LIVE] 220.0V | 5.0A | 1100.0W | 0.5Ω
+                // 核心逻辑：计算电势差 (电压) = |高电势 - 低电势|
+                double voltageDiff = Math.abs(vLiveOrPositive - vNeutralOrNegative);
+                // 功率 = 电势差 * 实际电流
+                double power = voltageDiff * current;
+
+                String typeStr = (type == CurrentType.AC) ? "AC" : "DC";
+
+                // 拼装出极简、友好的单行数据反馈
+                // 效果：[AC 设备] 电压: 220.0V | 电流: 5.00A | 功率: 1100.0W
                 Component message = Component.literal(
-                        String.format("[%s %s] %.1fV | %.2fA | %.1fW | %.2fΩ",
-                                typeStr, roleStr, voltage, current, power, resistance)
+                        String.format("§b[%s 设备] §f电压: §e%.1fV §7| §f电流: §a%.2fA §7| §f功率: §c%.1fW",
+                                typeStr, voltageDiff, current, power)
                 );
 
-                // 5. 发送到 Action Bar（屏幕正下方，快捷栏上方），第二个参数 true 代表是 Action Bar
                 player.displayClientMessage(message, true);
-
                 return InteractionResult.SUCCESS;
             }
         }
 
-        // 如果点的方块没有电气接口，提示玩家
-        player.displayClientMessage(Component.literal("§c该面上没有可检测的电气端子"), true);
+        player.displayClientMessage(Component.literal("§c目标没有可检测的电气网络"), true);
         return InteractionResult.PASS;
     }
 }
