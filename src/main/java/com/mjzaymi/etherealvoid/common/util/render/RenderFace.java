@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util.render;
+package com.mjzaymi.etherealvoid.common.util.render;
 
 public class RenderFace {
     public static final RenderFace ALL = new RenderFace(true, true, true, true, true, true);

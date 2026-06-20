@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util.fluid;
+package com.mjzaymi.etherealvoid.common.util.fluid;
 
 import net.minecraftforge.fluids.FluidStack;
 

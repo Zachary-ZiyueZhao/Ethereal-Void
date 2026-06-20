@@ -11,11 +11,11 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "ethereal_void:hydraulic_generator"
+          "name": "minecraft:air"
         }
       ],
       "rolls": 1.0
     }
   ],
-  "random_sequence": "ethereal_void:blocks/fluid_pipe"
+  "random_sequence": "ethereal_void:blocks/hydraulic_generator"
 }

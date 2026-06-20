@@ -3,7 +3,7 @@ package com.mjzaymi.etherealvoid.datagen;
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import com.mjzaymi.etherealvoid.registration.ModItems;
-import com.mjzaymi.etherealvoid.util.ReflectUtil;
+import com.mjzaymi.etherealvoid.common.util.ReflectUtil;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;

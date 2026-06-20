@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util.math;
+package com.mjzaymi.etherealvoid.common.util.math;
 
 public class Range {
     public final Number min;

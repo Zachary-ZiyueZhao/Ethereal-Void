@@ -2,8 +2,8 @@ package com.mjzaymi.etherealvoid.screen;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.util.GameUtil;
-import com.mjzaymi.etherealvoid.util.fluid.FluidSorter;
+import com.mjzaymi.etherealvoid.common.util.GameUtil;
+import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

@@ -60,6 +60,8 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 new ModelFile.UncheckedModelFile(modLoc("block/gem_polishing_station")));
         simpleBlockWithItem(ModBlocks.POOL_MONITOR.get(),
                 new ModelFile.UncheckedModelFile(modLoc("block/pool_monitor")));
+        simpleBlockWithItem(ModBlocks.HYDRAULIC_GENERATOR.get(),
+                new ModelFile.UncheckedModelFile(modLoc("block/hydraulic_generator")));
     }
 
 

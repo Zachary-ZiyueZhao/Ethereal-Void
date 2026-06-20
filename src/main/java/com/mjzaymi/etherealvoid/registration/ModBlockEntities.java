@@ -5,6 +5,7 @@ import com.mjzaymi.etherealvoid.block.entity.GemPolishingStationBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.FluidPipeBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.block.entity.electricity.HydraulicGeneratorBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -34,6 +35,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("fluid_pipe_be", () ->
                     BlockEntityType.Builder.of(FluidPipeBlockEntity::new,
                             ModBlocks.FLUID_PIPE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<HydraulicGeneratorBlockEntity>> HYDRAULIC_GENERATOR_BE =
+            BLOCK_ENTITIES.register("hydraulic_generator_be", () ->
+                    BlockEntityType.Builder.of(HydraulicGeneratorBlockEntity::new,
+                            ModBlocks.HYDRAULIC_GENERATOR.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

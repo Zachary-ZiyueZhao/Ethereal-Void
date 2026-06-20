@@ -1,8 +1,9 @@
-// 1.20.1	2026-06-20T00:08:54.0110539	Loot Tables
+// 1.20.1	2026-06-20T10:21:15.3412623	Loot Tables
 2a2567c4d4db091664cabd0b64206a8fc265a12c data/ethereal_void/loot_tables/blocks/anti_corrosion_glass.json
 bb4077386933ecce7ee79d0380ff5851e1b3abe1 data/ethereal_void/loot_tables/blocks/electrode_plate.json
-6b84ede67917fb7c2f4d57a168c72acf65206641 data/ethereal_void/loot_tables/blocks/fluid_pipe.json
+d6eaab5db7f2ad2f89e7c4ef6a67393bec6c354e data/ethereal_void/loot_tables/blocks/fluid_pipe.json
 4690de804899ca3a963e4a55f317fb96e2193191 data/ethereal_void/loot_tables/blocks/gem_polishing_station.json
+f9dcb8cd8da7d6e88be9b47354151019512ec7bb data/ethereal_void/loot_tables/blocks/hydraulic_generator.json
 23cb07f65814f2f62ec44ffe79d68a5711018487 data/ethereal_void/loot_tables/blocks/magnetic_sieve.json
 0db4c93e49205d6d8e3acff4bf1e4c2116434ccf data/ethereal_void/loot_tables/blocks/pool_monitor.json
 4cf7f655fe0c787268594b6736181de785f5c19e data/ethereal_void/loot_tables/blocks/resistive_heater.json

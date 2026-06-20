@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.reactionpool.recipe.condition;
 
-import com.mjzaymi.etherealvoid.util.math.Range;
+import com.mjzaymi.etherealvoid.common.util.math.Range;
 
 public class PressureCondition extends Condition {
     public PressureCondition(Range range) {

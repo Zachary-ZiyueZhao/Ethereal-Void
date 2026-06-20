@@ -3,7 +3,6 @@ package com.mjzaymi.etherealvoid.block.entity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.screen.PoolMonitorMenu;
-import com.mjzaymi.etherealvoid.util.GameUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

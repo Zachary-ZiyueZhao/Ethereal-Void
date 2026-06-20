@@ -1,35 +1,30 @@
 package com.mjzaymi.etherealvoid.block.entity;
 
+import com.mjzaymi.etherealvoid.common.block.entity.UpdateBaseBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
 import com.mjzaymi.etherealvoid.reactionpool.recipe.SyncType;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
-import com.mjzaymi.etherealvoid.util.GameUtil;
-import com.mjzaymi.etherealvoid.util.fluid.MultiFluidTank;
+import com.mjzaymi.etherealvoid.common.util.GameUtil;
+import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
-import javax.annotation.Nullable;
 import java.util.*;
 
-public class ReactionPoolBlockEntity extends BlockEntity {
+public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
 
     private CuboidStructure structure;
 
@@ -84,28 +79,6 @@ public class ReactionPoolBlockEntity extends BlockEntity {
         temperature = pTag.getFloat("temperature");
         pressure = pTag.getFloat("pressure");
         updateContentsAll();
-    }
-
-    @Override
-    public void handleUpdateTag(CompoundTag tag) {
-        if (tag!=null) load(tag);
-    }
-
-    @Override
-    public CompoundTag getUpdateTag() {
-        return saveWithFullMetadata();
-    }
-
-    @Nullable
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
-        var tag = pkt.getTag();
-        if (tag != null) this.load(tag);
     }
 
     public void setStructure(CuboidStructure structure) {

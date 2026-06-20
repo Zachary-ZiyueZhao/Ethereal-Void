@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util.render;
+package com.mjzaymi.etherealvoid.common.util.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util;
+package com.mjzaymi.etherealvoid.common.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

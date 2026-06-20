@@ -2,6 +2,7 @@ package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.block.*;
+import com.mjzaymi.etherealvoid.block.electricity.HydraulicGenerator;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -19,6 +20,7 @@ public class ModBlocks {
     public static final RegistryObject<Block> STEEL_CASING = BLOCKS.register("steel_casing", SteelCasing::new);
     public static final RegistryObject<Block> RESISTIVE_HEATER = BLOCKS.register("resistive_heater", ResistiveHeater::new);
     public static final RegistryObject<Block> FLUID_PIPE = BLOCKS.register("fluid_pipe", FluidPipe::new);
+    public static final RegistryObject<Block> HYDRAULIC_GENERATOR = BLOCKS.register("hydraulic_generator", HydraulicGenerator::new);
 
 
     public static final RegistryObject<Block> MAGNETIC_SIEVE = BLOCKS.register("magnetic_sieve", MagneticSieve::new);

@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util;
+package com.mjzaymi.etherealvoid.common.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

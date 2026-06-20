@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util;
+package com.mjzaymi.etherealvoid.common.util;
 
 import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
 import net.minecraft.core.BlockPos;
@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.mjzaymi.etherealvoid.util.ItemEntityModifier.DELTA_MOVEMENT_MODIFIER;
+import static com.mjzaymi.etherealvoid.common.util.ItemEntityModifier.DELTA_MOVEMENT_MODIFIER;
 
 public class GameUtil {
     public static ReactionRecipe findById(List<ReactionRecipe> list, String id) {

@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.util;
+package com.mjzaymi.etherealvoid.common.util;
 
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;

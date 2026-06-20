@@ -2,10 +2,10 @@ package com.mjzaymi.etherealvoid.client.renderer;
 
 import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
-import com.mjzaymi.etherealvoid.util.GameUtil;
-import com.mjzaymi.etherealvoid.util.fluid.FluidSorter;
-import com.mjzaymi.etherealvoid.util.render.RenderFace;
-import com.mjzaymi.etherealvoid.util.render.RenderUtil;
+import com.mjzaymi.etherealvoid.common.util.GameUtil;
+import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
+import com.mjzaymi.etherealvoid.common.util.render.RenderFace;
+import com.mjzaymi.etherealvoid.common.util.render.RenderUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;

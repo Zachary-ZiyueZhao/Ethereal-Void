@@ -1,7 +1,8 @@
 package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.item.BaseItem;
+import com.mjzaymi.etherealvoid.common.item.BaseItem;
+import com.mjzaymi.etherealvoid.item.Multimeter;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -19,7 +20,8 @@ public class ModItems {
     public static final RegistryObject<BlockItem> ELECTRODE_PLATE_ITEM = registerBlockItem("electrode_plate", ModBlocks.ELECTRODE_PLATE);
     public static final RegistryObject<BlockItem> STEEL_CASING_ITEM = registerBlockItem("steel_casing", ModBlocks.STEEL_CASING);
     public static final RegistryObject<BlockItem> RESISTIVE_HEATER_ITEM = registerBlockItem("resistive_heater", ModBlocks.RESISTIVE_HEATER);
-    public static final RegistryObject<BlockItem> PIPE_ITEM = registerBlockItem("fluid_pipe", ModBlocks.FLUID_PIPE);
+    public static final RegistryObject<BlockItem> FLUID_PIPE_ITEM = registerBlockItem("fluid_pipe", ModBlocks.FLUID_PIPE);
+    public static final RegistryObject<BlockItem> HYDRAULIC_GENERATOR_ITEM = registerBlockItem("hydraulic_generator", ModBlocks.HYDRAULIC_GENERATOR);
 
 
     public static final RegistryObject<BlockItem> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);
@@ -45,6 +47,7 @@ public class ModItems {
     // public static final RegistryObject<Item> CALCINED_DOLOMITE = ITEMS.register("calcined_dolomite", BaseItem::new);
     public static final RegistryObject<Item> RAW_MAGNESIUM = ITEMS.register("raw_magnesium", BaseItem::new);
     public static final RegistryObject<Item> MAGNESIUM_INGOT = ITEMS.register("magnesium_ingot", BaseItem::new);
+    public static final RegistryObject<Item> MULTIMETER = ITEMS.register("multimeter", Multimeter::new);
 
 
 
