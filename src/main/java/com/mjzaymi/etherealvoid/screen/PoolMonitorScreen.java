@@ -112,8 +112,22 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
                     (color & 0xFF) / 255f,
                     ((color >> 24) & 0xFF) / 255f
             );
-            int fluidHeight = Math.round(((float)fluid.getAmount() / capacity) * fluidsTotalHeight);
-            guiGraphics.blit(leftPos+8, topPos+currentY-fluidHeight+1, 0, 110, fluidHeight, sprite);
+            int fluidHeight =
+                    Math.round(((float) fluid.getAmount() / capacity)
+                            * fluidsTotalHeight);
+
+            int drawX = leftPos + 8;
+            int drawY = topPos + currentY - fluidHeight + 1;
+
+            drawTiledFluid(
+                    guiGraphics,
+                    sprite,
+                    drawX,
+                    drawY,
+                    110,
+                    fluidHeight
+            );
+
             currentY -= fluidHeight;
         }
 
@@ -122,6 +136,61 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         guiGraphics.blit(TEXTURE, leftPos+8, topPos+16, 176, 0, 80, 106);
         guiGraphics.blit(TEXTURE, leftPos+142, topPos+16, 176, 0, 11, 106);
+    }
+
+    private void drawTiledFluid(
+            GuiGraphics guiGraphics,
+            TextureAtlasSprite sprite,
+            int x,
+            int y,
+            int width,
+            int height
+    ) {
+
+        int tile = 32;
+
+        for (int yy = 0; yy < height; yy += tile) {
+            for (int xx = 0; xx < width; xx += tile) {
+
+                int w = Math.min(tile, width - xx);
+                int h = Math.min(tile, height - yy);
+
+
+                if (w == tile && h == tile) {
+
+                    guiGraphics.blit(
+                            x + xx,
+                            y + yy,
+                            0,
+                            tile,
+                            tile,
+                            sprite
+                    );
+
+                } else {
+
+                    guiGraphics.enableScissor(
+                            x + xx,
+                            y + yy,
+                            x + xx + w,
+                            y + yy + h
+                    );
+
+
+                    guiGraphics.blit(
+                            x + xx,
+                            y + yy,
+                            0,
+                            tile,
+                            tile,
+                            sprite
+                    );
+
+
+                    guiGraphics.disableScissor();
+                }
+            }
+        }
     }
 
     @Override

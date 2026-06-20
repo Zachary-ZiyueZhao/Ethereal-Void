@@ -14,6 +14,10 @@ public class RenderUtil {
         if (count > 1) return 2;
         return 1;
     }
+    private static float sliceV(float v0, float v1, float sliceHeight) {
+        sliceHeight = Math.max(0.0f, Math.min(1.0f, sliceHeight));
+        return v0 + (v1 - v0) * sliceHeight;
+    }
     public static void render(VertexConsumer builder, PoseStack poseStack, RenderFace renderFace,
                        BlockPos bePos, BlockPos min, BlockPos max,
                        float epsilon, float height, float fromBottom,
@@ -50,18 +54,21 @@ public class RenderUtil {
                 if (startY >= currentMaxY) continue;
                 float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
 
+                float sliceHeight = endY - startY;
+                float vBottom = sliceV(v0, v1, sliceHeight);
+
                 // 北面 (North, -Z)
                 if (renderFace.NORTH) {
-                    builder.vertex(posMatrix, endX, startY, totalMinZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
-                    builder.vertex(posMatrix, startX, startY, totalMinZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
+                    builder.vertex(posMatrix, endX, startY, totalMinZ).color(red, green, blue, alpha).uv(u0, vBottom).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
+                    builder.vertex(posMatrix, startX, startY, totalMinZ).color(red, green, blue, alpha).uv(u1, vBottom).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
                     builder.vertex(posMatrix, startX, endY, totalMinZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
                     builder.vertex(posMatrix, endX, endY, totalMinZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 0, 0, -1).endVertex();
                 }
 
                 // 南面 (South, +Z)
                 if (renderFace.SOUTH) {
-                    builder.vertex(posMatrix, startX, startY, totalMaxZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
-                    builder.vertex(posMatrix, endX, startY, totalMaxZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
+                    builder.vertex(posMatrix, startX, startY, totalMaxZ).color(red, green, blue, alpha).uv(u0, vBottom).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
+                    builder.vertex(posMatrix, endX, startY, totalMaxZ).color(red, green, blue, alpha).uv(u1, vBottom).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
                     builder.vertex(posMatrix, endX, endY, totalMaxZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
                     builder.vertex(posMatrix, startX, endY, totalMaxZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 0, 0, 1).endVertex();
                 }
@@ -78,18 +85,21 @@ public class RenderUtil {
                 if (startY >= currentMaxY) continue;
                 float endY = (y == maxY_i) ? currentMaxY : Math.min(currentMaxY, (float) (y + 1));
 
+                float sliceHeight = endY - startY;
+                float vBottom = sliceV(v0, v1, sliceHeight);
+
                 // 西面 (West, -X)
                 if (renderFace.WEST) {
-                    builder.vertex(posMatrix, totalMinX, startY, startZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
-                    builder.vertex(posMatrix, totalMinX, startY, endZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
+                    builder.vertex(posMatrix, totalMinX, startY, startZ).color(red, green, blue, alpha).uv(u0, vBottom).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
+                    builder.vertex(posMatrix, totalMinX, startY, endZ).color(red, green, blue, alpha).uv(u1, vBottom).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
                     builder.vertex(posMatrix, totalMinX, endY, endZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
                     builder.vertex(posMatrix, totalMinX, endY, startZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, -1, 0, 0).endVertex();
                 }
 
                 // 东面 (East, +X)
                 if (renderFace.EAST) {
-                    builder.vertex(posMatrix, totalMaxX, startY, endZ).color(red, green, blue, alpha).uv(u0, v1).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
-                    builder.vertex(posMatrix, totalMaxX, startY, startZ).color(red, green, blue, alpha).uv(u1, v1).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
+                    builder.vertex(posMatrix, totalMaxX, startY, endZ).color(red, green, blue, alpha).uv(u0, vBottom).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
+                    builder.vertex(posMatrix, totalMaxX, startY, startZ).color(red, green, blue, alpha).uv(u1, vBottom).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
                     builder.vertex(posMatrix, totalMaxX, endY, startZ).color(red, green, blue, alpha).uv(u1, v0).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
                     builder.vertex(posMatrix, totalMaxX, endY, endZ).color(red, green, blue, alpha).uv(u0, v0).uv2(light).normal(normalMatrix, 1, 0, 0).endVertex();
                 }

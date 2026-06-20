@@ -133,7 +133,7 @@ public class ModReactionRecipes {
     public static ReactionRecipe BRINE_ELECTROLYSIS = register(new ReactionRecipe(
             "brine_electrolysis",
             SyncType.RECIPE_SYNC,
-            200,
+            100,
             new ResultOrCost(List.of(
                     new FluidStack(Fluids.WATER, 1000))),
             new ResultOrCost(List.of(
@@ -141,7 +141,7 @@ public class ModReactionRecipes {
                     new FluidStack(ModFluids.SOURCE_CHLORINE.get(), 200),
                     new FluidStack(ModFluids.SOURCE_SODIUM_HYDROXIDE_SOLUTION.get(), 500))),
             Condition.ALWAYS_TRUE.and(
-                    new TemperatureCondition(new Range(320.15, 500)))
+                    new TemperatureCondition(new Range(273.15, 373.15)))
     )); // 这是电解配方！
     public static ReactionRecipe BAUXITE_CALCINATION = register(new ReactionRecipe(
             "bauxite_calcination",
