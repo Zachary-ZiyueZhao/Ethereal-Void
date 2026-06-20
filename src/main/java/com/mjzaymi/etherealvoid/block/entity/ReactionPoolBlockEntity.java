@@ -229,6 +229,7 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
                             task.result(precipitates, tank);
                             taskIterator.remove();
                             changed = true;
+                            continue;
                         }
                         if (!task.matchCondition(this)) {
                             task.returnCost(precipitates, tank);
