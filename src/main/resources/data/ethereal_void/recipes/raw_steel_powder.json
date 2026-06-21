@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "ethereal_void:crushed_iron_ore"
+    },
+    {
+      "item": "ethereal_void:crushed_iron_ore"
+    },
+    {
+      "item": "ethereal_void:crushed_iron_ore"
+    },
+    {
+      "item": "ethereal_void:crushed_iron_ore"
+    },
+    {
+      "item": "ethereal_void:coal_powder"
+    }
+  ],
+  "result": {
+    "item": "ethereal_void:raw_steel_powder",
+    "count": 4
+  }
+}

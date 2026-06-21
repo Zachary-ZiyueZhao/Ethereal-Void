@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "minecraft:raw_iron"
+  },
+  "result": "ethereal_void:crushed_iron_ore",
+  "count": 1
+}
