@@ -14,6 +14,11 @@ public class FluidSorter {
                     getDensityById(FluidUtil.getNameFromFluid(o2.getFluid()))-
                             getDensityById(FluidUtil.getNameFromFluid(o1.getFluid()))));
 
+    static {
+        DENSITY_MAP.put("water", 1f);
+        DENSITY_MAP.put("lava", 3.3f);
+    }
+
     public static float getDensityById(String id) {
         return DENSITY_MAP.getOrDefault(id, -1f);
     }
