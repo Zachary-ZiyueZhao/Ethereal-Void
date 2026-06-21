@@ -51,7 +51,7 @@ public class ModReactionRecipes {
                     new ItemStack(ModItems.ALUMINIUM_INGOT.get(), 1))),
             new ResultOrCost(
                     List.of(new FluidStack(ModFluids.SOURCE_MOLTEN_ALUMINIUM.get(), 144))),
-            Condition.ALWAYS_TRUE.and(new TemperatureCondition(new Range(933.15, 2743.15)))
+            Condition.ALWAYS_TRUE.and(new TemperatureCondition(new Range(0, 2743.15)))
     ));
     public static ReactionRecipe ALUMINIUM_SOLIDIFY = register(new ReactionRecipe(
             "aluminium_solidify",
@@ -62,7 +62,7 @@ public class ModReactionRecipes {
             new ResultOrCost(List.of(
                     new ItemStack(ModItems.ALUMINIUM_INGOT.get(), 1))),
             Condition.ALWAYS_TRUE.and(
-                    new TemperatureCondition(new Range(0, 933.15)))
+                    new TemperatureCondition(new Range(300, 933.15)))
     ));
     public static ReactionRecipe CRYOLITE_MELTING = register(new ReactionRecipe(
             "cryolite_melting",

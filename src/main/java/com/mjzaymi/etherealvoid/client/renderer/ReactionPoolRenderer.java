@@ -6,6 +6,7 @@ import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import com.mjzaymi.etherealvoid.common.util.render.RenderFace;
 import com.mjzaymi.etherealvoid.common.util.render.RenderUtil;
+import com.mjzaymi.etherealvoid.registration.ModFluids;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -18,14 +19,20 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.material.LavaFluid;
+import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlockEntity> {
 
@@ -49,7 +56,6 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
         BlockPos max = s.interiorMax();
 
         light = LevelRenderer.getLightColor(be.getLevel(), min);
-
 
         //Render Items
         var list = be.getPrecipitatesAll();
@@ -114,6 +120,11 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
             float u1 = sprite.getU1();
             float v0 = sprite.getV0();
             float v1 = sprite.getV1();
+            if (Objects.equals(ext.getStillTexture(), ResourceLocation.parse("ethereal_void:block/molten_materials/molten_materials_still")) || fluidStack.getFluid() == Fluids.LAVA) {
+                light = 0xF000F0;
+            } else {
+                light = LevelRenderer.getLightColor(be.getLevel(), min);
+            }
             RenderUtil.render(builder, poseStack, RenderFace.ALL,
                     bePos, min, max,
                     0.005f, height, currentHeight,
