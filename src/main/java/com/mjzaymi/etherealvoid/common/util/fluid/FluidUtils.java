@@ -30,7 +30,7 @@ public class FluidUtils {
             // 2. 垂直回溯：优先检查上方。只要上方有水，不管是不是水源，上游肯定在上面
             BlockPos posAbove = currentPos.above();
             FluidState fluidAbove = level.getFluidState(posAbove);
-            if (fluidAbove.is(Fluids.WATER)) {
+            if (fluidAbove.is(Fluids.WATER) || fluidAbove.is(Fluids.FLOWING_WATER)) {
                 currentPos = posAbove;
                 continue; // 重新开始下一轮循环
             }
@@ -44,7 +44,7 @@ public class FluidUtils {
                 BlockPos neighborPos = currentPos.relative(dir);
                 FluidState neighborFluid = level.getFluidState(neighborPos);
 
-                if (neighborFluid.is(Fluids.WATER)) {
+                if (neighborFluid.is(Fluids.WATER) || neighborFluid.is(Fluids.FLOWING_WATER)) {
                     int neighborAmount = neighborFluid.getAmount();
                     // 寻找周围水量最大的方块（水量越大越靠近水源）
                     if (neighborAmount > maxAmountFound) {

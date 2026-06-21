@@ -45,6 +45,16 @@ public class FluidPumpBlockEntity extends UpdateBaseBlockEntity {
         @Override public double getPotential() { return isSpinning ? 220.0 : 0.0; }
         @Override public double getResistance() { return 0.5; }
         @Override public double getCurrent() { return 0; } // 留给电网管理器覆写/注入
+
+        @Override
+        public void setNodePotential(double potential) {
+
+        }
+
+        @Override
+        public void setCurrentFlow(double current) {
+
+        }
     };
 
     private final IElectricalTerminal neutralTerminal = new IElectricalTerminal() {
@@ -52,6 +62,16 @@ public class FluidPumpBlockEntity extends UpdateBaseBlockEntity {
         @Override public double getPotential() { return 0.0; }
         @Override public double getResistance() { return 0.5; }
         @Override public double getCurrent() { return 0; }
+
+        @Override
+        public void setNodePotential(double potential) {
+
+        }
+
+        @Override
+        public void setCurrentFlow(double current) {
+
+        }
     };
 
     public FluidPumpBlockEntity(BlockPos pos, BlockState state) {

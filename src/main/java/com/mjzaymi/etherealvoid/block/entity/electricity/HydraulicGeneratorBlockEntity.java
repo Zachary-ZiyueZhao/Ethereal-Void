@@ -27,26 +27,36 @@ public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
     public static final ElectricalSpec SPEC_NEUTRAL = new ElectricalSpec(CurrentType.AC, WireRole.NEUTRAL, 220.0);
 
     public static final double MAX_POWER_OUTPUT = 2000.0;
-    private boolean isSpinning = false;
+    private int waterHeight = 0;
 
     @Override
     protected void saveAdditional(CompoundTag pTag) {
-        pTag.putBoolean("isSpinning", isSpinning);
+        pTag.putInt("waterHeight", waterHeight);
         super.saveAdditional(pTag);
     }
 
     @Override
     public void load(CompoundTag pTag) {
         super.load(pTag);
-        isSpinning = pTag.getBoolean("isSpinning");
+        waterHeight = pTag.getInt("waterHeight");
     }
 
     // 2. 实例化物理引脚
     private final IElectricalTerminal liveTerminal = new IElectricalTerminal() {
         @Override public ElectricalSpec getSpec() { return SPEC_LIVE; }
-        @Override public double getPotential() { return isSpinning ? 220.0 : 0.0; }
+        @Override public double getPotential() { return waterHeight; }
         @Override public double getResistance() { return 0.5; }
         @Override public double getCurrent() { return 0; } // 留给电网管理器覆写/注入
+
+        @Override
+        public void setNodePotential(double potential) {
+
+        }
+
+        @Override
+        public void setCurrentFlow(double current) {
+
+        }
     };
 
     private final IElectricalTerminal neutralTerminal = new IElectricalTerminal() {
@@ -54,6 +64,16 @@ public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
         @Override public double getPotential() { return 0.0; }
         @Override public double getResistance() { return 0.5; }
         @Override public double getCurrent() { return 0; }
+
+        @Override
+        public void setNodePotential(double potential) {
+
+        }
+
+        @Override
+        public void setCurrentFlow(double current) {
+
+        }
     };
 
     public HydraulicGeneratorBlockEntity(BlockPos pos, BlockState state) {
@@ -78,16 +98,17 @@ public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
 
         if (level.getGameTime() % 20 != 2) return;
 
-        boolean wasSpinning = isSpinning;
+        boolean wasSpinning = waterHeight!=0;
 
         BlockPos posAbove = pos.above();
         FluidState fluidAbove = level.getFluidState(posAbove);
 
-        boolean hasWaterPower = fluidAbove.is(Fluids.WATER) && !fluidAbove.isSource();
+        boolean hasWaterPower = fluidAbove.is(Fluids.FLOWING_WATER) && !fluidAbove.isSource();
+        System.out.println(hasWaterPower);
         if (!hasWaterPower) {
             if (!wasSpinning)
                 return;
-            isSpinning = false;
+            waterHeight = 0;
             level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, false), 3);
             updateChangeState(true);
             return;
@@ -97,16 +118,15 @@ public class HydraulicGeneratorBlockEntity extends UpdateBaseBlockEntity {
         if (sourcePos==null) {
             if (!wasSpinning)
                 return;
-            isSpinning = false;
+            waterHeight = 0;
             level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, false), 3);
             updateChangeState(true);
             return;
         }
-        if (hasWaterPower != wasSpinning) {
-            isSpinning = hasWaterPower;
-            setChanged();
-            level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, isSpinning), 3);
-            level.sendBlockUpdated(pos, getBlockState(), getBlockState(), 3);
-        }
+        int height = sourcePos.getY()-posAbove.getY();
+        if (waterHeight==height) return;
+        waterHeight = height;
+        if (!wasSpinning) level.setBlock(pos, state.setValue(HydraulicGenerator.ACTIVE, true), 3);
+        updateChangeState(true);
     }
 }

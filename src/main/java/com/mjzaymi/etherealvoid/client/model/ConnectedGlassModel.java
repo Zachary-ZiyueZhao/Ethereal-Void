@@ -126,7 +126,7 @@ public class ConnectedGlassModel extends BakedModelWrapper<BakedModel> {
     }
 
     private static boolean connectsTo(BlockAndTintGetter level, BlockPos pos) {
-        return level.getBlockState(pos).is(ModBlocks.ANTI_CORROSION_GLASS.get());
+        return level.getBlockState(pos).is(ModBlocks.ANTI_CORROSION_GLASS.get()) || level.getBlockState(pos).is(ModBlocks.POOL_MONITOR.get());
     }
 
     private static TextureAtlasSprite tileSprite(int tile) {
