@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
+import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import com.mjzaymi.etherealvoid.fluid.BaseFluidType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -120,9 +121,16 @@ public class ModFluidTypes {
                     FluidType.Properties.create().lightLevel(3).density(17).viscosity(6).sound(
                             SoundAction.get("drink"), SoundEvents.HONEY_DRINK)));
 
-
     private static <I extends FluidType> RegistryObject<FluidType> register(final String name, final Supplier<? extends I> sup) {
-        return FLUID_TYPES.register(name, sup);
+        RegistryObject<FluidType> result =  FLUID_TYPES.register(name, sup);
+        FluidSorter.DENSITY_MAP.put(result.get().getDescriptionId(), (float) result.get().getDensity());
+        return result;
+    }
+
+    private static <I extends FluidType> RegistryObject<FluidType> register(final String name, final Supplier<? extends I> sup, float density) {
+        RegistryObject<FluidType> result =  FLUID_TYPES.register(name, sup);
+        FluidSorter.DENSITY_MAP.put(result.get().getDescriptionId(), density);
+        return result;
     }
 
     public static void register(IEventBus eventBus) {
