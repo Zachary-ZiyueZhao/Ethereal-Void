@@ -1,37 +1,72 @@
 package com.mjzaymi.etherealvoid.common.electricity;
 
+import com.mjzaymi.etherealvoid.common.block.entity.electricity.CableBlockEntity;
+import com.mjzaymi.etherealvoid.common.block.entity.electricity.ConsumerBlockEntity;
+import com.mjzaymi.etherealvoid.common.block.entity.electricity.GeneratorBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class ElectricNetwork {
     //private final Level level;
     private final Set<BlockPos> wirePositions = new HashSet<>();
-    private final List<IElectricalTerminal> connectedTerminals = new ArrayList<>();
     public CurrentType networkType; // 这个子网是 AC 还是 DC？
 
     // 拓扑构建：当玩家放置电线时，通过广度优先搜索 (BFS) 找出所有相连的电线和机器端子
-    public void rebuildTopology(BlockPos startPos) {
-        // ... BFS 逻辑 ...
+    public GridNetwork rebuildTopology(Level level, BlockPos startPos) {
+        GridNetwork newGrid = new GridNetwork();
+
+        Queue<BlockPos> queue = new LinkedList<>();
+        Set<BlockPos> visited = new HashSet<>();
+
+        queue.add(startPos);
+        visited.add(startPos);
+
+        while (!queue.isEmpty()) {
+            BlockPos currentPos = queue.poll();
+            BlockEntity be = level.getBlockEntity(currentPos);
+
+            // 检查相邻的 6 个方向
+            for (Direction dir : Direction.values()) {
+                BlockPos neighborPos = currentPos.relative(dir);
+                if (visited.contains(neighborPos)) continue;
+
+                BlockEntity neighborBe = level.getBlockEntity(neighborPos);
+                if (neighborBe == null) continue;
+
+                // 核心逻辑：接口合法性检测！
+                if (isValidConnection(be, neighborBe, dir)) {
+                    visited.add(neighborPos);
+                    queue.add(neighborPos);
+
+                    // 根据相邻方块的类型归类并加入电网
+                    if (neighborBe instanceof CableBlockEntity) {
+                        newGrid.addCable(neighborPos);
+                    } else if (neighborBe instanceof GeneratorBlockEntity) {
+                        newGrid.addGenerator(neighborPos);
+                    } else if (neighborBe instanceof ConsumerBlockEntity) {
+                        newGrid.addConsumer(neighborPos);
+                    }
+                }
+            }
+        }
+        return newGrid;
     }
 
-    // 核心物理引擎：每 tick 或每 5 ticks 调用一次
-    public void solveMatrix() {
-        if (connectedTerminals.isEmpty()) return;
-
-        // 1. 根据 connectedTerminals 的 getSourceVoltage() 和 getInternalResistance()
-        // 2. 以及导线自身的电阻
-        // 3. 构建 基尔霍夫方程组 (G * V = I)
-        // 4. 调用矩阵求解库 (例如 Apache Commons Math 的 LUDecomposition)
-
-        // 5. 将算出的真实电势和电流，回写给每一个端子
-        for (IElectricalTerminal terminal : connectedTerminals) {
-            //terminal.setNodePotential(calculatedV);
-            //terminal.setCurrentFlow(calculatedI);
+    // 检查连接是否合法（例如：拒绝单相线连三相发电机）
+    private static boolean isValidConnection(BlockEntity from, BlockEntity to, Direction dir) {
+        // 如果目标是电线，检查它的相数是否匹配当前电网
+        /*if (to instanceof CableBlockEntity cable) {
+            return cable.getPhaseType() == networkPhase;
         }
+
+        // 如果目标是机器，检查该机器在该面上是否允许这种相数接入
+        if (to instanceof IACMachine machine) {
+            return machine.canConnectPhase(dir.getOpposite(), networkPhase);
+        }*/
+        return false;
     }
 }

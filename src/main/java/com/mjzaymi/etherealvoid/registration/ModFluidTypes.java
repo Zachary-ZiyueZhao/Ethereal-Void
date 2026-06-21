@@ -25,7 +25,7 @@ public class ModFluidTypes {
     public static final DeferredRegister<FluidType> FLUID_TYPES =
             DeferredRegister.create(ForgeRegistries.Keys.FLUID_TYPES, EtherealVoid.MOD_ID);
 
-    public static final RegistryObject<FluidType> SOAP_WATER_FLUID_TYPE = register("soap_water_fluid",
+    public static final RegistryObject<FluidType> SOAP_WATER_FLUID_TYPE = register("soap_water",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1E038D0, new Vector3f(224f / 255f, 56f / 255f, 208f / 255f),
                     FluidType.Properties.create().lightLevel(2).density(15).viscosity(5).sound(
@@ -122,15 +122,12 @@ public class ModFluidTypes {
                             SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
 
     private static <I extends FluidType> RegistryObject<FluidType> register(final String name, final Supplier<? extends I> sup) {
-        RegistryObject<FluidType> result =  FLUID_TYPES.register(name, sup);
-        FluidSorter.DENSITY_MAP.put(result.get().getDescriptionId(), (float) result.get().getDensity());
-        return result;
+        return register(name, sup, sup.get().getDensity());
     }
 
     private static <I extends FluidType> RegistryObject<FluidType> register(final String name, final Supplier<? extends I> sup, float density) {
-        RegistryObject<FluidType> result =  FLUID_TYPES.register(name, sup);
-        FluidSorter.DENSITY_MAP.put(result.get().getDescriptionId(), density);
-        return result;
+        FluidSorter.DENSITY_MAP.put(name, density);
+        return FLUID_TYPES.register(name, sup);
     }
 
     public static void register(IEventBus eventBus) {

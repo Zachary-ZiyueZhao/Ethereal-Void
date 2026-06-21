@@ -2,11 +2,26 @@ package com.mjzaymi.etherealvoid.common.util.fluid;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.fluids.FluidType;
+import net.minecraftforge.registries.ForgeRegistries;
 
-public class FluidUtils {
+public class FluidUtil {
+    public static String getNameFromFluid(Fluid fluid) {
+        ResourceLocation registryName = ForgeRegistries.FLUIDS.getKey(fluid);
+        if (registryName == null) return "";
+        return registryName.getPath();
+    }
+
+    public static String getNameFromFluidType(FluidType fluidType) {
+        ResourceLocation registryName = ForgeRegistries.FLUID_TYPES.get().getKey(fluidType);
+        if (registryName == null) return "";
+        return registryName.getPath();
+    }
 
     /**
      * 逆流而上寻找水源方块
