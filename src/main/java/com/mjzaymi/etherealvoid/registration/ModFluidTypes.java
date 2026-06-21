@@ -29,97 +29,97 @@ public class ModFluidTypes {
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1E038D0, new Vector3f(224f / 255f, 56f / 255f, 208f / 255f),
                     FluidType.Properties.create().lightLevel(2).density(15).viscosity(5).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 1.01f);
 
     public static final RegistryObject<FluidType> MOLTEN_ALUMINIUM_TYPE = register("molten_aluminium",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFF0FFFF, new Vector3f(240f / 255f, 255f / 255f, 255f / 255f),
                     FluidType.Properties.create().lightLevel(2).density(15).viscosity(5).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 2.30f);
 
     public static final RegistryObject<FluidType> MOLTEN_CRYOLITE_TYPE = register("molten_cryolite",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFF8F8FF, new Vector3f(248f / 255f, 248f / 255f, 255f / 255f),
                     FluidType.Properties.create().lightLevel(2).density(20).viscosity(6).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 2.10f);
 
     public static final RegistryObject<FluidType> SULFURIC_ACID_TYPE = register("sulfuric_acid",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1F5F5F5, new Vector3f(245f / 255f, 245f / 255f, 245f / 255f),
                     FluidType.Properties.create().density(18).viscosity(4).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 1.55f);
 
     public static final RegistryObject<FluidType> SULFUR_DIOXIDE_TYPE = register("sulfur_dioxide",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1FFFFE0, new Vector3f(255f / 255f, 255f / 255f, 224f / 255f),
                     FluidType.Properties.create().density(2).viscosity(1).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 0.00286f);
 
     public static final RegistryObject<FluidType> ZINC_SULFATE_SOLUTION_TYPE = register("zinc_sulfate_solution",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1F0F8FF, new Vector3f(240f / 255f, 248f / 255f, 255f / 255f),
                     FluidType.Properties.create().density(12).viscosity(3).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 1.21f);
 
     public static final RegistryObject<FluidType> COPPER_SULFATE_SOLUTION_TYPE = register("copper_sulfate_solution",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA11E90FF, new Vector3f(30f / 255f, 144f / 255f, 255f / 255f),
                     FluidType.Properties.create().density(12).viscosity(3).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 1.18f);
 
     public static final RegistryObject<FluidType> SODIUM_HYDROXIDE_SOLUTION_TYPE = register("sodium_hydroxide_solution",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1DCDCDC, new Vector3f(220f / 255f, 220f / 255f, 220f / 255f),
                     FluidType.Properties.create().density(11).viscosity(3).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 1.22f);
 
     public static final RegistryObject<FluidType> HYDROGEN_TYPE = register("hydrogen",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1FFFFFF, new Vector3f(255f / 255f, 255f / 255f, 255f / 255f),
                     FluidType.Properties.create().density(1).viscosity(1).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 0));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 0), 0.000089f);
 
     public static final RegistryObject<FluidType> CHLORINE_TYPE = register("chlorine",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1F0E68C, new Vector3f(240f / 255f, 230f / 255f, 140f / 255f),
                     FluidType.Properties.create().density(3).viscosity(1).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 0));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 0), 0.00317f);
 
     public static final RegistryObject<FluidType> LIQUID_HYDROGEN_TYPE = register("liquid_hydrogen",
             () -> new BaseFluidType(WATER_STILL_RL, WATER_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xA1E6E6FA, new Vector3f(230f / 255f, 230f / 255f, 250f / 255f),
                     FluidType.Properties.create().lightLevel(1).density(2).viscosity(1).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 1), 0.071f);
 
     public static final RegistryObject<FluidType> MOLTEN_ELECTROLYTE_TYPE = register("molten_electrolyte",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFF0F8FF, new Vector3f(240f / 255f, 248f / 255f, 255f / 255f),
                     FluidType.Properties.create().lightLevel(3).density(18).viscosity(6).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 2.10f);
 
     public static final RegistryObject<FluidType> MOLTEN_ZINC_TYPE = register("molten_zinc",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFF8F8FF, new Vector3f(248f / 255f, 248f / 255f, 255f / 255f),
                     FluidType.Properties.create().lightLevel(2).density(16).viscosity(5).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 6.57f);
 
     public static final RegistryObject<FluidType> MOLTEN_MAGNESIUM_TYPE = register("molten_magnesium",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFFFFFFF, new Vector3f(255f / 255f, 255f / 255f, 255f / 255f),
                     FluidType.Properties.create().lightLevel(3).density(10).viscosity(4).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 1.58f);
 
     public static final RegistryObject<FluidType> MOLTEN_COPPER_TYPE = register("molten_copper",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFF4A460, new Vector3f(244f / 255f, 164f / 255f, 96f / 255f),
                     FluidType.Properties.create().lightLevel(4).density(18).viscosity(6).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 7.99f);
 
     public static final RegistryObject<FluidType> MOLTEN_AEROSPACE_ALLOY_TYPE = register("molten_aerospace_alloy",
             () -> new BaseFluidType(MT_STILL_RL, MT_FLOWING_RL, SOAP_OVERLAY_RL,
                     0xFFE1FFFF, new Vector3f(225f / 255f, 255f / 255f, 255f / 255f),
                     FluidType.Properties.create().lightLevel(3).density(17).viscosity(6).sound(
-                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2));
+                            SoundAction.get("drink"), SoundEvents.HONEY_DRINK), 2), 2.82f);
 
     private static <I extends FluidType> RegistryObject<FluidType> register(final String name, final Supplier<? extends I> sup) {
         RegistryObject<FluidType> result =  FLUID_TYPES.register(name, sup);
