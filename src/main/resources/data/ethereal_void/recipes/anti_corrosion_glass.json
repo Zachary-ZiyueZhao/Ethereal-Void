@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "#.#",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:glass"
+    },
+    ".": {
+      "item": "ethereal_void:steel_ingot"
+    }
+  },
+  "result": {
+    "item": "ethereal_void:anti_corrosion_glass",
+    "count": 8
+  }
+}

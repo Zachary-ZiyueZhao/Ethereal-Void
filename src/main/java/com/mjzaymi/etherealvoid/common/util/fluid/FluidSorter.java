@@ -10,7 +10,7 @@ public class FluidSorter {
     public static final Map<String, Float> DENSITY_MAP = new HashMap<>();
     public static final Comparator<FluidStack> AMOUNT_SORTER = (o1, o2) -> o2.getAmount() - o1.getAmount();
     public static final Comparator<FluidStack> DENSITY_SORTER = (o1, o2) -> Math.round(
-            100f*(
+            1000000f*(
                     getDensityById(FluidUtil.getNameFromFluid(o2.getFluid()))-
                             getDensityById(FluidUtil.getNameFromFluid(o1.getFluid()))));
 

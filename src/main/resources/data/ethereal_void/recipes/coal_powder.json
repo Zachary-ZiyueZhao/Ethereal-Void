@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "minecraft:coal"
+},
+  "result": "ethereal_void:coal_powder",
+  "count": 1
+}
