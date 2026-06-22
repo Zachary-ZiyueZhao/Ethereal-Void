@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.block.electricity;
 
-import com.mjzaymi.etherealvoid.block.entity.electricity.HydraulicGeneratorBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.electricity.HydraulicGeneratorBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;

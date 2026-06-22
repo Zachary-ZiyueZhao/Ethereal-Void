@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.block.entity;
+package com.mjzaymi.etherealvoid.blockentity;
 
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;

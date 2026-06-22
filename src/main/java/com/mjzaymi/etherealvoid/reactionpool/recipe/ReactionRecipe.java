@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.reactionpool.recipe;
 
-import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.Checker;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;

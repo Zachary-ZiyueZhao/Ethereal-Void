@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.screen;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import com.mojang.blaze3d.systems.RenderSystem;

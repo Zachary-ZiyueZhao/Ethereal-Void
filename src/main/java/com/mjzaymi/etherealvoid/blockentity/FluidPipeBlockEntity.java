@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.block.entity;
+package com.mjzaymi.etherealvoid.blockentity;
 
 import com.mjzaymi.etherealvoid.block.FluidPipe;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;

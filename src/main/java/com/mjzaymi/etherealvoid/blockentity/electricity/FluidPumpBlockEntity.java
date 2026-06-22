@@ -1,7 +1,7 @@
-package com.mjzaymi.etherealvoid.block.entity.electricity;
+package com.mjzaymi.etherealvoid.blockentity.electricity;
 
 import com.mjzaymi.etherealvoid.block.electricity.FluidPump;
-import com.mjzaymi.etherealvoid.common.block.entity.UpdateBaseBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.UpdateBaseBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

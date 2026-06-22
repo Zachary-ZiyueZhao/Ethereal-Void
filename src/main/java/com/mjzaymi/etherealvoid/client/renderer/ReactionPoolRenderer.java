@@ -1,12 +1,11 @@
 package com.mjzaymi.etherealvoid.client.renderer;
 
-import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import com.mjzaymi.etherealvoid.common.util.render.RenderFace;
 import com.mjzaymi.etherealvoid.common.util.render.RenderUtil;
-import com.mjzaymi.etherealvoid.registration.ModFluids;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -25,11 +24,8 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.material.LavaFluid;
-import net.minecraft.world.level.material.WaterFluid;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 import java.util.Objects;

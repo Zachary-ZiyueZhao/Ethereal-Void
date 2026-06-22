@@ -1,6 +1,6 @@
-package com.mjzaymi.etherealvoid.common.block.entity.electricity;
+package com.mjzaymi.etherealvoid.common.blockentity.electricity;
 
-import com.mjzaymi.etherealvoid.common.block.entity.UpdateBaseBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.UpdateBaseBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;

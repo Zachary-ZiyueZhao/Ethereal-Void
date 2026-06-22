@@ -1,8 +1,8 @@
 package com.mjzaymi.etherealvoid.common.electricity;
 
-import com.mjzaymi.etherealvoid.common.block.entity.electricity.CableBlockEntity;
-import com.mjzaymi.etherealvoid.common.block.entity.electricity.ConsumerBlockEntity;
-import com.mjzaymi.etherealvoid.common.block.entity.electricity.GeneratorBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.electricity.CableBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.electricity.ConsumerBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.electricity.GeneratorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;

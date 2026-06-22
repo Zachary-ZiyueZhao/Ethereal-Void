@@ -1,6 +1,6 @@
-package com.mjzaymi.etherealvoid.common.block.entity.electricity;
+package com.mjzaymi.etherealvoid.common.blockentity.electricity;
 
-import com.mjzaymi.etherealvoid.common.block.entity.UpdateBaseBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.UpdateBaseBlockEntity;
 import com.mjzaymi.etherealvoid.common.electricity.ElectricalSpec;
 import com.mjzaymi.etherealvoid.common.electricity.IElectricalDevice;
 import com.mjzaymi.etherealvoid.common.electricity.IMultimeterDetectable;

@@ -1,6 +1,6 @@
-package com.mjzaymi.etherealvoid.block.entity;
+package com.mjzaymi.etherealvoid.blockentity;
 
-import com.mjzaymi.etherealvoid.common.block.entity.UpdateBaseBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.UpdateBaseBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
 import com.mjzaymi.etherealvoid.reactionpool.recipe.SyncType;

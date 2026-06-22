@@ -1,7 +1,7 @@
-package com.mjzaymi.etherealvoid.block.entity.electricity;
+package com.mjzaymi.etherealvoid.blockentity.electricity;
 
 import com.mjzaymi.etherealvoid.block.electricity.HydraulicGenerator;
-import com.mjzaymi.etherealvoid.common.block.entity.electricity.GeneratorBlockEntity;
+import com.mjzaymi.etherealvoid.common.blockentity.electricity.GeneratorBlockEntity;
 import com.mjzaymi.etherealvoid.common.electricity.CurrentType;
 import com.mjzaymi.etherealvoid.common.electricity.ElectricalSpec;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidUtil;

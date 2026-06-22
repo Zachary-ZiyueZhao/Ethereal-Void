@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.common.block.entity;
+package com.mjzaymi.etherealvoid.common.blockentity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

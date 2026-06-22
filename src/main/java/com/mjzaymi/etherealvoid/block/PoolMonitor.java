@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.block;
 
-import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.PoolMonitorBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
@@ -72,10 +72,7 @@ public class PoolMonitor extends BaseEntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level pLevel, BlockState pState, BlockEntityType<T> pBlockEntityType) {
-        if(pLevel.isClientSide()) {
-            return null;
-        }
-
+        if(pLevel.isClientSide()) return null;
         return createTickerHelper(pBlockEntityType, ModBlockEntities.POOL_MONITOR_BE.get(),
                 (pLevel1, pPos, pState1, pBlockEntity) -> pBlockEntity.tick(pLevel1, pPos, pState1));
     }

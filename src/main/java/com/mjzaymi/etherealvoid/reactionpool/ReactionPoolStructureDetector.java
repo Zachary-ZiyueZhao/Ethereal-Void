@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.reactionpool;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

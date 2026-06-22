@@ -1,7 +1,6 @@
-package com.mjzaymi.etherealvoid.block;
+package com.mjzaymi.etherealvoid.common.block.electriccity;
 
-import com.mjzaymi.etherealvoid.blockentity.FluidPipeBlockEntity;
-import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
+import com.mjzaymi.etherealvoid.common.blockentity.electricity.CableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -22,13 +21,11 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FluidPipe extends BaseEntityBlock {
+public class CableBlock <I extends CableBlockEntity> extends BaseEntityBlock {
     // 6个方向的连接状态
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
     public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
@@ -39,9 +36,13 @@ public class FluidPipe extends BaseEntityBlock {
 
     // 碰撞箱缓存 Map (避免 getShape 时高频重复计算)
     private static final Map<BlockState, VoxelShape> SHAPE_CACHE = new HashMap<>();
-    private static final VoxelShape CENTER_SHAPE = Block.box(6, 6, 6, 10, 10, 10); // 中心 6x6x6 的核心
+    public final float size;
+    private final float startPos;
+    private final float endPos;
+    private final VoxelShape CENTER_SHAPE;
+    private final BlockEntityType<I> beType;
 
-    public FluidPipe() {
+    public CableBlock(BlockEntityType<I> beType) {
         super(BlockBehaviour.Properties.of()
                 .strength(6f, 5f)
                 .sound(SoundType.METAL)
@@ -50,40 +51,35 @@ public class FluidPipe extends BaseEntityBlock {
                 .setValue(NORTH, false).setValue(SOUTH, false)
                 .setValue(EAST, false).setValue(WEST, false)
                 .setValue(UP, false).setValue(DOWN, false));
+        this.size = 4;
+        this.startPos = (16-size) / 2;
+        this.endPos = (16+size) / 2;
+        this.CENTER_SHAPE = Block.box(startPos, startPos, startPos, endPos, endPos, endPos);
+        this.beType = beType;
     }
 
-    // 判定旁边是不是能连（是同类管道，或者带流体接口的机器）
-    private boolean canConnectTo(LevelAccessor level, BlockPos currentPos, Direction dir) {
+    public boolean canConnectTo(LevelAccessor level, BlockPos currentPos, Direction dir) {
         BlockPos neighborPos = currentPos.relative(dir);
         BlockState neighborState = level.getBlockState(neighborPos);
-        if (neighborState.getBlock() instanceof FluidPipe) return true;
-
-        BlockEntity be = level.getBlockEntity(neighborPos);
-        if (be != null) {
-            // 检查对方是否有流体 Capability (NeoForge 对应 lookup，Forge 对应 getCapability)
-            return be.getCapability(ForgeCapabilities.FLUID_HANDLER, dir.getOpposite()).isPresent();
-        }
-        return false;
+        return neighborState.getBlock() instanceof CableBlock;
     }
 
     @Override
     public BlockState updateShape(BlockState state, Direction dir, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        // 当邻居改变时，自动更新当前连接臂的布尔值
         BooleanProperty property = getPropertyForDirection(dir);
         return state.setValue(property, canConnectTo(level, pos, dir));
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        // 动态拼装并缓存 VoxelShape
         return SHAPE_CACHE.computeIfAbsent(state, s -> {
             VoxelShape shape = CENTER_SHAPE;
-            if (s.getValue(NORTH)) shape = Shapes.or(shape, Block.box(6, 6, 0, 10, 10, 6));
-            if (s.getValue(SOUTH)) shape = Shapes.or(shape, Block.box(6, 6, 10, 10, 10, 16));
-            if (s.getValue(EAST))  shape = Shapes.or(shape, Block.box(10, 6, 6, 16, 10, 10));
-            if (s.getValue(WEST))  shape = Shapes.or(shape, Block.box(0, 6, 6, 6, 10, 10));
-            if (s.getValue(UP))    shape = Shapes.or(shape, Block.box(6, 10, 6, 10, 16, 10));
-            if (s.getValue(DOWN))  shape = Shapes.or(shape, Block.box(6, 0, 6, 10, 6, 10));
+            if (s.getValue(NORTH)) shape = Shapes.or(shape, Block.box(startPos, startPos, 0, endPos, endPos, startPos));
+            if (s.getValue(SOUTH)) shape = Shapes.or(shape, Block.box(startPos, startPos, endPos, endPos, endPos, 16));
+            if (s.getValue(EAST))  shape = Shapes.or(shape, Block.box(endPos, startPos, startPos, 16, endPos, endPos));
+            if (s.getValue(WEST))  shape = Shapes.or(shape, Block.box(0, startPos, startPos, startPos, endPos, endPos));
+            if (s.getValue(UP))    shape = Shapes.or(shape, Block.box(startPos, endPos, startPos, endPos, 16, endPos));
+            if (s.getValue(DOWN))  shape = Shapes.or(shape, Block.box(startPos, 0, startPos, endPos, startPos, endPos));
             return shape;
         });
     }
@@ -102,15 +98,17 @@ public class FluidPipe extends BaseEntityBlock {
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
+    }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new FluidPipeBlockEntity(pos, state); }
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return beType.create(pos, state);
+    }
 
-    @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.FLUID_PIPE_BE.get(), FluidPipeBlockEntity::tick);
+        return level.isClientSide ? null : createTickerHelper(type, beType, (pLevel1, pPos, pState1, pBlockEntity) -> pBlockEntity.tick(pLevel1, pPos, pState1));
     }
 }

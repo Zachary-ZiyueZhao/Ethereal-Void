@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.block;
 
-import com.mjzaymi.etherealvoid.block.entity.GemPolishingStationBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.GemPolishingStationBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;

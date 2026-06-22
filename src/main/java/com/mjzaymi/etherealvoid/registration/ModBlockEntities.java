@@ -1,12 +1,13 @@
 package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.block.entity.GemPolishingStationBlockEntity;
-import com.mjzaymi.etherealvoid.block.entity.FluidPipeBlockEntity;
-import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
-import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.block.entity.electricity.FluidPumpBlockEntity;
-import com.mjzaymi.etherealvoid.block.entity.electricity.HydraulicGeneratorBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.GemPolishingStationBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.FluidPipeBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.PoolMonitorBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.electricity.FluidPumpBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.electricity.HydraulicGeneratorBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.electricity.ThreeWireCableBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -46,6 +47,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("fluid_pump_be", () ->
                     BlockEntityType.Builder.of(FluidPumpBlockEntity::new,
                             ModBlocks.FLUID_PUMP.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ThreeWireCableBlockEntity>> THREE_WIRE_CABLE_BE =
+            BLOCK_ENTITIES.register("three_wire_cable_be", () ->
+                    BlockEntityType.Builder.of(ThreeWireCableBlockEntity::new,
+                            ModBlocks.THREE_WIRE_CABLE.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

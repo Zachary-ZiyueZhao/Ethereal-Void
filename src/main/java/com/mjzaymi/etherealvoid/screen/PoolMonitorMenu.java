@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.screen;
 
-import com.mjzaymi.etherealvoid.block.entity.PoolMonitorBlockEntity;
-import com.mjzaymi.etherealvoid.block.entity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.PoolMonitorBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import com.mjzaymi.etherealvoid.registration.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
