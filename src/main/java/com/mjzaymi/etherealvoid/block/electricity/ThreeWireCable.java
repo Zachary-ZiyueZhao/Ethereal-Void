@@ -10,6 +10,6 @@ import java.util.function.Supplier;
 
 public class ThreeWireCable extends CableBlock<ThreeWireCableBlockEntity> {
     public ThreeWireCable() {
-        super(ModBlockEntities.THREE_WIRE_CABLE_BE.get());
+        super(null);//ModBlockEntities.THREE_WIRE_CABLE_BE.get());
     }
 }
