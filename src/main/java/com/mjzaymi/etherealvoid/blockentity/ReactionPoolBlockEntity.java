@@ -9,9 +9,12 @@ import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -88,6 +91,10 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
     }
 
     public void setStructure(CuboidStructure structure) {
+        if (structure == null && this.structure != null) {
+
+            spawnEvaporationParticles();
+        }
         if (structure==null) {
             tank.setCapacity(0);
             if (this.structure!=null) {
@@ -257,6 +264,44 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
                     if (!(o instanceof FluidStack fluidStack)) continue;
                     tankAll.fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
                 }
+        }
+    }
+
+    private void spawnEvaporationParticles() {
+        if (level == null || level.isClientSide) return;
+        if (!(level instanceof ServerLevel serverLevel)) return;
+        if (structure == null) return;
+        if (tank.getFluids().isEmpty()) return;
+
+        BlockPos min = structure.interiorMin();
+        BlockPos max = structure.interiorMax();
+        float capacity = tank.getCapacity();
+
+        if (capacity <= 0) return;
+
+        float totalAmount = 0;
+
+        for (FluidStack stack : tank.getFluids()) {
+            totalAmount += stack.getAmount();
+        }
+
+        float fillPercent = Math.min(1.0f, totalAmount / capacity);
+        float totalHeight = max.getY() - min.getY() + 0.88f;
+        float fluidHeight = fillPercent * totalHeight;
+        RandomSource random = level.random;
+
+        int particleCount = Math.max(300, (int)(totalAmount / 100));
+
+        for (int i = 0; i < particleCount; i++) {
+            double x = min.getX() + random.nextDouble() * (max.getX() - min.getX() + 1);
+            double z = min.getZ() + random.nextDouble() * (max.getZ() - min.getZ() + 1);
+            double y = min.getY() + random.nextDouble() * fluidHeight;
+
+            float type = random.nextFloat();
+
+            if (type < 0.7f) serverLevel.sendParticles(ParticleTypes.CLOUD, x, y, z, 1, 0.08, 0.03, 0.08, 0.005);
+            else if (type < 0.9f) serverLevel.sendParticles(ParticleTypes.ASH, x, y, z, 1, 0.06, 0.04, 0.06, 0.01);
+            else serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 1, 0.12, 0.08, 0.12, 0.002);
         }
     }
 

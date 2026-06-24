@@ -37,7 +37,7 @@ public class CuboidStructure {
         this.members=members;
         Set<BlockPos> blockPosSet = new HashSet<>();
         for (int x = min.getX()+1; x < max.getX(); x++) {
-            for (int y = min.getY()+1; y <= max.getY(); y++) {
+            for (int y = min.getY()+1; y < max.getY(); y++) {
                 for (int z = min.getZ()+1; z < max.getZ(); z++) {
                     blockPosSet.add(new BlockPos(x, y, z));
                 }
@@ -67,7 +67,10 @@ public class CuboidStructure {
             return Optional.empty();
         }
 
-        int maxY = findWallTop(level, minX, maxX, bottomY, minZ, maxZ);
+        Integer maxY = findWallTop(level, minX, maxX, bottomY, minZ, maxZ);
+        if (maxY == null) {
+            return Optional.empty();
+        }
         if (maxY - bottomY + 1 < MIN_HEIGHT || interiorPos.getY() > maxY) {
             return Optional.empty();
         }
@@ -208,20 +211,30 @@ public class CuboidStructure {
             boolean edgeZ = pos.getZ() == min.getZ() || pos.getZ() == max.getZ();
             boolean wall = edgeX || edgeZ;
 
+            BlockState state = level.getBlockState(pos);
+            boolean edge = isEdge(pos, min, max);
+            boolean roof = pos.getY() == max.getY();
+
             if (bottom) {
                 if (!isSteelCasing(level.getBlockState(pos))) {
                     return false;
                 }
-            } else if (wall) {
-                if (edgeX && edgeZ) {
-                    if (!isSteelCasing(level.getBlockState(pos))) {
+            } else if (roof) {
+                if (edge) {
+                    if (!isSteelCasing(state))
                         return false;
-                    }
-                } else if (!isWallPanel(level.getBlockState(pos))) {
-                    return false;
+                } else {
+                    if (!isWallPanel(state))
+                        return false;
                 }
-            } else if (!isInterior(level, pos)) {
-                return false;
+            } else if (wall) {
+                if (edge) {
+                    if (!isSteelCasing(state))
+                        return false;
+                } else {
+                    if (!isWallPanel(state))
+                        return false;
+                }
             }
         }
         return true;
@@ -265,17 +278,25 @@ public class CuboidStructure {
         return null;
     }
 
-    private static int findWallTop(Level level, int minX, int maxX, int bottomY, int minZ, int maxZ) {
-        int maxY = bottomY;
-
+    private static Integer findWallTop(Level level,int minX, int maxX, int bottomY, int minZ, int maxZ) {
         for (int y = bottomY + 1; y <= bottomY + MAX_DIMENSION - 1; y++) {
-            if (!isWallLayer(level, minX, maxX, y, minZ, maxZ)) {
-                break;
-            }
-            maxY = y;
+            if (isRoofLayer(level, minX, maxX, y, minZ, maxZ)) return y;
+            if (!isWallLayer(level, minX, maxX, y, minZ, maxZ)) return null;
         }
+        return null;
+    }
 
-        return maxY;
+    private static boolean isEdge(BlockPos pos, BlockPos min, BlockPos max) {
+        int count = 0;
+
+        if (pos.getX() == min.getX() || pos.getX() == max.getX())
+            count++;
+        if (pos.getY() == min.getY() || pos.getY() == max.getY())
+            count++;
+        if (pos.getZ() == min.getZ() || pos.getZ() == max.getZ())
+            count++;
+
+        return count >= 2;
     }
 
     private static boolean isWallLayer(Level level, int minX, int maxX, int y, int minZ, int maxZ) {
@@ -380,6 +401,27 @@ public class CuboidStructure {
                         root.getCompound("max").getInt("y"),
                         root.getCompound("max").getInt("z")),
                 members);
+    }
+
+    private static boolean isRoofLayer(Level level, int minX, int maxX, int y, int minZ, int maxZ) {
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                boolean edgeX = x == minX || x == maxX;
+                boolean edgeZ = z == minZ || z == maxZ;
+                BlockState state = level.getBlockState(new BlockPos(x, y, z));
+
+                if (edgeX && edgeZ) {
+                    if (!isSteelCasing(state)) {
+                        return false;
+                    }
+                } else {
+                    if (!isWallPanel(state)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     public boolean isEqual(CuboidStructure cuboidStructure) {
