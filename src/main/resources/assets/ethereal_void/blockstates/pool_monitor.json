@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "ethereal_void:block/pool_monitor" },
+    "facing=south": { "model": "ethereal_void:block/pool_monitor", "y": 180 },
+    "facing=west": { "model": "ethereal_void:block/pool_monitor", "y": 270 },
+    "facing=east": { "model": "ethereal_void:block/pool_monitor", "y": 90 }
+  }
+}
