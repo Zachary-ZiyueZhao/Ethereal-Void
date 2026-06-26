@@ -1,10 +1,7 @@
 package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
-import com.mjzaymi.etherealvoid.blockentity.GemPolishingStationBlockEntity;
-import com.mjzaymi.etherealvoid.blockentity.FluidPipeBlockEntity;
-import com.mjzaymi.etherealvoid.blockentity.PoolMonitorBlockEntity;
-import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
+import com.mjzaymi.etherealvoid.blockentity.*;
 import com.mjzaymi.etherealvoid.blockentity.electricity.FluidPumpBlockEntity;
 import com.mjzaymi.etherealvoid.blockentity.electricity.HydraulicGeneratorBlockEntity;
 import com.mjzaymi.etherealvoid.blockentity.electricity.ThreeWireCableBlockEntity;
@@ -52,6 +49,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("three_wire_cable_be", () ->
                     BlockEntityType.Builder.of(ThreeWireCableBlockEntity::new,
                             ModBlocks.THREE_WIRE_CABLE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ReactionPoolFluidIOBlockEntity>> REACTION_POOL_FLUID_IO_BE =
+            BLOCK_ENTITIES.register("reaction_pool_fluid_io_be", () ->
+                    BlockEntityType.Builder.of(ReactionPoolFluidIOBlockEntity::new,
+                            ModBlocks.REACTION_POOL_FLUID_IO.get()).build(null));
 
 
     public static void register(IEventBus eventBus) {

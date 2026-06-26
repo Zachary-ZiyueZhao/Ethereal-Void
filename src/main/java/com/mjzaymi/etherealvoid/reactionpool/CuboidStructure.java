@@ -169,7 +169,7 @@ public class CuboidStructure {
     }
 
     public BlockPos interiorMax() {
-        return max.offset(-1, 0, -1);
+        return max.offset(-1, -1, -1);
     }
 
     public BlockPos interiorFloorMin() {
@@ -192,7 +192,7 @@ public class CuboidStructure {
         return pos.getX() > min.getX()
                 && pos.getX() < max.getX()
                 && pos.getY() > min.getY()
-                && pos.getY() <= max.getY()
+                && pos.getY() < max.getY()
                 && pos.getZ() > min.getZ()
                 && pos.getZ() < max.getZ();
     }
@@ -202,6 +202,14 @@ public class CuboidStructure {
                 && height() >= MIN_HEIGHT
                 && depth() >= MIN_DEPTH
                 && isValidShell(level);
+    }
+
+    private static boolean isValidMonitorFacing(int x, int z, int minX, int maxX, int minZ, int maxZ, Direction facing) {
+        if (x == minX && facing == Direction.WEST) return true;
+        if (x == maxX && facing == Direction.EAST) return true;
+        if (z == minZ && facing == Direction.NORTH) return true;
+        if (z == maxZ && facing == Direction.SOUTH) return true;
+        return false;
     }
 
     private boolean isValidShell(Level level) {
@@ -215,25 +223,31 @@ public class CuboidStructure {
             boolean edge = isEdge(pos, min, max);
             boolean roof = pos.getY() == max.getY();
 
-            if (bottom) {
-                if (!isSteelCasing(level.getBlockState(pos))) {
+            // 在整体结构校验中强制执行 Monitor 的位置和方向规则
+            if (state.is(ModBlocks.POOL_MONITOR.get())) {
+                if (roof || bottom) {
                     return false;
                 }
+                // 朝向必须向外
+                Direction facing = state.getValue(com.mjzaymi.etherealvoid.block.PoolMonitor.FACING);
+                if (!isValidMonitorFacing(pos.getX(), pos.getZ(), min.getX(), max.getX(), min.getZ(), max.getZ(), facing)) {
+                    return false;
+                }
+            }
+
+            if (bottom) {
+                if (!isSteelCasing(level.getBlockState(pos))) return false;
             } else if (roof) {
                 if (edge) {
-                    if (!isSteelCasing(state))
-                        return false;
+                    if (!isSteelCasing(state)) return false;
                 } else {
-                    if (!isWallPanel(state))
-                        return false;
+                    if (!isWallPanel(state)) return false;
                 }
             } else if (wall) {
                 if (edge) {
-                    if (!isSteelCasing(state))
-                        return false;
+                    if (!isSteelCasing(state)) return false;
                 } else {
-                    if (!isWallPanel(state))
-                        return false;
+                    if (!isWallPanel(state)) return false;
                 }
             }
         }
@@ -310,10 +324,16 @@ public class CuboidStructure {
                 }
 
                 BlockState state = level.getBlockState(new BlockPos(x, y, z));
-                if (edgeX && edgeZ) {
-                    if (!isSteelCasing(state)) {
+
+                if (state.is(ModBlocks.POOL_MONITOR.get())) {
+                    Direction facing = state.getValue(com.mjzaymi.etherealvoid.block.PoolMonitor.FACING);
+                    if (!isValidMonitorFacing(x, z, minX, maxX, minZ, maxZ, facing)) {
                         return false;
                     }
+                }
+
+                if (edgeX && edgeZ) {
+                    if (!isSteelCasing(state)) return false;
                 } else if (!isWallPanel(state)) {
                     return false;
                 }
@@ -338,8 +358,10 @@ public class CuboidStructure {
     }
 
     private static boolean isWallPanel(BlockState state) {
-        return isSteelCasing(state) || state.is(ModBlocks.ANTI_CORROSION_GLASS.get())
-                || state.is(ModBlocks.POOL_MONITOR.get());
+        return isSteelCasing(state)
+                || state.is(ModBlocks.ANTI_CORROSION_GLASS.get())
+                || state.is(ModBlocks.POOL_MONITOR.get())
+                || state.is(ModBlocks.REACTION_POOL_FLUID_IO.get()); // 加上这一行
     }
 
     private static boolean isSteelCasing(BlockState state) {
@@ -410,14 +432,14 @@ public class CuboidStructure {
                 boolean edgeZ = z == minZ || z == maxZ;
                 BlockState state = level.getBlockState(new BlockPos(x, y, z));
 
+                if (state.is(ModBlocks.POOL_MONITOR.get())) {
+                    return false;
+                }
+
                 if (edgeX && edgeZ) {
-                    if (!isSteelCasing(state)) {
-                        return false;
-                    }
+                    if (!isSteelCasing(state)) return false;
                 } else {
-                    if (!isWallPanel(state)) {
-                        return false;
-                    }
+                    if (!isWallPanel(state)) return false;
                 }
             }
         }

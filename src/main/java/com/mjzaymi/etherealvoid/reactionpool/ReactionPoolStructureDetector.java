@@ -23,7 +23,8 @@ public class ReactionPoolStructureDetector {
         BlockState placedBlock = event.getPlacedBlock();
         boolean isPoolBlock = placedBlock.is(ModBlocks.ANTI_CORROSION_GLASS.get())
                 || placedBlock.is(ModBlocks.POOL_MONITOR.get())
-                || placedBlock.is(ModBlocks.STEEL_CASING.get());
+                || placedBlock.is(ModBlocks.STEEL_CASING.get())
+                || placedBlock.is(ModBlocks.REACTION_POOL_FLUID_IO.get()); // 加上这一行
         if (!isPoolBlock) return;
 
         BlockPos pos = event.getPos();

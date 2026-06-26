@@ -305,6 +305,10 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         }
     }
 
+    public MultiFluidTank getTank() {
+        return this.tank;
+    }
+
     public List<ItemStack> getPrecipitatesAll() {
         return precipitatesAll;
     }

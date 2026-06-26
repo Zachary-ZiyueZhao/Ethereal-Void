@@ -5,6 +5,8 @@ import com.mjzaymi.etherealvoid.block.*;
 import com.mjzaymi.etherealvoid.block.electricity.FluidPump;
 import com.mjzaymi.etherealvoid.block.electricity.HydraulicGenerator;
 import com.mjzaymi.etherealvoid.block.electricity.ThreeWireCable;
+import com.mjzaymi.etherealvoid.reactionpool.ReactionPoolStructureDetector;
+import com.mojang.text2speech.OperatingSystem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -33,6 +35,7 @@ public class ModBlocks {
             () -> new GemPolishingStationBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
 
     public static final RegistryObject<Block> POOL_MONITOR = BLOCKS.register("pool_monitor", PoolMonitor::new);
+    public static final RegistryObject<Block> REACTION_POOL_FLUID_IO = BLOCKS.register("reaction_pool_fluid_io", ReactionPoolFluidIO::new);
 
 
     public static void register(IEventBus eventBus) {
