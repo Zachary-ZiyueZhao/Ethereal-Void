@@ -1,0 +1,35 @@
+{
+  "variants": {
+    "facing=north,mode=input": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_i"
+    },
+    "facing=east,mode=input": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_i",
+      "y": 90
+    },
+    "facing=south,mode=input": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_i",
+      "y": 180
+    },
+    "facing=west,mode=input": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_i",
+      "y": 270
+    },
+
+    "facing=north,mode=output": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_o"
+    },
+    "facing=east,mode=output": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_o",
+      "y": 90
+    },
+    "facing=south,mode=output": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_o",
+      "y": 180
+    },
+    "facing=west,mode=output": {
+      "model": "ethereal_void:block/reaction_pool_fluid_io_o",
+      "y": 270
+    }
+  }
+}

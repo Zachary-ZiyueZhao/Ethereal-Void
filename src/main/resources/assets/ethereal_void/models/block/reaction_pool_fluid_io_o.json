@@ -1,0 +1,7 @@
+{
+	"parent": "ethereal_void:block/reaction_pool_fluid_io_base",
+	"textures": {
+		"0": "ethereal_void:block/reaction_pool_fluid_io_o",
+		"particle": "ethereal_void:block/reaction_pool_fluid_io_o"
+	}
+}
