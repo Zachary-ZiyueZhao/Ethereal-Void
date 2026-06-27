@@ -10,6 +10,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import com.mjzaymi.etherealvoid.item.FluidStorageTankItem;
 
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
@@ -50,6 +51,7 @@ public class ModItems {
     public static final RegistryObject<Item> RAW_MAGNESIUM = ITEMS.register("raw_magnesium", BaseItem::new);
     public static final RegistryObject<Item> MAGNESIUM_INGOT = ITEMS.register("magnesium_ingot", BaseItem::new);
     public static final RegistryObject<Item> MULTIMETER = ITEMS.register("multimeter", Multimeter::new);
+    public static final RegistryObject<Item> FLUID_STORAGE_TANK = ITEMS.register("fluid_storage_tank", () -> new FluidStorageTankItem(new Item.Properties()));
 
 
 

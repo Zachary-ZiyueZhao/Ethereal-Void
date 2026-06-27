@@ -1,11 +1,14 @@
 package com.mjzaymi.etherealvoid.block;
 
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolFluidIOBlockEntity;
+import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -14,17 +17,21 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 
-public class ReactionPoolFluidIO extends BaseEntityBlock {
+public class ReactionPoolFluidIO extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final EnumProperty<FluidIOMode> MODE = EnumProperty.create("mode", FluidIOMode.class);
     public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
@@ -46,6 +53,7 @@ public class ReactionPoolFluidIO extends BaseEntityBlock {
         return SHAPE;
     }
 
+    // 💡 实现 EntityBlock 必须指定的渲染类型，否则方块在游戏里会变成隐形的
     @Override
     public RenderShape getRenderShape(BlockState pState) {
         return RenderShape.MODEL;
@@ -70,14 +78,29 @@ public class ReactionPoolFluidIO extends BaseEntityBlock {
 
     @Override
     public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
-        // 先尝试进行流体容器（桶）的交互
-        // 它会根据我们在 BlockEntity 里暴露的 Capability 自动判断是填入还是抽进去。
-        if (FluidUtil.interactWithFluidHandler(pPlayer, pHand, pLevel, pPos, pHit.getDirection())) {
-            // 如果桶交互成功（比如成功把水倒进去了，或者成功抽出来了），直接返回成功，不切换模式
+        ItemStack heldItem = pPlayer.getItemInHand(pHand);
+
+        var itemFluidCap = heldItem.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
+
+        if (itemFluidCap.isPresent()) {
+            if (!pLevel.isClientSide()) {
+                BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
+                if (blockEntity != null) {
+                    blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, pHit.getDirection()).ifPresent(blockFluidHandler -> {
+                        IFluidHandlerItem itemHandler = itemFluidCap.resolve().get();
+                        FluidIOMode currentMode = pState.getValue(MODE);
+
+                        if (currentMode == FluidIOMode.OUTPUT) {
+                            extractFluidByDensity(blockFluidHandler, itemHandler, pPlayer, pHand);
+                        } else {
+                            FluidUtil.interactWithFluidHandler(pPlayer, pHand, blockFluidHandler);
+                        }
+                    });
+                }
+            }
             return InteractionResult.sidedSuccess(pLevel.isClientSide());
         }
 
-        // 如果玩家手里拿的不是流体容器（或者是空手、普通方块），才触发“切换输入/输出模式”的逻辑
         if (!pLevel.isClientSide()) {
             FluidIOMode currentMode = pState.getValue(MODE);
             FluidIOMode nextMode = currentMode == FluidIOMode.INPUT ? FluidIOMode.OUTPUT : FluidIOMode.INPUT;
@@ -90,6 +113,39 @@ public class ReactionPoolFluidIO extends BaseEntityBlock {
         return InteractionResult.sidedSuccess(pLevel.isClientSide());
     }
 
+    private void extractFluidByDensity(IFluidHandler blockHandler, IFluidHandlerItem itemHandler, Player player, InteractionHand hand) {
+        FluidStack targetFluid = FluidStack.EMPTY;
+        float lowestDensity = Float.MAX_VALUE;
+
+        for (int i = 0; i < blockHandler.getTanks(); i++) {
+            FluidStack fluidInTank = blockHandler.getFluidInTank(i);
+            if (!fluidInTank.isEmpty() && fluidInTank.getAmount() > 0) {
+                String fluidName = ForgeRegistries.FLUIDS.getKey(fluidInTank.getFluid()).getPath();
+                float density = FluidSorter.DENSITY_MAP.getOrDefault(fluidName, 1.0f);
+
+                if (density < lowestDensity) {
+                    FluidStack simulatedDrain = blockHandler.drain(fluidInTank, IFluidHandler.FluidAction.SIMULATE);
+                    if (!simulatedDrain.isEmpty() && itemHandler.fill(simulatedDrain, IFluidHandler.FluidAction.SIMULATE) > 0) {
+                        lowestDensity = density;
+                        targetFluid = fluidInTank;
+                    }
+                }
+            }
+        }
+
+        if (!targetFluid.isEmpty()) {
+            int itemEmptySpace = itemHandler.getTankCapacity(0) - (itemHandler.getFluidInTank(0).isEmpty() ? 0 : itemHandler.getFluidInTank(0).getAmount());
+            int maxDrainAmount = Math.min(targetFluid.getAmount(), itemEmptySpace);
+
+            if (maxDrainAmount > 0) {
+                FluidStack drained = blockHandler.drain(new FluidStack(targetFluid.getFluid(), maxDrainAmount), IFluidHandler.FluidAction.EXECUTE);
+                itemHandler.fill(drained, IFluidHandler.FluidAction.EXECUTE);
+                player.setItemInHand(hand, itemHandler.getContainer());
+            }
+        }
+    }
+
+    // 💡 接口 EntityBlock 的标准方法
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
