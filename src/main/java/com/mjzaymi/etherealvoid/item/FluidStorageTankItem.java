@@ -15,32 +15,39 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class FluidStorageTankItem extends Item {
-    public static final int CAPACITY = 1000; // 最大容量 1000 mB
+    public static final int CAPACITY = 1000;
 
     public FluidStorageTankItem(Properties properties) {
-        super(properties.stacksTo(1)); // 储罐必须是单分堆叠
+        super(properties.stacksTo(1));
     }
 
-    // 💡 为物品注入流体处理能力
     @Override
     public @Nullable ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
         return new FluidHandlerItemStack(stack, CAPACITY);
     }
 
-    // 💡 动态显示储罐内的流体信息
-    // 💡 动态显示储罐内的流体信息
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        // 💡 加上 .orElse(FluidStack.EMPTY) 来解包 Optional 类型
         FluidStack fluidStack = FluidUtil.getFluidContained(stack).orElse(FluidStack.EMPTY);
 
         if (fluidStack.isEmpty()) {
             tooltip.add(Component.translatable("tooltip.ethereal_void.fluid_storage_tank.empty"));
         } else {
-            // 显示示例：硫酸 (450 / 1000 mB)
             String fluidName = fluidStack.getDisplayName().getString();
             tooltip.add(Component.literal(fluidName + ": " + fluidStack.getAmount() + " / " + CAPACITY + " mB"));
         }
         super.appendHoverText(stack, level, tooltip, flag);
+    }
+
+    @Override
+    public Component getName(ItemStack stack) {
+        FluidStack fluidStack = FluidUtil.getFluidContained(stack).orElse(FluidStack.EMPTY);
+        Component baseName = Component.translatable(this.getDescriptionId());
+
+        if (fluidStack.isEmpty()) {
+            return baseName;
+        }
+
+        return Component.literal("").append(baseName).append(" (").append(fluidStack.getDisplayName()).append(" ").append(String.valueOf(fluidStack.getAmount())).append("mB)");
     }
 }

@@ -27,6 +27,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -93,13 +94,41 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
         if (buffer instanceof MultiBufferSource.BufferSource immediateBuffer) immediateBuffer.endBatch();
 
 
-        //Render Fluids
+
         float capacity = be.getTankAll().getCapacity();
-        List<FluidStack> fluids =  be.getTankAll().getFluids();
+        List<FluidStack> fluids = be.getTankAll().getFluids();
+
         fluids.sort(FluidSorter.DENSITY_SORTER);
-        float totalHeight = max.getY() - min.getY() + 0.88f;
-        float currentHeight = 0;
+
+        float totalHeight = max.getY() - min.getY() + 1.0f;
+
+        // TODO: 将 0.0012f 替换为从 ATM 系统动态计算出来的空气密度方法
+        // 例如：float currentAirDensity = be.getAtmosphereDensity();
+        float currentAirDensity = 0.0012f;
+
+        List<FluidStack> liquids = new ArrayList<>();
+        List<FluidStack> gases = new ArrayList<>();
+
         for (FluidStack fluidStack : fluids) {
+            float amount = fluidStack.getAmount();
+            if (amount <= 0) continue;
+
+            ResourceLocation rl = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getKey(fluidStack.getFluid());
+            float density = 1.0f;
+
+            if (rl != null && FluidSorter.DENSITY_MAP.containsKey(rl.getPath())) {
+                density = FluidSorter.DENSITY_MAP.get(rl.getPath());
+            }
+
+            if (density < currentAirDensity) {
+                gases.add(fluidStack);
+            } else {
+                liquids.add(fluidStack);
+            }
+        }
+
+        float currentLiquidHeight = 0;
+        for (FluidStack fluidStack : liquids) {
             float amount = fluidStack.getAmount();
             float fillPercentage = Math.min(1.0f, amount / capacity);
             if (fillPercentage <= 0) continue;
@@ -116,17 +145,56 @@ public class ReactionPoolRenderer implements BlockEntityRenderer<ReactionPoolBlo
             float u1 = sprite.getU1();
             float v0 = sprite.getV0();
             float v1 = sprite.getV1();
+
             if (Objects.equals(ext.getStillTexture(), ResourceLocation.parse("ethereal_void:block/molten_materials/molten_materials_still")) || fluidStack.getFluid() == Fluids.LAVA) {
                 light = 0xF000F0;
             } else {
                 light = LevelRenderer.getLightColor(be.getLevel(), min);
             }
+
             RenderUtil.render(builder, poseStack, RenderFace.ALL,
                     bePos, min, max,
-                    0.005f, height, currentHeight,
+                    0.005f, height, currentLiquidHeight,
                     tintColor, light,
                     u0, u1, v0, v1);
-            currentHeight += height;
+
+            currentLiquidHeight += height;
+        }
+
+        float currentGasTop = totalHeight;
+        for (FluidStack fluidStack : gases) {
+            float amount = fluidStack.getAmount();
+            float fillPercentage = Math.min(1.0f, amount / capacity);
+            if (fillPercentage <= 0) continue;
+            float height = fillPercentage * totalHeight;
+
+            Fluid fluid = fluidStack.getFluid();
+            IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid);
+            TextureAtlasSprite sprite = Minecraft.getInstance()
+                    .getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+                    .apply(ext.getStillTexture(fluidStack));
+            int tintColor = ext.getTintColor(fluidStack);
+            VertexConsumer builder = buffer.getBuffer(RenderType.translucent());
+            float u0 = sprite.getU0();
+            float u1 = sprite.getU1();
+            float v0 = sprite.getV0();
+            float v1 = sprite.getV1();
+
+            if (Objects.equals(ext.getStillTexture(), ResourceLocation.parse("ethereal_void:block/molten_materials/molten_materials_still")) || fluidStack.getFluid() == Fluids.LAVA) {
+                light = 0xF000F0;
+            } else {
+                light = LevelRenderer.getLightColor(be.getLevel(), min);
+            }
+
+            float gasBottom = currentGasTop - height;
+
+            RenderUtil.render(builder, poseStack, RenderFace.ALL,
+                    bePos, min, max,
+                    0.005f, height, gasBottom,
+                    tintColor, light,
+                    u0, u1, v0, v1);
+
+            currentGasTop -= height;
         }
     }
 }
