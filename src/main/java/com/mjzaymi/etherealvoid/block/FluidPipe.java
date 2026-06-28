@@ -4,16 +4,16 @@ import com.mjzaymi.etherealvoid.blockentity.FluidPipeBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -28,8 +28,7 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FluidPipe extends BaseEntityBlock {
-    // 6个方向的连接状态
+public class FluidPipe extends Block implements EntityBlock {
     public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
     public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
     public static final BooleanProperty EAST = BlockStateProperties.EAST;
@@ -37,9 +36,8 @@ public class FluidPipe extends BaseEntityBlock {
     public static final BooleanProperty UP = BlockStateProperties.UP;
     public static final BooleanProperty DOWN = BlockStateProperties.DOWN;
 
-    // 碰撞箱缓存 Map (避免 getShape 时高频重复计算)
     private static final Map<BlockState, VoxelShape> SHAPE_CACHE = new HashMap<>();
-    private static final VoxelShape CENTER_SHAPE = Block.box(6, 6, 6, 10, 10, 10); // 中心 6x6x6 的核心
+    private static final VoxelShape CENTER_SHAPE = Block.box(6, 6, 6, 10, 10, 10);
 
     public FluidPipe() {
         super(BlockBehaviour.Properties.of()
@@ -52,7 +50,6 @@ public class FluidPipe extends BaseEntityBlock {
                 .setValue(UP, false).setValue(DOWN, false));
     }
 
-    // 判定旁边是不是能连（是同类管道，或者带流体接口的机器）
     private boolean canConnectTo(LevelAccessor level, BlockPos currentPos, Direction dir) {
         BlockPos neighborPos = currentPos.relative(dir);
         BlockState neighborState = level.getBlockState(neighborPos);
@@ -60,7 +57,6 @@ public class FluidPipe extends BaseEntityBlock {
 
         BlockEntity be = level.getBlockEntity(neighborPos);
         if (be != null) {
-            // 检查对方是否有流体 Capability (NeoForge 对应 lookup，Forge 对应 getCapability)
             return be.getCapability(ForgeCapabilities.FLUID_HANDLER, dir.getOpposite()).isPresent();
         }
         return false;
@@ -68,14 +64,51 @@ public class FluidPipe extends BaseEntityBlock {
 
     @Override
     public BlockState updateShape(BlockState state, Direction dir, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
-        // 当邻居改变时，自动更新当前连接臂的布尔值
+        boolean canConnect = canConnectTo(level, pos, dir);
+
+        // 💡 修复：使用标准的 scheduleTick 替换不兼容的 getBlockTickQueue
+        if (!level.isClientSide() && level instanceof Level realLevel) {
+            realLevel.scheduleTick(pos, this, 1);
+        }
+
         BooleanProperty property = getPropertyForDirection(dir);
-        return state.setValue(property, canConnectTo(level, pos, dir));
+        return state.setValue(property, canConnect);
+    }
+
+    // 💡 必须重写此方法，用于承接上面 scheduleTick 分发的计划刻度
+    @Override
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        super.tick(state, level, pos, random);
+        // 刻度到达时，安全地刷新当处网络位置，完美防死锁
+        FluidPipeBlockEntity.updateVirtualNetwork(level, pos);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (!level.isClientSide()) {
+            FluidPipeBlockEntity.updateVirtualNetwork(level, pos);
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (state.getBlock() != newState.getBlock()) {
+            super.onRemove(state, level, pos, newState, isMoving);
+            if (!level.isClientSide()) {
+                for (Direction dir : Direction.values()) {
+                    BlockPos neighborPos = pos.relative(dir);
+                    if (level.getBlockState(neighborPos).getBlock() instanceof FluidPipe) {
+                        FluidPipeBlockEntity.updateVirtualNetwork(level, neighborPos);
+                    }
+                }
+                FluidPipeBlockEntity.updateVirtualNetwork(level, pos);
+            }
+        }
     }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        // 动态拼装并缓存 VoxelShape
         return SHAPE_CACHE.computeIfAbsent(state, s -> {
             VoxelShape shape = CENTER_SHAPE;
             if (s.getValue(NORTH)) shape = Shapes.or(shape, Block.box(6, 6, 0, 10, 10, 6));
@@ -106,11 +139,7 @@ public class FluidPipe extends BaseEntityBlock {
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new FluidPipeBlockEntity(pos, state); }
-
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.FLUID_PIPE_BE.get(), FluidPipeBlockEntity::tick);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new FluidPipeBlockEntity(pos, state);
     }
 }

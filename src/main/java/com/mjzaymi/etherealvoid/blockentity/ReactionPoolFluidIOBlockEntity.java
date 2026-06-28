@@ -6,6 +6,7 @@ import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -19,6 +20,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
+
+    // 💡 虚拟长连接的核心内部变量
+    @Nullable
+    private ReactionPoolFluidIOBlockEntity virtualTargetInput = null;
+    private int transferRatePerTick = 0;
 
     private final LazyOptional<IFluidHandler> fluidHandlerProxy = LazyOptional.of(() -> new IFluidHandler() {
 
@@ -37,8 +43,6 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
         public int getTanks() {
             ReactionPoolBlockEntity master = getMaster();
             if (master == null || master.getTank() == null) return 0;
-            // 关键点：返回当前已有的流体种类数量 + 1。
-            // 永远多留一个“虚拟空位”，外部管道（如 Mekanism）才能把新种类的流体推进来。
             return master.getTank().getFluids().size() + 1;
         }
 
@@ -60,8 +64,6 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
             ReactionPoolBlockEntity master = getMaster();
             if (master == null || master.getTank() == null) return 0;
 
-            // 因为你的反应池是“共享总容量”的
-            // 对于某个特定的流体槽，它的最大可用极限 = 该流体当前量 + 整个反应池的剩余空闲空间
             int space = master.getTank().getSpace();
             FluidStack existing = getFluidInTank(tank);
             return existing.getAmount() + space;
@@ -69,13 +71,11 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
 
         @Override
         public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
-            // 反应池来者不拒，只要有空间都可以进
             return true;
         }
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            // 只有当方块状态为 INPUT 时才允许注入流体
             BlockState state = getBlockState();
             if (state.hasProperty(ReactionPoolFluidIO.MODE) && state.getValue(ReactionPoolFluidIO.MODE) == FluidIOMode.INPUT) {
                 ReactionPoolBlockEntity master = getMaster();
@@ -93,7 +93,6 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
         @NotNull
         @Override
         public FluidStack drain(FluidStack resource, FluidAction action) {
-            // 只有当方块状态为 OUTPUT 时才允许抽走流体
             BlockState state = getBlockState();
             if (state.hasProperty(ReactionPoolFluidIO.MODE) && state.getValue(ReactionPoolFluidIO.MODE) == FluidIOMode.OUTPUT) {
                 ReactionPoolBlockEntity master = getMaster();
@@ -111,7 +110,6 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
         @NotNull
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
-            // 当外部管道不指定流体类型，只说“我要抽走最多 maxDrain 容积的流体”时触发
             BlockState state = getBlockState();
             if (state.hasProperty(ReactionPoolFluidIO.MODE) && state.getValue(ReactionPoolFluidIO.MODE) == FluidIOMode.OUTPUT) {
                 ReactionPoolBlockEntity master = getMaster();
@@ -119,7 +117,6 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
                     List<FluidStack> fluids = master.getTank().getFluids();
                     if (fluids.isEmpty()) return FluidStack.EMPTY;
 
-                    // 默认抽取列表里的第一种流体
                     FluidStack firstFluid = fluids.get(0);
                     int drainAmount = Math.min(maxDrain, firstFluid.getAmount());
                     FluidStack toDrain = new FluidStack(firstFluid, drainAmount);
@@ -137,6 +134,108 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
 
     public ReactionPoolFluidIOBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.REACTION_POOL_FLUID_IO_BE.get(), pos, state);
+    }
+
+    // ==========================================
+    // 💡 虚拟网络调用的核心交互方法 (管道网络刷新时使用)
+    // ==========================================
+
+    /**
+     * 判断当前 IO 方块是否绑定了有效的水槽结构
+     */
+    public boolean hasValidPool() {
+        if (level == null) return false;
+        return CuboidStructure.findFromWallAndCorner(level, worldPosition).isPresent();
+    }
+
+    /**
+     * 判断当前是否为 INPUT 模式
+     */
+    public boolean isInputMode() {
+        BlockState state = getBlockState();
+        return state.hasProperty(ReactionPoolFluidIO.MODE) && state.getValue(ReactionPoolFluidIO.MODE) == FluidIOMode.INPUT;
+    }
+
+    /**
+     * 判断当前是否为 OUTPUT 模式
+     */
+    public boolean isOutputMode() {
+        BlockState state = getBlockState();
+        return state.hasProperty(ReactionPoolFluidIO.MODE) && state.getValue(ReactionPoolFluidIO.MODE) == FluidIOMode.OUTPUT;
+    }
+
+    /**
+     * 获取多方块核心主控的位置作为唯一标识符（用于验证是否属于同个水槽）
+     */
+    @Nullable
+    public BlockPos getPoolController() {
+        if (level == null) return null;
+        return CuboidStructure.findFromWallAndCorner(level, worldPosition)
+                .map(CuboidStructure::min) // 直接使用 min 点作为水槽唯一的 Controller 标识
+                .orElse(null);
+    }
+
+    /**
+     * 由管网寻路算法触发：命令此 OUTPUT 口建立到目标的直线直达通道
+     */
+    public void establishVirtualLink(ReactionPoolFluidIOBlockEntity inputTarget, int ratePerTick) {
+        this.virtualTargetInput = inputTarget;
+        this.transferRatePerTick = ratePerTick;
+    }
+
+    /**
+     * 由管网寻路算法触发：管网断开时，彻底解绑长连接
+     */
+    public void breakVirtualLink() {
+        this.virtualTargetInput = null;
+        this.transferRatePerTick = 0;
+    }
+
+    // ==========================================
+    // 💡 核心传输 Tick：由 Ticker 高效驱动虚拟长连接
+    // ==========================================
+    public static void tick(Level level, BlockPos pos, BlockState state, ReactionPoolFluidIOBlockEntity io) {
+        if (level.isClientSide) return;
+
+        if (io.isOutputMode() && io.virtualTargetInput != null) {
+
+            if (io.virtualTargetInput.isRemoved() || !io.virtualTargetInput.isInputMode() || io.getPoolController() != io.virtualTargetInput.getPoolController()) {
+                io.breakVirtualLink();
+                return;
+            }
+
+            IFluidHandler myHandler = io.fluidHandlerProxy.orElse(null);
+            IFluidHandler targetHandler = io.virtualTargetInput.fluidHandlerProxy.orElse(null);
+
+            if (myHandler != null && targetHandler != null) {
+                boolean transferSuccess = false;
+
+                // 💡 升级：遍历自己储罐里的每一种液体（氯气、氢氧化钠、氢气等），谁能传就传谁
+                for (int i = 0; i < myHandler.getTanks(); i++) {
+                    FluidStack fluidInTank = myHandler.getFluidInTank(i);
+                    if (fluidInTank.isEmpty() || fluidInTank.getAmount() <= 0) continue;
+
+                    // 准备抽取该种液体，最大限制为流速限制
+                    int amountToDrain = Math.min(io.transferRatePerTick, fluidInTank.getAmount());
+                    FluidStack targetDrain = new FluidStack(fluidInTank.getFluid(), amountToDrain, fluidInTank.getTag());
+
+                    // 模拟抽取与注入
+                    FluidStack simulatedDrain = myHandler.drain(targetDrain, IFluidHandler.FluidAction.SIMULATE);
+                    if (!simulatedDrain.isEmpty()) {
+                        int accepted = targetHandler.fill(simulatedDrain, IFluidHandler.FluidAction.SIMULATE);
+
+                        if (accepted > 0) {
+                            // 真正执行扣除与注入
+                            FluidStack realDrained = myHandler.drain(new FluidStack(simulatedDrain.getFluid(), accepted), IFluidHandler.FluidAction.EXECUTE);
+                            targetHandler.fill(realDrained, IFluidHandler.FluidAction.EXECUTE);
+
+                            transferSuccess = true;
+                            break; // 这一 tick 成功传输了，结束本 tick 的传输，等待下一 tick
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override

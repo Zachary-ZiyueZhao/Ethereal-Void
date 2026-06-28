@@ -1,10 +1,14 @@
 package com.mjzaymi.etherealvoid.block;
 
+import com.mjzaymi.etherealvoid.blockentity.FluidPipeBlockEntity;
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolFluidIOBlockEntity;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
+import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -12,8 +16,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -53,7 +60,6 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
         return SHAPE;
     }
 
-    // 💡 实现 EntityBlock 必须指定的渲染类型，否则方块在游戏里会变成隐形的
     @Override
     public RenderShape getRenderShape(BlockState pState) {
         return RenderShape.MODEL;
@@ -74,6 +80,29 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
     @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    // 💡 替代 getBlockTickQueue 方法的更稳妥、标准的邻居状态改变监听
+    @Override
+    public BlockState updateShape(BlockState state, Direction dir, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
+        if (!level.isClientSide()) {
+            // 使用原版标准的计划刻度：在 1 个游戏刻（1 tick）后触发下面的 tick(..) 回调方法
+            level.scheduleTick(pos, this, 1);
+        }
+        return super.updateShape(state, dir, neighborState, level, pos, neighborPos);
+    }
+
+    // 💡 当延迟的计划刻度到达时，触发该方法。用于安全打破物理更新引起的网路死锁
+    @Override
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        super.tick(state, level, pos, random);
+        // 解开此注释：当 IO 口模式切换或物理更新时，强制刷新其周围邻居管网
+        for (Direction dir : Direction.values()) {
+            BlockPos neighborPos = pos.relative(dir);
+            if (level.getBlockState(neighborPos).getBlock() instanceof FluidPipe) {
+                FluidPipeBlockEntity.updateVirtualNetwork(level, neighborPos);
+            }
+        }
     }
 
     @Override
@@ -145,10 +174,26 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
         }
     }
 
-    // 💡 接口 EntityBlock 的标准方法
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
         return new ReactionPoolFluidIOBlockEntity(pPos, pState);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        // 只有服务端才允许执行虚拟搬运计算
+        if (level.isClientSide()) return null;
+
+        // 验证当前 BlockEntityType 是否匹配我们的 IO 块实体
+        if (type == ModBlockEntities.REACTION_POOL_FLUID_IO_BE.get()) {
+            return (level1, pos, state1, blockEntity) -> {
+                if (blockEntity instanceof ReactionPoolFluidIOBlockEntity ioBe) {
+                    ReactionPoolFluidIOBlockEntity.tick(level1, pos, state1, ioBe);
+                }
+            };
+        }
+        return null;
     }
 }
