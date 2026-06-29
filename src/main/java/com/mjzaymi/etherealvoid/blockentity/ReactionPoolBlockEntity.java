@@ -95,11 +95,13 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
     public void setStructure(CuboidStructure structure) {
         // 当原先有结构，而传入新结构为 null 时，说明多方块外壳被砸碎破坏了
         if (structure == null && this.structure != null) {
-            spawnEvaporationParticles(); // 此时内部结构和流体还未被清空，精准触发！
+            spawnEvaporationParticles();
+            this.temperature = 293.15f;
+            this.pressure = 1.0f;
         }
-        if (structure==null) {
+        if (structure == null) {
             tank.setCapacity(0);
-            if (this.structure!=null) {
+            if (this.structure != null) {
                 GameUtil.spawnItemRandomlyInArea(level,
                         this.structure.interiorFloorMin(), this.structure.interiorFloorMax(),
                         precipitates);
@@ -110,17 +112,6 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             tank.setCapacity(structure.interiors().size() * 1000);
         }
         this.structure = structure;
-    }
-
-    @Override
-    public AABB getRenderBoundingBox() {
-        if (structure==null) return super.getRenderBoundingBox();
-        var min = getStructure().min();
-        var max = getStructure().max();
-        return new AABB(
-                min.getX(), min.getY(), min.getZ(),
-                max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0
-        );
     }
 
 
@@ -134,18 +125,43 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         if (pLevel.isClientSide) return;
 
         var structure = getStructure();
-        if (structure == null) return;
 
-        var realStructureOpt = CuboidStructure.findFromCorner(pLevel, getBlockPos());
-        if (realStructureOpt.isEmpty()) {
-            setStructure(null);
-            setChanged(pLevel, pPos, pState);
-            updateChangeState(true);
-            return;
-        } else if (!structure.isEqual(realStructureOpt.get())){
-            setStructure(realStructureOpt.get());
-            setChanged(pLevel, pPos, pState);
-            updateChangeState(true);
+        if (structure != null) {
+            var realStructureOpt = CuboidStructure.findFromCorner(pLevel, getBlockPos());
+
+            // 💡 核心修复：如果主控方块不在多方块角落（例如在墙面），findFromCorner 会误判为空导致自毁。
+            // 此时自动使用 findFromWallAndCorner 进行安全兜底，双重保障！
+            if (realStructureOpt.isEmpty()) {
+                realStructureOpt = CuboidStructure.findFromWallAndCorner(pLevel, getBlockPos());
+            }
+
+            if (realStructureOpt.isEmpty()) {
+                setStructure(null);
+                setChanged(pLevel, pPos, pState);
+                updateChangeState(true);
+                return;
+            } else if (!structure.isEqual(realStructureOpt.get())){
+                setStructure(realStructureOpt.get());
+                setChanged(pLevel, pPos, pState);
+                updateChangeState(true);
+                return;
+            }
+
+            int heaterCount = structure.countHeatersBelow(pLevel);
+            float baseTargetTemperature = 293.15f;
+            float targetTemperature = baseTargetTemperature + (heaterCount * 100.0f);
+
+            if (this.temperature < targetTemperature) {
+                this.temperature = Math.min(targetTemperature, this.temperature + 0.5f);
+            } else if (this.temperature > targetTemperature) {
+                this.temperature = Math.max(targetTemperature, this.temperature - 0.2f);
+            }
+
+        } else {
+            // 如果彻底没有结构，温度持续保持常温
+            if (this.temperature > 293.15f) {
+                this.temperature = Math.max(293.15f, this.temperature - 0.5f);
+            }
             return;
         }
 
@@ -154,10 +170,7 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             var s = pLevel.getBlockState(p);
             var fluid = s.getFluidState();
             if (!fluid.isEmpty() && fluid.isSource()) {
-                tank.fill(
-                        new FluidStack(fluid.getType(), 1000),
-                        IFluidHandler.FluidAction.EXECUTE
-                );
+                tank.fill(new FluidStack(fluid.getType(), 1000), IFluidHandler.FluidAction.EXECUTE);
                 pLevel.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
                 setChanged(pLevel, pPos, pState);
                 pLevel.updateNeighborsAt(p, Blocks.AIR.defaultBlockState().getBlock());
@@ -171,13 +184,12 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             }
         }
 
+        // 物品吞噬合并
         var min = structure.min();
         var max = structure.max();
-        AABB area = new AABB(
-                min.getX(), min.getY(), min.getZ(),
-                max.getX() + 1.0D, max.getY() + 1.0D, max.getZ() + 1.0D
-        );
+        AABB area = new AABB(min.getX(), min.getY(), min.getZ(), max.getX() + 1.0D, max.getY() + 1.0D, max.getZ() + 1.0D);
         GameUtil.mergeItemsInArea(pLevel, area);
+
         var entities = pLevel.getEntitiesOfClass(ItemEntity.class, area);
         if (!entities.isEmpty()) {
             synchronized (precipitates) {
@@ -190,26 +202,18 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             updateChangeState(true);
         }
 
+        // 伤害危害层
         BlockPos intMin = structure.interiorMin();
         BlockPos intMax = structure.interiorMax();
-        AABB interiorArea = new AABB(
-                intMin.getX(), intMin.getY(), intMin.getZ(),
-                intMax.getX() + 1.0D, intMax.getY() + 1.0D, intMax.getZ() + 1.0D
-        );
-
+        AABB interiorArea = new AABB(intMin.getX(), intMin.getY(), intMin.getZ(), intMax.getX() + 1.0D, intMax.getY() + 1.0D, intMax.getZ() + 1.0D);
         List<net.minecraft.world.entity.player.Player> players = pLevel.getEntitiesOfClass(net.minecraft.world.entity.player.Player.class, interiorArea);
         if (!players.isEmpty()) {
-            // 只有当水槽里确实有流体残留时，才会触发危害
             boolean hasFluids = !tank.getFluids().isEmpty() && tank.getFluids().stream().anyMatch(fs -> fs.getAmount() > 0);
             if (hasFluids) {
                 for (var player : players) {
                     if (player.isSpectator()) continue;
-
-                    player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                            net.minecraft.world.effect.MobEffects.BLINDNESS, 40, 0, true, false, false));
-                    player.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                            net.minecraft.world.effect.MobEffects.DIG_SLOWDOWN, 40, 2, true, false, false));
-
+                    player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.BLINDNESS, 40, 0, true, false, false));
+                    player.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.DIG_SLOWDOWN, 40, 2, true, false, false));
                     if (pLevel.getGameTime() % 10 == 0) {
                         player.hurt(pLevel.damageSources().magic(), 4.0F);
                     }
@@ -221,44 +225,20 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         processReaction();
     }
 
+    @Override
+    public AABB getRenderBoundingBox() {
+        if (structure==null) return super.getRenderBoundingBox();
+        var min = getStructure().min();
+        var max = getStructure().max();
+        return new AABB(
+                min.getX(), min.getY(), min.getZ(),
+                max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0
+        );
+    }
+
     public void registerReaction(ReactionRecipe recipe) {
         recipe.cost(precipitates, tank);
         activeTasks.add(recipe.copyNew());
-    }
-
-    // 模拟 ReactionPoolBlockEntity 内部的 Tick 逻辑
-    public static void tick(Level level, BlockPos pos, BlockState state, ReactionPoolBlockEntity blockEntity) {
-        if (level.isClientSide()) return;
-
-        // 1. 获取当前的多方块结构
-        var structureOpt = CuboidStructure.findFromWallAndCorner(level, pos);
-        if (structureOpt.isPresent()) {
-            CuboidStructure structure = structureOpt.get();
-
-            // 2. 检测底部的加热器数量
-            int heaterCount = structure.countHeatersBelow(level);
-
-            // 3. 计算目标平衡温度
-            // 假设基础室温为 300K，每存在一个贴底的加热器，上限就提升 100K
-            float baseTargetTemperature = 300.0f;
-            float targetTemperature = baseTargetTemperature + (heaterCount * 100.0f);
-
-            // 4. 平滑控温逻辑（让温度逼近目标温度，避免瞬间暴涨，更有工业感）
-            if (blockEntity.temperature < targetTemperature) {
-                blockEntity.temperature = Math.min(targetTemperature, blockEntity.temperature + 0.5f); // 每 tick 升温 0.5K
-            } else if (blockEntity.temperature > targetTemperature) {
-                blockEntity.temperature = Math.max(targetTemperature, blockEntity.temperature - 0.2f); // 自然冷却
-            }
-
-            // 如果你需要“瞬间+100K”且不考虑冷却，可以直接硬编码：
-            // blockEntity.temperature = targetTemperature;
-
-        } else {
-            // 如果多方块结构解体，温度逐步回归室温
-            if (blockEntity.temperature > 300.0f) {
-                blockEntity.temperature -= 1.0f;
-            }
-        }
     }
 
     public void processReaction() {
