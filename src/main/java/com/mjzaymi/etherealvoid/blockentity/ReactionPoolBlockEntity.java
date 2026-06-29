@@ -8,7 +8,7 @@ import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
-import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter; // 确保引入
+import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -119,49 +119,22 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         return structure;
     }
 
-    public static final int PROCESS_TICK = 20;
-
     public void tick(Level pLevel, BlockPos pPos, BlockState pState) {
         if (pLevel.isClientSide) return;
 
         var structure = getStructure();
+        if (structure == null) return;
 
-        if (structure != null) {
-            var realStructureOpt = CuboidStructure.findFromCorner(pLevel, getBlockPos());
-
-            // 💡 核心修复：如果主控方块不在多方块角落（例如在墙面），findFromCorner 会误判为空导致自毁。
-            // 此时自动使用 findFromWallAndCorner 进行安全兜底，双重保障！
-            if (realStructureOpt.isEmpty()) {
-                realStructureOpt = CuboidStructure.findFromWallAndCorner(pLevel, getBlockPos());
-            }
-
-            if (realStructureOpt.isEmpty()) {
-                setStructure(null);
-                setChanged(pLevel, pPos, pState);
-                updateChangeState(true);
-                return;
-            } else if (!structure.isEqual(realStructureOpt.get())){
-                setStructure(realStructureOpt.get());
-                setChanged(pLevel, pPos, pState);
-                updateChangeState(true);
-                return;
-            }
-
-            int heaterCount = structure.countHeatersBelow(pLevel);
-            float baseTargetTemperature = 293.15f;
-            float targetTemperature = baseTargetTemperature + (heaterCount * 100.0f);
-
-            if (this.temperature < targetTemperature) {
-                this.temperature = Math.min(targetTemperature, this.temperature + 0.5f);
-            } else if (this.temperature > targetTemperature) {
-                this.temperature = Math.max(targetTemperature, this.temperature - 0.2f);
-            }
-
-        } else {
-            // 如果彻底没有结构，温度持续保持常温
-            if (this.temperature > 293.15f) {
-                this.temperature = Math.max(293.15f, this.temperature - 0.5f);
-            }
+        var realStructureOpt = CuboidStructure.findFromCorner(pLevel, getBlockPos());
+        if (realStructureOpt.isEmpty()) {
+            setStructure(null);
+            setChanged(pLevel, pPos, pState);
+            updateChangeState(true);
+            return;
+        } else if (!structure.isEqual(realStructureOpt.get())){
+            setStructure(realStructureOpt.get());
+            setChanged(pLevel, pPos, pState);
+            updateChangeState(true);
             return;
         }
 
@@ -221,8 +194,14 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             }
         }
 
-        if (pLevel.getGameTime() % PROCESS_TICK != 0) return;
-        processReaction();
+
+        //一下是并列的进程，需要在方法第一行优化tick
+
+        //Update temperature
+        updateTemperature(pLevel);
+
+        //Process Reactions
+        processReactions(pLevel);
     }
 
     @Override
@@ -236,12 +215,34 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         );
     }
 
+    public static final int UPDATE_TEMPERATURE_TICK = 20; //间隔tick
+    public final int RANDOM_UPDATE_TEMPERATURE_REMAINDER = new Random().nextInt(UPDATE_TEMPERATURE_TICK); //每个方块随机选tick
+    public void updateTemperature(Level pLevel) {
+        if (pLevel.getGameTime() % UPDATE_TEMPERATURE_TICK != RANDOM_UPDATE_TEMPERATURE_REMAINDER) return;
+
+        var heaterCount = structure.countHeatersBelow(pLevel);
+        var targetTemperature = 293.15f + (heaterCount * 100.0f);
+
+        var originalTemp = this.temperature;
+        if (this.temperature < targetTemperature) {
+            this.temperature = Math.min(targetTemperature, this.temperature + 10);
+        } else if (this.temperature > targetTemperature) {
+            this.temperature = Math.max(targetTemperature, this.temperature - 4);
+        }
+        if (originalTemp!=this.temperature)
+            updateChangeState(true);
+    }
+
     public void registerReaction(ReactionRecipe recipe) {
         recipe.cost(precipitates, tank);
         activeTasks.add(recipe.copyNew());
     }
 
-    public void processReaction() {
+    public static final int PROCESS_TICK = 20; //间隔tick
+    public final int RANDOM_PROCESS_REMAINDER = new Random().nextInt(PROCESS_TICK); //每个方块随机选tick
+    public void processReactions(Level pLevel) {
+        if (pLevel.getGameTime() % PROCESS_TICK != RANDOM_PROCESS_REMAINDER) return;
+
         boolean changed = false;
         //Check for recipes and register them.
         FOR:

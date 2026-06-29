@@ -200,24 +200,6 @@ public class ModReactionRecipes {
                     new TemperatureCondition(new Range(950.15, 2000)))
     ));
 
-    //TODO Change the example.
-    public static ReactionRecipe EXAMPLE = register(new ReactionRecipe(
-            "example", SyncType.RECIPE_SYNC, 80,
-            new ResultOrCost(List.of(
-                    new ItemStack(Items.BUCKET, 1))),
-            new ResultOrCost(
-                    List.of(new FluidStack(ModFluids.SOURCE_SOAP_WATER.get(), 300))),
-            //An example of a complex condition
-            be -> {
-                float temperature = be.getTemperature();
-                float pressure = be.getPressure();
-                if (true) { //Your code here
-                    return true; //return true if matches
-                }
-                return false;
-            }
-    ));
-
 
     public static ReactionRecipe register(ReactionRecipe recipe) {
         registeredRecipes.add(recipe);
