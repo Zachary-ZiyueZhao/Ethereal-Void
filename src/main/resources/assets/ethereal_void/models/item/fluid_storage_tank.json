@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ethereal_void:item/fluid_storage_tank_empty"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "ethereal_void:contains_fluid": 1.0
+      },
+      "model": "ethereal_void:item/fluid_storage_tank_filled"
+    }
+  ]
+}

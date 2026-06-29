@@ -144,6 +144,26 @@ public class CuboidStructure {
         return Optional.empty();
     }
 
+    /**
+     * 扫描整个多方块底盘正下方一格 (Y = min.getY() - 1)，统计有效加热器的数量
+     */
+    public int countHeatersBelow(Level level) {
+        int heaterCount = 0;
+        int targetY = this.min.getY() - 1;
+
+        // 遍历多方块底盘所占的 XZ 平面投影
+        for (int x = this.min.getX(); x <= this.max.getX(); x++) {
+            for (int z = this.min.getZ(); z <= this.max.getZ(); z++) {
+                BlockPos checkPos = new BlockPos(x, targetY, z);
+                // 💡 替换为你的加热器实际注册对象
+                if (level.getBlockState(checkPos).is(ModBlocks.RESISTIVE_HEATER.get())) {
+                    heaterCount++;
+                }
+            }
+        }
+        return heaterCount;
+    }
+
     public int width() {
         return max.getX()-min.getX()+1;
     }

@@ -226,6 +226,41 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         activeTasks.add(recipe.copyNew());
     }
 
+    // 模拟 ReactionPoolBlockEntity 内部的 Tick 逻辑
+    public static void tick(Level level, BlockPos pos, BlockState state, ReactionPoolBlockEntity blockEntity) {
+        if (level.isClientSide()) return;
+
+        // 1. 获取当前的多方块结构
+        var structureOpt = CuboidStructure.findFromWallAndCorner(level, pos);
+        if (structureOpt.isPresent()) {
+            CuboidStructure structure = structureOpt.get();
+
+            // 2. 检测底部的加热器数量
+            int heaterCount = structure.countHeatersBelow(level);
+
+            // 3. 计算目标平衡温度
+            // 假设基础室温为 300K，每存在一个贴底的加热器，上限就提升 100K
+            float baseTargetTemperature = 300.0f;
+            float targetTemperature = baseTargetTemperature + (heaterCount * 100.0f);
+
+            // 4. 平滑控温逻辑（让温度逼近目标温度，避免瞬间暴涨，更有工业感）
+            if (blockEntity.temperature < targetTemperature) {
+                blockEntity.temperature = Math.min(targetTemperature, blockEntity.temperature + 0.5f); // 每 tick 升温 0.5K
+            } else if (blockEntity.temperature > targetTemperature) {
+                blockEntity.temperature = Math.max(targetTemperature, blockEntity.temperature - 0.2f); // 自然冷却
+            }
+
+            // 如果你需要“瞬间+100K”且不考虑冷却，可以直接硬编码：
+            // blockEntity.temperature = targetTemperature;
+
+        } else {
+            // 如果多方块结构解体，温度逐步回归室温
+            if (blockEntity.temperature > 300.0f) {
+                blockEntity.temperature -= 1.0f;
+            }
+        }
+    }
+
     public void processReaction() {
         boolean changed = false;
         //Check for recipes and register them.

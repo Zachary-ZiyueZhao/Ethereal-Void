@@ -28,8 +28,21 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
             ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "textures/gui/pool_monitor_gui.png");
 
     public final ReactionPoolBlockEntity poolBlockEntity;
-    public final float pressure = 1f;
-    public final float temperature = 20f+273.15f;
+    // public final float pressure = 1f;
+    // public final float temperature = 20f+273.15f;
+
+    public float getTemperature() {
+        // 如果没有多方块结构，返回基础室温 293.15K
+        if (this.poolBlockEntity == null) return 20f + 273.15f;
+        // 💡 替换为你 ReactionPoolBlockEntity 里面实际存储温度的方法名
+        return this.poolBlockEntity.getTemperature();
+    }
+
+    public float getPressure() {
+        if (this.poolBlockEntity == null) return 1.0f;
+        // 💡 替换为你 ReactionPoolBlockEntity 里面实际存储气压的方法名
+        return this.poolBlockEntity.getPressure();
+    }
     public final List<FluidStack> fluids;
     public final List<ItemStack> precipitates;
 
@@ -63,16 +76,16 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
             return;
         }
 
-        //Thermometer bar
         final float temperatureTotalHeight = 97f;
-        final float totalTemperature = GameUtil.getPreferredTotalTemperature(temperature);
-        int temperatureHeight = Math.round((temperature / totalTemperature) * temperatureTotalHeight);
+        float currentTemp = getTemperature();
+        final float totalTemperature = GameUtil.getPreferredTotalTemperature(currentTemp);
+        int temperatureHeight = Math.round((currentTemp / totalTemperature) * temperatureTotalHeight);
         guiGraphics.fill(leftPos+163, topPos+114-temperatureHeight+1, leftPos+164, topPos+115, 0xffeb3822);
 
-        //Barometer bar
         final float pressureTotalHeight = 106f;
-        final float totalPressure = GameUtil.getPreferredTotalPressure(pressure);
-        int pressureHeight = Math.round((pressure / totalPressure) * pressureTotalHeight);
+        float currentPress = getPressure();
+        final float totalPressure = GameUtil.getPreferredTotalPressure(currentPress);
+        int pressureHeight = Math.round((currentPress / totalPressure) * pressureTotalHeight);
 
         FluidStack fluid = new FluidStack(Fluids.WATER, 1000);
         IClientFluidTypeExtensions ext = IClientFluidTypeExtensions.of(fluid.getFluid());
@@ -217,7 +230,8 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         final String noStructureKey = "tooltip."+EtherealVoid.MOD_ID+".pool_not_found";
 
         //Temperature Tooltip
-        final float totalTemperature = GameUtil.getPreferredTotalTemperature(temperature);
+        float currentTemp = getTemperature();
+        final float totalTemperature = GameUtil.getPreferredTotalTemperature(currentTemp);
         if (mouseX >= temperatureBarX && mouseX < temperatureBarX + temperatureBarWidth &&
                 mouseY >= temperatureBarY && mouseY < temperatureBarY + temperatureBarHeight) {
             guiGraphics.fill(temperatureBarX, temperatureBarY, temperatureBarX + temperatureBarWidth,
@@ -229,7 +243,7 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
             } else {
                 Component name = Component.translatable("tooltip."+EtherealVoid.MOD_ID+".temperature");
                 tooltip.add(name.copy().withStyle(ChatFormatting.GOLD));
-                tooltip.add(Component.literal(String.format("%,.2f / %,.2f K", temperature, totalTemperature))
+                tooltip.add(Component.literal(String.format("%,.2f / %,.2f K", currentTemp, totalTemperature))
                         .withStyle(ChatFormatting.GRAY));
             }
             guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
@@ -237,7 +251,8 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
         }
 
         //Pressure Tooltip
-        final float totalPressure = GameUtil.getPreferredTotalPressure(pressure);
+        float currentPress = getPressure();
+        final float totalPressure = GameUtil.getPreferredTotalPressure(currentPress);
         if (mouseX >= pressureBarX && mouseX < pressureBarX + pressureBarWidth &&
                 mouseY >= pressureBarY && mouseY < pressureBarY + pressureBarHeight) {
             guiGraphics.fill(pressureBarX, pressureBarY, pressureBarX + pressureBarWidth,
@@ -249,7 +264,7 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
             } else {
                 Component name = Component.translatable("tooltip." + EtherealVoid.MOD_ID + ".pressure");
                 tooltip.add(name.copy().withStyle(ChatFormatting.GOLD));
-                tooltip.add(Component.literal(String.format("%,.2f / %,.2f atm", pressure, totalPressure))
+                tooltip.add(Component.literal(String.format("%,.2f / %,.2f atm", currentPress, totalPressure))
                         .withStyle(ChatFormatting.GRAY));
             }
             guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
