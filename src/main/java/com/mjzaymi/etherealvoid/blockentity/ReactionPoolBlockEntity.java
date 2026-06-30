@@ -1,5 +1,6 @@
 package com.mjzaymi.etherealvoid.blockentity;
 
+import com.mjzaymi.etherealvoid.client.renderer.PoolEffectHandler;
 import com.mjzaymi.etherealvoid.common.blockentity.UpdateBaseBlockEntity;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
@@ -8,14 +9,10 @@ import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
-import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -25,7 +22,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import net.minecraft.resources.ResourceLocation;
 
 import java.util.*;
 
@@ -93,9 +89,15 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
     }
 
     public void setStructure(CuboidStructure structure) {
-        // 当原先有结构，而传入新结构为 null 时，说明多方块外壳被砸碎破坏了
+        // 当结构被破坏时
         if (structure == null && this.structure != null) {
-            spawnEvaporationParticles();
+            // 通过 EffectHandler 分离处理粒子与声音
+            PoolEffectHandler.spawnEvaporationParticles(level, this.structure, tank);
+
+            if (this.temperature >= 273.15f + 100f) {
+                PoolEffectHandler.spawnCoolingParticle(level, this.structure);
+            }
+
             this.temperature = 293.15f;
             this.pressure = 1.0f;
         }
@@ -113,7 +115,6 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         }
         this.structure = structure;
     }
-
 
     public CuboidStructure getStructure() {
         return structure;
@@ -194,13 +195,10 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             }
         }
 
+        // 🌟 表现逻辑移交给 Handler 处理
+        PoolEffectHandler.tickAmbientEffects(pLevel, structure, this.temperature);
 
-        //一下是并列的进程，需要在方法第一行优化tick
-
-        //Update temperature
         updateTemperature(pLevel);
-
-        //Process Reactions
         processReactions(pLevel);
     }
 
@@ -215,8 +213,8 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         );
     }
 
-    public static final int UPDATE_TEMPERATURE_TICK = 20; //间隔tick
-    public final int RANDOM_UPDATE_TEMPERATURE_REMAINDER = new Random().nextInt(UPDATE_TEMPERATURE_TICK); //每个方块随机选tick
+    public static final int UPDATE_TEMPERATURE_TICK = 20;
+    public final int RANDOM_UPDATE_TEMPERATURE_REMAINDER = new Random().nextInt(UPDATE_TEMPERATURE_TICK);
     public void updateTemperature(Level pLevel) {
         if (pLevel.getGameTime() % UPDATE_TEMPERATURE_TICK != RANDOM_UPDATE_TEMPERATURE_REMAINDER) return;
 
@@ -238,13 +236,12 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         activeTasks.add(recipe.copyNew());
     }
 
-    public static final int PROCESS_TICK = 20; //间隔tick
-    public final int RANDOM_PROCESS_REMAINDER = new Random().nextInt(PROCESS_TICK); //每个方块随机选tick
+    public static final int PROCESS_TICK = 20;
+    public final int RANDOM_PROCESS_REMAINDER = new Random().nextInt(PROCESS_TICK);
     public void processReactions(Level pLevel) {
         if (pLevel.getGameTime() % PROCESS_TICK != RANDOM_PROCESS_REMAINDER) return;
 
         boolean changed = false;
-        //Check for recipes and register them.
         FOR:
         for (var recipe : ModReactionRecipes.registeredRecipes) {
             if (!recipe.costsEnough(precipitates, tank.getFluids())) continue;
@@ -309,94 +306,6 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
                     if (!(o instanceof FluidStack fluidStack)) continue;
                     tankAll.fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
                 }
-        }
-    }
-
-    private void spawnEvaporationParticles() {
-        if (level == null || level.isClientSide) return;
-        if (!(level instanceof ServerLevel serverLevel)) return;
-        if (structure == null) return;
-
-        List<FluidStack> fluids = tank.getFluids();
-        if (fluids == null || fluids.isEmpty() || fluids.stream().allMatch(fs -> fs.getAmount() <= 0)) return;
-
-        BlockPos min = structure.interiorMin();
-        BlockPos max = structure.interiorMax();
-        float capacity = tank.getCapacity();
-        if (capacity <= 0) return;
-
-        float totalHeight = max.getY() - min.getY() + 1.0f;
-        float currentAirDensity = 0.0012f;
-        float totalLiquidHeight = 0;
-        float totalGasHeight = 0;
-
-        for (FluidStack fluidStack : fluids) {
-            float amount = fluidStack.getAmount();
-            if (amount <= 0) continue;
-            float fillPercentage = Math.min(1.0f, amount / capacity);
-            float height = fillPercentage * totalHeight;
-
-            net.minecraft.world.level.material.Fluid fluid = fluidStack.getFluid();
-            float density = 1.0f; // 默认密度
-
-            ResourceLocation rl = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getKey(fluid);
-            if (rl != null) {
-                String path = rl.getPath();
-                if (path.endsWith("_flowing")) {
-                    path = path.substring(0, path.length() - 8);
-                }
-                if (FluidSorter.DENSITY_MAP.containsKey(path)) {
-                    density = FluidSorter.DENSITY_MAP.get(path);
-                }
-            }
-
-            if (density < currentAirDensity) {
-                totalGasHeight += height;
-            } else {
-                totalLiquidHeight += height;
-            }
-        }
-
-        RandomSource random = level.random;
-        int totalFluidAmount = fluids.stream().mapToInt(FluidStack::getAmount).sum();
-        int baseCount = Math.max(200, Math.min(1000, totalFluidAmount / 50));
-
-        // --- A. 液体爆炸渲染：集中在水槽底部的液体层区间 ---
-        if (totalLiquidHeight > 0) {
-            double liquidMinY = min.getY();
-            double liquidMaxY = min.getY() + totalLiquidHeight;
-            int liquidCount = Math.round(baseCount * (totalLiquidHeight / totalHeight));
-
-            for (int i = 0; i < Math.max(20, liquidCount); i++) {
-                double x = min.getX() + random.nextDouble() * (max.getX() - min.getX() + 1);
-                double z = min.getZ() + random.nextDouble() * (max.getZ() - min.getZ() + 1);
-                double y = liquidMinY + random.nextDouble() * (liquidMaxY - liquidMinY);
-
-                if (random.nextFloat() < 0.7f) {
-                    serverLevel.sendParticles(ParticleTypes.CLOUD, x, y, z, 1, 0.08, 0.03, 0.08, 0.01);
-                } else {
-                    serverLevel.sendParticles(ParticleTypes.LARGE_SMOKE, x, y, z, 1, 0.06, 0.03, 0.06, 0.02);
-                }
-            }
-        }
-
-        // --- B. 气体膨胀渲染：集中在水槽顶部的倒挂气体层区间 ---
-        if (totalGasHeight > 0) {
-            double gasMaxY = max.getY() + 1.0;
-            double gasMinY = gasMaxY - totalGasHeight;
-            int gasCount = Math.round(baseCount * (totalGasHeight / totalHeight));
-
-            for (int i = 0; i < Math.max(20, gasCount); i++) {
-                double x = min.getX() + random.nextDouble() * (max.getX() - min.getX() + 1);
-                double z = min.getZ() + random.nextDouble() * (max.getZ() - min.getZ() + 1);
-                double y = gasMinY + random.nextDouble() * (gasMaxY - gasMinY);
-
-                if (random.nextFloat() < 0.7f) {
-                    serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, x, y, z, 1, 0.1, 0.05, 0.1, 0.005);
-                } else {
-                    serverLevel.sendParticles(ParticleTypes.ASH, x, y, z, 1, 0.05, 0.05, 0.05, 0.01);
-                }
-            }
         }
     }
 

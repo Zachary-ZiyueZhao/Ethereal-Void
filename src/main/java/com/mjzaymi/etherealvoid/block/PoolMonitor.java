@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PoolMonitor extends BaseEntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+
     public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
 
     public PoolMonitor() {
@@ -41,7 +42,6 @@ public class PoolMonitor extends BaseEntityBlock {
     @Override
     @Nullable
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // 💡 纯粹的熔炉逻辑：不管玩家点哪里，方块正面（显示屏）永远朝向玩家
         return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
@@ -58,6 +58,18 @@ public class PoolMonitor extends BaseEntityBlock {
     @Override
     public RenderShape getRenderShape(BlockState pState) {
         return RenderShape.MODEL;
+    }
+
+    @Override
+    public VoxelShape getOcclusionShape(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+        // 既然物理上是满格，遮光也直接用满格，彻底封死下方地面的漏光问题
+        return SHAPE;
+    }
+
+    @Override
+    public float getShadeBrightness(BlockState pState, BlockGetter pLevel, BlockPos pPos) {
+        // 给监控仪自身表面赋予 0.2F 的标准实体阴影暗度，使其不再像“发光方块”一样苍白扁平
+        return 0.2F;
     }
 
     @Override
