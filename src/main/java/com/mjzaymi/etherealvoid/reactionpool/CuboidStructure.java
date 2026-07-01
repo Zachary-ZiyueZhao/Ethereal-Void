@@ -10,9 +10,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CuboidStructure {
     public static final int MIN_WIDTH = 3;
@@ -144,10 +142,7 @@ public class CuboidStructure {
         return Optional.empty();
     }
 
-    /**
-     * 扫描整个多方块底盘正下方一格 (Y = min.getY() - 1)，统计有效加热器的数量
-     * 只有处于“开启状态”的加热器才会被计入统计
-     */
+    // 计算加热器数量
     public int countHeatersBelow(Level level) {
         int heaterCount = 0;
         int targetY = this.min.getY() - 1;
@@ -168,6 +163,43 @@ public class CuboidStructure {
             }
         }
         return heaterCount;
+    }
+
+    // 计算电极片集群数量，纯粹的 BFS
+    public int countIndependentElectromines(Level level) {
+        Set<BlockPos> allElectrodes = new HashSet<>();
+        for (BlockPos pos : this.members) {
+            if (level.getBlockState(pos).is(ModBlocks.ELECTRODE_PLATE.get())) {
+                allElectrodes.add(pos.immutable());
+            }
+        }
+
+        Set<BlockPos> visited = new HashSet<>();
+        int clusterCount = 0;
+
+        for (BlockPos startPos : allElectrodes) {
+            if (!visited.contains(startPos)) {
+                clusterCount++;
+
+                Queue<BlockPos> queue = new LinkedList<>();
+                queue.add(startPos);
+                visited.add(startPos);
+
+                while (!queue.isEmpty()) {
+                    BlockPos current = queue.poll();
+                    // 四联通
+                    for (Direction dir : Direction.values()) {
+                        BlockPos neighbor = current.relative(dir);
+                        if (allElectrodes.contains(neighbor) && !visited.contains(neighbor)) {
+                            visited.add(neighbor);
+                            queue.add(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+
+        return clusterCount;
     }
 
     public int width() {
@@ -387,7 +419,8 @@ public class CuboidStructure {
         return isSteelCasing(state)
                 || state.is(ModBlocks.ANTI_CORROSION_GLASS.get())
                 || state.is(ModBlocks.POOL_MONITOR.get())
-                || state.is(ModBlocks.REACTION_POOL_FLUID_IO.get()); // 加上这一行
+                || state.is(ModBlocks.REACTION_POOL_FLUID_IO.get())
+                || state.is(ModBlocks.ELECTRODE_PLATE.get());
     }
 
     private static boolean isSteelCasing(BlockState state) {

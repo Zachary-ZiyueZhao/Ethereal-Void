@@ -31,10 +31,10 @@ public class PoolEffectHandler {
         if (temperature >= 273.15f + 1500f) {
             spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.LAVA, 1);
             spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.FLAME, 1);
-            spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.SMOKE, 3);
+            spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.SMOKE, 1);
         } else if (temperature >= 273.15f + 1000f) {
             spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.FLAME, 1);
-            spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.SMOKE, 2);
+            spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.SMOKE, 1);
         } else if (temperature >= 273.15f + 500f) {
             spawnRandomParticle(serverLevel, intMin, intMax, random, ParticleTypes.SMOKE, 2);
         } else if (temperature >= 273.15f + 100f) {

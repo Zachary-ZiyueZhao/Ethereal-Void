@@ -130,6 +130,7 @@ public class ModReactionRecipes {
             Condition.ALWAYS_TRUE.and(
                     new TemperatureCondition(new Range(0, 923.15)))
     ));
+
     public static ReactionRecipe BRINE_ELECTROLYSIS = register(new ReactionRecipe(
             "brine_electrolysis",
             SyncType.RECIPE_SYNC,
@@ -140,9 +141,11 @@ public class ModReactionRecipes {
                     new FluidStack(ModFluids.SOURCE_HYDROGEN.get(), 20),
                     new FluidStack(ModFluids.SOURCE_CHLORINE.get(), 50),
                     new FluidStack(ModFluids.SOURCE_SODIUM_HYDROXIDE_SOLUTION.get(), 100))),
-            Condition.ALWAYS_TRUE.and(
-                    new TemperatureCondition(new Range(273.15, 373.15)))
-    )); // 这是电解配方！
+            Condition.ALWAYS_TRUE
+                    .and(new TemperatureCondition(new Range(273.15, 373.15)))
+                    .and(new com.mjzaymi.etherealvoid.reactionpool.recipe.condition.ElectrodeCountCondition(2))
+    ));
+
     public static ReactionRecipe BAUXITE_CALCINATION = register(new ReactionRecipe(
             "bauxite_calcination",
             SyncType.RECIPE_SYNC,
