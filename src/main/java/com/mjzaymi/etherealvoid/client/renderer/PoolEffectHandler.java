@@ -3,6 +3,7 @@ package com.mjzaymi.etherealvoid.client.renderer;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
+import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.TemperatureCondition;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -136,9 +137,9 @@ public class PoolEffectHandler {
     }
 
     /**
-     * 多方块破裂时外壳边界的冷凝粒子与灭火音效
+     * 多方块破裂时外壳边界的冷凝贴地光环与灭火音效（带温度加成）
      */
-    public static void spawnCoolingParticle(Level level, CuboidStructure structure) {
+    public static void spawnCoolingParticle(Level level, CuboidStructure structure, float temperature) {
         if (level == null || level.isClientSide || !(level instanceof ServerLevel serverLevel) || structure == null) return;
 
         BlockPos min = structure.min();
@@ -164,26 +165,42 @@ public class PoolEffectHandler {
         int sideLengthX = (int) (maxX - minX);
         int sideLengthZ = (int) (maxZ - minZ);
 
+        // 1. 🎲 基础粒子数量计算
         int particlesPerFace = Math.max(3, (sideHeight + sideLengthX + sideLengthZ) / 3);
+
+        // 2. 📈 根据温度增幅系数
+        // 超过 1000°C (1273.15K) 时，粒子数量翻 2.5 倍，下沉速度加剧
+        double speedMultiplier = 1.0;
+        if (temperature >= 273.15f + 1000f) {
+            particlesPerFace = (int) (particlesPerFace * 2.5);
+            speedMultiplier = 1.5; // 让超高热状态下的冷凝下沉显得更沉重、更有压迫感
+        }
 
         // 四个外侧面零散随机打点
         for (int i = 0; i < particlesPerFace; i++) {
             double rX1 = minX + random.nextDouble() * (maxX - minX);
             double rY1 = minY + random.nextDouble() * (maxY - minY);
-            spawnDynamicParticle(serverLevel, rX1, rY1, minZ, random);
+            spawnDynamicParticle(serverLevel, rX1, rY1, minZ, random, speedMultiplier);
 
             double rX2 = minX + random.nextDouble() * (maxX - minX);
             double rY2 = minY + random.nextDouble() * (maxY - minY);
-            spawnDynamicParticle(serverLevel, rX2, rY2, maxZ, random);
+            spawnDynamicParticle(serverLevel, rX2, rY2, maxZ, random, speedMultiplier);
 
             double rZ1 = minZ + random.nextDouble() * (maxZ - minZ);
             double rY3 = minY + random.nextDouble() * (maxY - minY);
-            spawnDynamicParticle(serverLevel, minX, rY3, rZ1, random);
+            spawnDynamicParticle(serverLevel, minX, rY3, rZ1, random, speedMultiplier);
 
             double rZ2 = minZ + random.nextDouble() * (maxZ - minZ);
             double rY4 = minY + random.nextDouble() * (maxY - minY);
-            spawnDynamicParticle(serverLevel, maxX, rY4, rZ2, random);
+            spawnDynamicParticle(serverLevel, maxX, rY4, rZ2, random, speedMultiplier);
         }
+    }
+
+    private static void spawnDynamicParticle(ServerLevel level, double x, double y, double z, RandomSource random, double speedMultiplier) {
+        double motionX = (random.nextDouble() - 0.5) * 0.03 * speedMultiplier;
+        double motionZ = (random.nextDouble() - 0.5) * 0.03 * speedMultiplier;
+        double motionY = (-0.03 - random.nextDouble() * 0.03) * speedMultiplier;
+        level.sendParticles(ParticleTypes.CLOUD, x, y, z, 0, motionX, motionY, motionZ, 1.0);
     }
 
     private static void spawnRandomParticle(ServerLevel level, BlockPos min, BlockPos max, RandomSource random, ParticleOptions type, int count) {
@@ -191,12 +208,5 @@ public class PoolEffectHandler {
         double y = min.getY() + random.nextDouble() * (max.getY() - min.getY() + 1);
         double z = min.getZ() + random.nextDouble() * (max.getZ() - min.getZ() + 1);
         level.sendParticles(type, x, y, z, count, 0.02, 0.02, 0.02, 0.005);
-    }
-
-    private static void spawnDynamicParticle(ServerLevel level, double x, double y, double z, RandomSource random) {
-        double motionX = (random.nextDouble() - 0.5) * 0.03;
-        double motionZ = (random.nextDouble() - 0.5) * 0.03;
-        double motionY = -0.03 - random.nextDouble() * 0.03;
-        level.sendParticles(ParticleTypes.CLOUD, x, y, z, 0, motionX, motionY, motionZ, 1.0);
     }
 }

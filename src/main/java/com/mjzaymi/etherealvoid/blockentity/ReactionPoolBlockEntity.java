@@ -27,36 +27,60 @@ import java.util.*;
 
 public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
 
+    // ==========================================
+    // 🧱 字段与内部数据结构 (Fields & Data)
+    // ==========================================
+
     private CuboidStructure structure;
 
-    //Idle
+    // Idle
     private final List<ItemStack> precipitates = new ArrayList<>();
     private final MultiFluidTank tank = new MultiFluidTank(0);
-    //All
+
+    // All
     private final List<ItemStack> precipitatesAll = new ArrayList<>();
     private final MultiFluidTank tankAll = new MultiFluidTank(0);
     private final List<ReactionRecipe> activeTasks = new ArrayList<>();
-    private float temperature = 273.15f+20f;
+
+    // 物理参数
+    private float temperature = 273.15f + 20f;
     private float pressure = 1;
+
+    // ==========================================
+    // 🏗️ 构造器与基础生命周期 (Constructor & LifeCycle)
+    // ==========================================
 
     public ReactionPoolBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.REACTION_POOL_BE.get(), pos, state);
     }
 
     @Override
+    public void updateChangeState(Level level, boolean update) {
+        super.updateChangeState(level, update);
+        updateContentsAll();
+    }
+
+    // ==========================================
+    // 💾 NBT 数据存储与读取 (NBT Serialization)
+    // ==========================================
+
+    @Override
     protected void saveAdditional(CompoundTag pTag) {
-        if (structure!=null) pTag.put("structure", structure.serializeNBT());
+        if (structure != null) pTag.put("structure", structure.serializeNBT());
         pTag.put("tank", tank.writeToNBT(new CompoundTag()));
+
         var list = new ListTag();
         synchronized (precipitates) {
             for (ItemStack itemStack : precipitates) list.add(itemStack.save(new CompoundTag()));
         }
         pTag.put("precipitates", list);
+
         list = new ListTag();
         synchronized (activeTasks) {
             for (ReactionRecipe task : activeTasks) list.add(task.save(new CompoundTag()));
         }
         pTag.put("activeTasks", list);
+
         pTag.putFloat("temperature", temperature);
         pTag.putFloat("pressure", pressure);
         super.saveAdditional(pTag);
@@ -67,26 +91,27 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         super.load(pTag);
         structure = CuboidStructure.deserializeNBT(pTag.getCompound("structure"));
         tank.readFromNBT(pTag.getCompound("tank"));
+
         synchronized (precipitates) {
             precipitates.clear();
             for (Tag t : pTag.getList("precipitates", Tag.TAG_COMPOUND))
                 precipitates.add(ItemStack.of((CompoundTag) t));
         }
+
         synchronized (activeTasks) {
             activeTasks.clear();
             for (Tag t : pTag.getList("activeTasks", Tag.TAG_COMPOUND))
                 activeTasks.add(ReactionRecipe.of((CompoundTag) t));
         }
+
         temperature = pTag.getFloat("temperature");
         pressure = pTag.getFloat("pressure");
         updateContentsAll();
     }
 
-    @Override
-    public void updateChangeState(Level level, boolean update) {
-        super.updateChangeState(level, update);
-        updateContentsAll();
-    }
+    // ==========================================
+    // 📐 多方块结构构建与销毁 (Structure Management)
+    // ==========================================
 
     public void setStructure(CuboidStructure structure) {
         // 当结构被破坏时
@@ -95,7 +120,7 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             PoolEffectHandler.spawnEvaporationParticles(level, this.structure, tank);
 
             if (this.temperature >= 273.15f + 100f) {
-                PoolEffectHandler.spawnCoolingParticle(level, this.structure);
+                PoolEffectHandler.spawnCoolingParticle(level, this.structure, this.temperature);
             }
 
             this.temperature = 293.15f;
@@ -120,12 +145,17 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         return structure;
     }
 
+    // ==========================================
+    // ⚙️ 核心 Tick 逻辑处理 (Core Game Loop)
+    // ==========================================
+
     public void tick(Level pLevel, BlockPos pPos, BlockState pState) {
         if (pLevel.isClientSide) return;
 
         var structure = getStructure();
         if (structure == null) return;
 
+        // 验证多方块结构的完整性
         var realStructureOpt = CuboidStructure.findFromCorner(pLevel, getBlockPos());
         if (realStructureOpt.isEmpty()) {
             setStructure(null);
@@ -195,41 +225,62 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             }
         }
 
-        // 🌟 表现逻辑移交给 Handler 处理
+        // 表现逻辑移交给 Handler 处理
         PoolEffectHandler.tickAmbientEffects(pLevel, structure, this.temperature);
 
+        // 处理物理和化学反应
         updateTemperature(pLevel);
         processReactions(pLevel);
     }
 
-    @Override
-    public AABB getRenderBoundingBox() {
-        if (structure==null) return super.getRenderBoundingBox();
-        var min = getStructure().min();
-        var max = getStructure().max();
-        return new AABB(
-                min.getX(), min.getY(), min.getZ(),
-                max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0
-        );
-    }
+    // ==========================================
+    // 🌡️ 物理动力学: 温度调节 (Thermodynamics)
+    // ==========================================
 
     public static final int UPDATE_TEMPERATURE_TICK = 20;
     public final int RANDOM_UPDATE_TEMPERATURE_REMAINDER = new Random().nextInt(UPDATE_TEMPERATURE_TICK);
+
     public void updateTemperature(Level pLevel) {
         if (pLevel.getGameTime() % UPDATE_TEMPERATURE_TICK != RANDOM_UPDATE_TEMPERATURE_REMAINDER) return;
 
-        var heaterCount = structure.countHeatersBelow(pLevel);
-        var targetTemperature = 293.15f + (heaterCount * 100.0f);
+        int heaterCount = structure.countHeatersBelow(pLevel);
+        float targetTemperature = 293.15f + (heaterCount * 100.0f);
 
         var originalTemp = this.temperature;
         if (this.temperature < targetTemperature) {
-            this.temperature = Math.min(targetTemperature, this.temperature + 10);
+            // 使用对数函数动态计算升温速率
+            double logBonus = Math.log(heaterCount + 1.0);
+            float heatingRate = (float) (10.0 * logBonus);
+
+            // 确保哪怕只有 1 个加热器，最少也能升温 1°C
+            if (heaterCount > 0 && heatingRate < 1.0f) {
+                heatingRate = 1.0f;
+            }
+
+            this.temperature = Math.min(targetTemperature, this.temperature + heatingRate);
+
         } else if (this.temperature > targetTemperature) {
-            this.temperature = Math.max(targetTemperature, this.temperature - 4);
+            float tempDifference = this.temperature - targetTemperature;
+
+            // 基于温差的对数降温
+            double logCooling = Math.log(tempDifference + 1.0);
+            float coolingRate = (float) (2.5 * logCooling);
+
+            // 保底机制
+            if (coolingRate < 0.5f) {
+                coolingRate = 0.5f;
+            }
+
+            this.temperature = Math.max(targetTemperature, this.temperature - coolingRate);
         }
-        if (originalTemp!=this.temperature)
+
+        if (originalTemp != this.temperature)
             updateChangeState(true);
     }
+
+    // ==========================================
+    // 🧪 反应池机制: 配方与工艺流程 (Chemical Reactions)
+    // ==========================================
 
     public void registerReaction(ReactionRecipe recipe) {
         recipe.cost(precipitates, tank);
@@ -238,6 +289,7 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
 
     public static final int PROCESS_TICK = 20;
     public final int RANDOM_PROCESS_REMAINDER = new Random().nextInt(PROCESS_TICK);
+
     public void processReactions(Level pLevel) {
         if (pLevel.getGameTime() % PROCESS_TICK != RANDOM_PROCESS_REMAINDER) return;
 
@@ -247,7 +299,7 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
             if (!recipe.costsEnough(precipitates, tank.getFluids())) continue;
             if (!recipe.matchCondition(this)) continue;
             boolean emptyTasks = activeTasks.isEmpty();
-            boolean containsType = GameUtil.findById(activeTasks, recipe.id)!=null;
+            boolean containsType = GameUtil.findById(activeTasks, recipe.id) != null;
             switch (recipe.syncType) {
                 case SyncType.SYNC -> {
                     if (!emptyTasks) continue;
@@ -268,6 +320,7 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
                 }
             }
         }
+
         synchronized (activeTasks) {
             synchronized (precipitates) {
                 synchronized (tank) {
@@ -292,6 +345,10 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         if (changed) updateChangeState(true);
     }
 
+    // ==========================================
+    // 📊 内部缓存同步与信息流转 (Data Sync & Getters)
+    // ==========================================
+
     public void updateContentsAll() {
         var pCopy = new ArrayList<>(precipitates);
         for (ReactionRecipe task : activeTasks) GameUtil.addItemsToList(pCopy, task.cost.ingredients);
@@ -309,6 +366,17 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
         }
     }
 
+    @Override
+    public AABB getRenderBoundingBox() {
+        if (structure == null) return super.getRenderBoundingBox();
+        var min = getStructure().min();
+        var max = getStructure().max();
+        return new AABB(
+                min.getX(), min.getY(), min.getZ(),
+                max.getX() + 1.0, max.getY() + 1.0, max.getZ() + 1.0
+        );
+    }
+
     public MultiFluidTank getTank() {
         return this.tank;
     }
@@ -316,12 +384,15 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
     public List<ItemStack> getPrecipitatesAll() {
         return precipitatesAll;
     }
+
     public MultiFluidTank getTankAll() {
         return tankAll;
     }
+
     public float getTemperature() {
         return temperature;
     }
+
     public float getPressure() {
         return pressure;
     }

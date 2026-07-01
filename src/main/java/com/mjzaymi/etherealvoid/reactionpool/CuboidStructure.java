@@ -155,7 +155,6 @@ public class CuboidStructure {
         for (int x = this.min.getX(); x <= this.max.getX(); x++) {
             for (int z = this.min.getZ(); z <= this.max.getZ(); z++) {
                 BlockPos checkPos = new BlockPos(x, targetY, z);
-                // 💡 替换为你的加热器实际注册对象
                 if (level.getBlockState(checkPos).is(ModBlocks.RESISTIVE_HEATER.get())) {
                     heaterCount++;
                 }
