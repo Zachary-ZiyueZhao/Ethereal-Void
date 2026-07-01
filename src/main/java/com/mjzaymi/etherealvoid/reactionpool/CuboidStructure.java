@@ -146,6 +146,7 @@ public class CuboidStructure {
 
     /**
      * 扫描整个多方块底盘正下方一格 (Y = min.getY() - 1)，统计有效加热器的数量
+     * 只有处于“开启状态”的加热器才会被计入统计
      */
     public int countHeatersBelow(Level level) {
         int heaterCount = 0;
@@ -155,8 +156,14 @@ public class CuboidStructure {
         for (int x = this.min.getX(); x <= this.max.getX(); x++) {
             for (int z = this.min.getZ(); z <= this.max.getZ(); z++) {
                 BlockPos checkPos = new BlockPos(x, targetY, z);
-                if (level.getBlockState(checkPos).is(ModBlocks.RESISTIVE_HEATER.get())) {
-                    heaterCount++;
+                BlockState state = level.getBlockState(checkPos);
+
+                // 检查方块类型，并且必须具有 ENABLED 属性且值为 true
+                if (state.is(ModBlocks.RESISTIVE_HEATER.get())) {
+                    if (state.hasProperty(com.mjzaymi.etherealvoid.block.ResistiveHeater.ENABLED)
+                            && state.getValue(com.mjzaymi.etherealvoid.block.ResistiveHeater.ENABLED)) {
+                        heaterCount++;
+                    }
                 }
             }
         }

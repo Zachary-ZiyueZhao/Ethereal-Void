@@ -3,7 +3,6 @@ package com.mjzaymi.etherealvoid.client.renderer;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.TemperatureCondition;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -18,9 +17,7 @@ import java.util.List;
 
 public class PoolEffectHandler {
 
-    /**
-     * 实时维护多方块内部不同温度阶段的日常环境粒子表现
-     */
+    // 实时维护多方块内部不同温度阶段的日常环境粒子表现
     public static void tickAmbientEffects(Level level, CuboidStructure structure, float temperature) {
         if (level.isClientSide || !(level instanceof ServerLevel serverLevel) || structure == null) return;
 
@@ -49,9 +46,7 @@ public class PoolEffectHandler {
         }
     }
 
-    /**
-     * 多方块碎裂时，内部流体的气化与蒸发粒子效果
-     */
+    // 多方块碎裂时，内部流体的气化与蒸发粒子效果
     public static void spawnEvaporationParticles(Level level, CuboidStructure structure, MultiFluidTank tank) {
         if (level == null || level.isClientSide || !(level instanceof ServerLevel serverLevel) || structure == null) return;
 
@@ -136,9 +131,7 @@ public class PoolEffectHandler {
         }
     }
 
-    /**
-     * 多方块破裂时外壳边界的冷凝贴地光环与灭火音效（带温度加成）
-     */
+    // 多方块破裂时外壳边界的冷凝贴地光环与灭火音效（带温度加成）
     public static void spawnCoolingParticle(Level level, CuboidStructure structure, float temperature) {
         if (level == null || level.isClientSide || !(level instanceof ServerLevel serverLevel) || structure == null) return;
 
@@ -165,10 +158,10 @@ public class PoolEffectHandler {
         int sideLengthX = (int) (maxX - minX);
         int sideLengthZ = (int) (maxZ - minZ);
 
-        // 1. 🎲 基础粒子数量计算
+        // 1. 基础粒子数量计算
         int particlesPerFace = Math.max(3, (sideHeight + sideLengthX + sideLengthZ) / 3);
 
-        // 2. 📈 根据温度增幅系数
+        // 2. 根据温度增幅系数
         // 超过 1000°C (1273.15K) 时，粒子数量翻 2.5 倍，下沉速度加剧
         double speedMultiplier = 1.0;
         if (temperature >= 273.15f + 1000f) {
