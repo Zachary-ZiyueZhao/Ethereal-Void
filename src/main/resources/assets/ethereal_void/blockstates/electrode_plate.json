@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "mode=unassigned": {
+      "model": "ethereal_void:block/electrode_plate"
+    },
+    "mode=positive": {
+      "model": "ethereal_void:block/electrode_plate_1"
+    },
+    "mode=negative": {
+      "model": "ethereal_void:block/electrode_plate_2"
+    }
+  }
+}

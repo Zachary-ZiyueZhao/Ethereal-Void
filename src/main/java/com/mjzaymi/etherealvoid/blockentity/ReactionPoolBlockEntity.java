@@ -114,18 +114,32 @@ public class ReactionPoolBlockEntity extends UpdateBaseBlockEntity {
     // ==========================================
 
     public void setStructure(CuboidStructure structure) {
-        // 当结构被破坏时
+        // 当结构被破坏时（从非 null 变成 null 的瞬间）
         if (structure == null && this.structure != null) {
-            // 通过 EffectHandler 分离处理粒子与声音
+            // 1. 通过 EffectHandler 分离处理粒子与声音
             PoolEffectHandler.spawnEvaporationParticles(level, this.structure, tank);
 
             if (this.temperature >= 273.15f + 100f) {
                 PoolEffectHandler.spawnCoolingParticle(level, this.structure, this.temperature);
             }
 
+            // 2. 🔥 【高效新增】: 遍历已缓存的结构成员，一键重置电极片
+            // 仅在此瞬间执行一次，不涉及任何多余的拓扑搜索，性能极高！
+            for (BlockPos pos : this.structure.members()) {
+                BlockState state = level.getBlockState(pos);
+                // 检查方块是否为电极片
+                if (state.is(com.mjzaymi.etherealvoid.registration.ModBlocks.ELECTRODE_PLATE.get())) {
+                    // 只有当它在工作（非 UNASSIGNED）时，才触发状态切换与粒子爆发
+                    if (state.getValue(com.mjzaymi.etherealvoid.block.ElectrodePlate.MODE) != com.mjzaymi.etherealvoid.block.ElectrodePlate.ElectrodeMode.UNASSIGNED) {
+                        com.mjzaymi.etherealvoid.block.ElectrodePlate.changeMode(level, pos, state, com.mjzaymi.etherealvoid.block.ElectrodePlate.ElectrodeMode.UNASSIGNED);
+                    }
+                }
+            }
+
             this.temperature = 293.15f;
             this.pressure = 1.0f;
         }
+
         if (structure == null) {
             tank.setCapacity(0);
             if (this.structure != null) {
