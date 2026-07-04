@@ -1,0 +1,8 @@
+{
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "ethereal_void:block/electrode_plate/electrode_plate"
+  },
+  "elements": []
+}

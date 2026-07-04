@@ -1,13 +1,15 @@
 {
   "variants": {
-    "mode=unassigned": {
-      "model": "ethereal_void:block/electrode_plate"
-    },
-    "mode=positive": {
-      "model": "ethereal_void:block/electrode_plate_1"
-    },
-    "mode=negative": {
-      "model": "ethereal_void:block/electrode_plate_2"
-    }
+    "mode=unassigned,render_kind=default": { "model": "ethereal_void:block/electrode_plate" },
+    "mode=positive,render_kind=default": { "model": "ethereal_void:block/electrode_plate_1" },
+    "mode=negative,render_kind=default": { "model": "ethereal_void:block/electrode_plate_2" },
+
+    "mode=unassigned,render_kind=center": { "model": "ethereal_void:block/huge_electrode_plate" },
+    "mode=positive,render_kind=center": { "model": "ethereal_void:block/huge_electrode_plate" },
+    "mode=negative,render_kind=center": { "model": "ethereal_void:block/huge_electrode_plate" },
+
+    "mode=unassigned,render_kind=invisible": { "model": "ethereal_void:block/invisible" },
+    "mode=positive,render_kind=invisible": { "model": "ethereal_void:block/invisible" },
+    "mode=negative,render_kind=invisible": { "model": "ethereal_void:block/invisible" }
   }
 }
