@@ -16,7 +16,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import java.util.Optional;
 
 public class HugeElectrodePlate {
-    // 确保这里的模组ID和你的完全一致
     public static final ResourceLocation STRUCTURE_RL = new ResourceLocation("ethereal_void", "huge_electrode_plate");
 
     /**
