@@ -1,8 +1,8 @@
 {
-	"ambientocclusion": false,
-	"render_type": "minecraft:cutout",
 	"format_version": "1.9.0",
 	"credit": "Made with Blockbench",
+	"ambientocclusion": false,
+	"render_type": "minecraft:cutout",
 	"textures": {
 		"0": "ethereal_void:block/anti_corrosion_glass",
 		"1": "ethereal_void:block/pool_monitor_sensor/monitor_sensor_1",
@@ -45,6 +45,24 @@
 			}
 		},
 		{
+			"from": [12.25, 11.25, 1.25],
+			"to": [3.75, 4.75, -0.75],
+			"rotation": {"angle": 0, "axis": "y", "origin": [15.25, 13.25, 1.75]},
+			"shade": false,
+			"forge_data": {
+				"block_light": 15,
+				"sky_light": 15
+			},
+			"faces": {
+				"north": {"uv": [14, 14, 15, 15], "texture": "#11"},
+				"east": {"uv": [14, 14, 15, 15], "texture": "#11"},
+				"south": {"uv": [14, 14, 15, 15], "texture": "#11"},
+				"west": {"uv": [14, 14, 15, 15], "texture": "#11"},
+				"up": {"uv": [15, 15, 14, 14], "texture": "#11"},
+				"down": {"uv": [15, 14, 14, 15], "texture": "#11"}
+			}
+		},
+		{
 			"from": [5, 6, 15],
 			"to": [11, 10, 17],
 			"rotation": {"angle": 0, "axis": "y", "origin": [7, 7, 15]},
@@ -55,6 +73,24 @@
 				"west": {"uv": [0, 8, 2, 12], "texture": "#1"},
 				"up": {"uv": [12, 2, 6, 0], "texture": "#1"},
 				"down": {"uv": [12, 2, 6, 4], "texture": "#1"}
+			}
+		},
+		{
+			"from": [11.1, 10.1, 17.1],
+			"to": [4.9, 5.9, 14.9],
+			"rotation": {"angle": 0, "axis": "y", "origin": [13.1, 11.1, 17.1]},
+			"shade": false,
+			"forge_data": {
+				"block_light": 15,
+				"sky_light": 15
+			},
+			"faces": {
+				"north": {"uv": [14, 14, 15, 15], "texture": "#1"},
+				"east": {"uv": [14, 14, 15, 15], "texture": "#1"},
+				"south": {"uv": [14, 14, 15, 15], "texture": "#1"},
+				"west": {"uv": [14, 14, 15, 15], "texture": "#1"},
+				"up": {"uv": [15, 15, 14, 14], "texture": "#1"},
+				"down": {"uv": [15, 14, 14, 15], "texture": "#1"}
 			}
 		},
 		{
