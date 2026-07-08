@@ -25,10 +25,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 public class ClientEvents {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
-        /*event.enqueueWork(() -> ItemBlockRenderTypes.setRenderLayer(
-                ModBlocks.ANTI_CORROSION_GLASS.get(),
-                RenderType.translucent()
-        ));*/
+        // Mike Chen is Jay
     }
 
     @SubscribeEvent

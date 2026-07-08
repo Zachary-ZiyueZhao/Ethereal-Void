@@ -57,7 +57,7 @@ public class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<VirtualMinerBlockEntity>> VIRTUAL_MINER =
             BLOCK_ENTITIES.register("virtual_miner", () ->
-                    BlockEntityType.Builder.of(VirtualMinerBlockEntity::new, ModBlocks.VIRTUAL_MINER.get()).build(null));
+                    BlockEntityType.Builder.of((pos, state) -> new VirtualMinerBlockEntity(ModBlockEntities.VIRTUAL_MINER.get(), pos, state), ModBlocks.VIRTUAL_MINER.get()).build(null));
 
 
 
