@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid.registration;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
+import com.mjzaymi.etherealvoid.blockentity.VirtualMinerItem;
 import com.mjzaymi.etherealvoid.common.item.BaseItem;
 import com.mjzaymi.etherealvoid.item.Multimeter;
 import net.minecraft.world.item.BlockItem;
@@ -25,6 +26,7 @@ public class ModItems {
     public static final RegistryObject<BlockItem> HYDRAULIC_GENERATOR_ITEM = registerBlockItem("hydraulic_generator", ModBlocks.HYDRAULIC_GENERATOR);
     public static final RegistryObject<BlockItem> FLUID_PUMP_ITEM = registerBlockItem("fluid_pump", ModBlocks.FLUID_PUMP);
     public static final RegistryObject<BlockItem> REACTION_POOL_FLUID_IO_ITEM = registerBlockItem("reaction_pool_fluid_io", ModBlocks.REACTION_POOL_FLUID_IO);
+    public static final RegistryObject<Item> VIRTUAL_MINER = ITEMS.register("virtual_miner", () -> new VirtualMinerItem(ModBlocks.VIRTUAL_MINER.get(), new Item.Properties()));
 
 
     public static final RegistryObject<BlockItem> MAGNETIC_SIEVE_ITEM = registerBlockItem("magnetic_sieve", ModBlocks.MAGNETIC_SIEVE);

@@ -37,6 +37,12 @@ public class ModBlocks {
     public static final RegistryObject<Block> POOL_MONITOR = BLOCKS.register("pool_monitor", PoolMonitor::new);
     public static final RegistryObject<Block> REACTION_POOL_FLUID_IO = BLOCKS.register("reaction_pool_fluid_io", ReactionPoolFluidIO::new);
 
+    // 仆从方块：设置为空气般不可见，且不可导电/透光（noOcclusion）
+    public static final RegistryObject<Block> VIRTUAL_MINER_PART = BLOCKS.register("virtual_miner_part",
+            () -> new VirtualMinerPartBlock(BlockBehaviour.Properties.copy(Blocks.BARRIER).noOcclusion().noLootTable()));
+
+    public static final RegistryObject<Block> VIRTUAL_MINER = BLOCKS.register("virtual_miner", VirtualMinerBlock::new);
+
 
     public static void register(IEventBus eventBus) {
         BLOCKS.register(eventBus);

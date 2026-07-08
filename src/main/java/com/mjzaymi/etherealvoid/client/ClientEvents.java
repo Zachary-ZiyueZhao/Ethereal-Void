@@ -2,7 +2,9 @@ package com.mjzaymi.etherealvoid.client;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.client.model.ConnectedGlassModel;
+import com.mjzaymi.etherealvoid.client.model.VirtualMinerModel;
 import com.mjzaymi.etherealvoid.client.renderer.ReactionPoolRenderer;
+import com.mjzaymi.etherealvoid.client.renderer.VirtualMinerBlockEntityRenderer;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
 import net.minecraft.client.renderer.block.BlockModelShaper;
@@ -35,6 +37,8 @@ public class ClientEvents {
                 ModBlockEntities.REACTION_POOL_BE.get(),
                 ReactionPoolRenderer::new
         );
+
+        event.registerBlockEntityRenderer(ModBlockEntities.VIRTUAL_MINER.get(), VirtualMinerBlockEntityRenderer::new);
     }
 
     @SubscribeEvent
@@ -47,5 +51,11 @@ public class ClientEvents {
         if (originalModel != null && !(originalModel instanceof ConnectedGlassModel)) {
             event.getModels().put(modelLocation, new ConnectedGlassModel(originalModel));
         }
+    }
+
+    @SubscribeEvent
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        // 注册你在 Blockbench 里生成的骨骼模型层（通常导出的类里自带了一个静态的 createBodyLayer() 方法）
+        event.registerLayerDefinition(VirtualMinerBlockEntityRenderer.LAYER_LOCATION, VirtualMinerModel::createBodyLayer);
     }
 }

@@ -55,6 +55,11 @@ public class ModBlockEntities {
                     BlockEntityType.Builder.of(ReactionPoolFluidIOBlockEntity::new,
                             ModBlocks.REACTION_POOL_FLUID_IO.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<VirtualMinerBlockEntity>> VIRTUAL_MINER =
+            BLOCK_ENTITIES.register("virtual_miner", () ->
+                    BlockEntityType.Builder.of(VirtualMinerBlockEntity::new, ModBlocks.VIRTUAL_MINER.get()).build(null));
+
+
 
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
