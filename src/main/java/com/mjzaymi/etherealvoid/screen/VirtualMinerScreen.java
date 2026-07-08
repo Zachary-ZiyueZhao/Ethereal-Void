@@ -10,8 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class VirtualMinerScreen extends AbstractContainerScreen<VirtualMinerMenu> {
     // 直接复用原版最完美的 9x3 标准箱子贴图
-    private static final ResourceLocation TEXTURE =
-            new ResourceLocation("minecraft", "textures/gui/container/generic_54.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/container/generic_54.png");
 
     public VirtualMinerScreen(VirtualMinerMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
         super(pMenu, pPlayerInventory, pTitle);
