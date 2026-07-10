@@ -1,5 +1,6 @@
 package com.mjzaymi.etherealvoid.block;
 
+import com.mjzaymi.etherealvoid.blockentity.GemPolishingStationBlockEntity;
 import com.mjzaymi.etherealvoid.blockentity.VirtualMinerBlockEntity;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModBlocks;
@@ -56,6 +57,20 @@ public class VirtualMinerBlock extends BaseEntityBlock {
     @Override
     public BlockState mirror(BlockState state, Mirror mirror) {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
+    }
+
+    @Override
+    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+        if (!pLevel.isClientSide()) {
+            BlockEntity entity = pLevel.getBlockEntity(pPos);
+            if(entity instanceof GemPolishingStationBlockEntity) {
+                NetworkHooks.openScreen(((ServerPlayer)pPlayer), (GemPolishingStationBlockEntity)entity, pPos);
+            } else {
+                throw new IllegalStateException("Our Container provider is missing!");
+            }
+        }
+
+        return InteractionResult.sidedSuccess(pLevel.isClientSide());
     }
 
     // 放置后：生成其余 17 个仆从方块占位
