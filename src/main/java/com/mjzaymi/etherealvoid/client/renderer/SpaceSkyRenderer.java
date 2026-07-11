@@ -16,8 +16,7 @@ public class SpaceSkyRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 
-        // 🌟 1. 重新设定符合“低轨道”的硬核物理参数
-        double planetRadius = 20000.0;
+        double planetRadius = 48000.0;
         double planetCenterY = -340.0 - planetRadius;
 
         // 获取当前相机的真实世界 Y 坐标
@@ -26,25 +25,33 @@ public class SpaceSkyRenderer {
         // 计算相机到虚拟地心的真实距离
         double distanceToCenter = cameraY - planetCenterY;
 
-        // 安全锁：防止玩家跌进地心导致数学报错
+        // 安全锁
         if (distanceToCenter <= planetRadius) {
             distanceToCenter = planetRadius + 1.0;
         }
 
-        // 平面固定挂在相机下方 100 格
+        // 虚拟平面原本挂在相机下方 100 格
         float renderDistance = 100.0F;
 
-        // 🌟 2. 【核心突破】球体切线视区算法
-        // 利用勾股定理计算出真正贴近地表时的缩放比。
-        // 当玩家在 Y=64 时，距离地表极近，这个公式会让 size 飙升到 300~500，让地球几乎“贴脸”！
+        // 算出原本需要的 size
         double skySquare = distanceToCenter * distanceToCenter - planetRadius * planetRadius;
         float size = (float) (renderDistance * (planetRadius / Math.sqrt(skySquare)));
 
-        // 🌟 3. 渲染状态设置
+        // 设想将平面的最远端顶点（四个角）的绝对距离强行锁死在 30 格的绝对安全区内
+        float maxSafeDistance = 30.0F;
+
+        // 根据勾股定理，计算出大平面原坐标下的最远距离，从而得出收缩系数 k
+        float k = (float) (maxSafeDistance / Math.sqrt(2.0 * size * size + renderDistance * renderDistance));
+
+        // 算出收缩后的真实安全渲染距离和安全尺寸
+        float finalRenderDistance = renderDistance * k;
+        float finalSize = size * k;
+
+        // 渲染状态设置
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.depthMask(false);
-        RenderSystem.disableDepthTest(); // 强行关闭深度测试，确保它是巨大的天空背景
+        RenderSystem.disableDepthTest();
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderTexture(0, EARTH_TEXTURE);
@@ -52,23 +59,43 @@ public class SpaceSkyRenderer {
 
         poseStack.pushPose();
 
-        // 🌟 4. 位置变换
-        // 直接向下平移 100 格，来到视线正下方
-        poseStack.translate(0.0F, -renderDistance, 0.0F);
+        // 位置变换
+        poseStack.translate(0.0F, -finalRenderDistance, 0.0F);
 
         // 星球自转
-        poseStack.mulPose(Axis.YP.rotationDegrees(gameTime * 0.05F));
+        poseStack.mulPose(Axis.YP.rotationDegrees(gameTime * 0.005F));
 
         Matrix4f matrix = poseStack.last().pose();
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
 
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
 
-        // 🌟 5. 顶点映射（由于 size 现在能突破 100 的限制，它会铺满你屏幕下方的整片世界！）
-        bufferbuilder.vertex(matrix, -size, 0.0F, -size).uv(0.0F, 0.0F).endVertex();
-        bufferbuilder.vertex(matrix, -size, 0.0F, size).uv(0.0F, 1.0F).endVertex();
-        bufferbuilder.vertex(matrix, size, 0.0F, size).uv(1.0F, 1.0F).endVertex();
-        bufferbuilder.vertex(matrix, size, 0.0F, -size).uv(1.0F, 0.0F).endVertex();
+        int split = 4;
+        // 所有的顶点生成全部基于 finalSize
+        float step = finalSize * 2.0F / split;
+        float uvStep = 1.0F / split;
+
+        for (int x = 0; x < split; x++) {
+            for (int z = 0; z < split; z++) {
+
+                float x0 = -finalSize + x * step;
+                float x1 = x0 + step;
+
+                float z0 = -finalSize + z * step;
+                float z1 = z0 + step;
+
+                float u0 = x * uvStep;
+                float u1 = u0 + uvStep;
+
+                float v0 = z * uvStep;
+                float v1 = v0 + uvStep;
+
+                bufferbuilder.vertex(matrix, x0, 0.0F, z0).uv(u0, v0).endVertex();
+                bufferbuilder.vertex(matrix, x0, 0.0F, z1).uv(u0, v1).endVertex();
+                bufferbuilder.vertex(matrix, x1, 0.0F, z1).uv(u1, v1).endVertex();
+                bufferbuilder.vertex(matrix, x1, 0.0F, z0).uv(u1, v0).endVertex();
+            }
+        }
 
         BufferUploader.drawWithShader(bufferbuilder.end());
 
