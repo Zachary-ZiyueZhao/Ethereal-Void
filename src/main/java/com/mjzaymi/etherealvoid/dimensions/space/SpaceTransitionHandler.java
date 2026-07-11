@@ -8,9 +8,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,8 +22,7 @@ import java.util.UUID;
 public class SpaceTransitionHandler {
 
     private static final ResourceKey<Level> EARTH_KEY = Level.OVERWORLD;
-    private static final ResourceKey<Level> ORBIT_KEY = ResourceKey.create(Registries.DIMENSION,
-            new ResourceLocation(EtherealVoid.MOD_ID, "low_earth_orbit"));
+    private static final ResourceKey<Level> ORBIT_KEY = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "low_earth_orbit"));
 
     private static final double EARTH_MAX_Y = 320.0;
     private static final double ORBIT_MIN_Y = -60.0;
@@ -49,7 +50,6 @@ public class SpaceTransitionHandler {
             ServerLevel orbitLevel = player.server.getLevel(ORBIT_KEY);
             if (orbitLevel != null) {
                 COOLDOWN_MAP.put(uuid, currentTime + 60);
-                // 传送到轨道 -25.0 处，此时客户端会计算出该高度依然带有中等程度的浓雾，随后向上飞时慢慢消散
                 teleportToDimension(player, orbitLevel, player.getX(), -59.0, player.getZ());
             }
         }
@@ -58,27 +58,50 @@ public class SpaceTransitionHandler {
             ServerLevel earthLevel = player.server.getLevel(EARTH_KEY);
             if (earthLevel != null) {
                 COOLDOWN_MAP.put(uuid, currentTime + 60);
-                // 传送到地球 285.0 处，同样带有中等浓雾，向下掉落时平滑消散
                 teleportToDimension(player, earthLevel, player.getX(), 319.0, player.getZ());
             }
         }
     }
 
     private static void teleportToDimension(ServerPlayer player, ServerLevel targetLevel, double x, double y, double z) {
-        double motionX = player.getDeltaMovement().x;
-        double motionY = player.getDeltaMovement().y;
-        double motionZ = player.getDeltaMovement().z;
+        // 1. 🌟 在传送前精准记录玩家当前的动量
+        Vec3 originalVelocity = player.getDeltaMovement();
 
         if (player.isPassenger()) {
             Entity vehicle = player.getVehicle();
             player.stopRiding();
             if (vehicle != null) {
-                vehicle.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, motionX, motionY, motionZ));
+                vehicle.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
             }
-            player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, motionX, motionY, motionZ));
-            player.startRiding(vehicle, true);
+            // 记录跨界后的新玩家实例
+            ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
+            if (telePlayer != null) {
+                // 2. 🌟 恢复玩家跨界后的动量
+                restorePlayerVelocity(telePlayer, originalVelocity);
+                if (vehicle != null) {
+                    telePlayer.startRiding(vehicle, true);
+                }
+            }
         } else {
-            player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, motionX, motionY, motionZ));
+            ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
+            if (telePlayer != null) {
+                // 2. 🌟 恢复玩家跨界后的动量
+                restorePlayerVelocity(telePlayer, originalVelocity);
+            }
         }
+    }
+
+    /**
+     * 辅助方法：强制恢复并同步玩家的动量
+     */
+    private static void restorePlayerVelocity(ServerPlayer player, Vec3 velocity) {
+        // 强制写入服务端玩家实例的速度
+        player.setDeltaMovement(velocity);
+
+        // 关键：触发脉冲标记，防止原版执行不必要的重置
+        player.hasImpulse = true;
+
+        // 🌟 核心：向客户端发送运动量同步数据包，强制刷新客户端的画面，防止两端速度不一致发生瞬移拉扯
+        player.connection.send(new ClientboundSetEntityMotionPacket(player));
     }
 }
