@@ -20,8 +20,7 @@ import net.minecraftforge.fml.common.Mod;
 public class ClientSpaceVisualHandler {
 
     private static final ResourceKey<Level> EARTH_KEY = Level.OVERWORLD;
-    private static final ResourceKey<Level> ORBIT_KEY = ResourceKey.create(Registries.DIMENSION,
-            ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "low_earth_orbit"));
+    private static final ResourceKey<Level> ORBIT_KEY = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "low_earth_orbit"));
 
     // 🌟 提取一个公用的计算 Factor 方法，确保颜色和距离使用完全一致的平滑曲线
     private static float getFogFactor(Player player) {
