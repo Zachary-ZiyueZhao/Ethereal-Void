@@ -48,9 +48,23 @@ public class SpaceTransitionHandler {
         // 地球 -> 太空
         if (currentDim.equals(EARTH_KEY) && playerY >= EARTH_MAX_Y) {
             ServerLevel orbitLevel = player.server.getLevel(ORBIT_KEY);
+
+            if (orbitLevel == null) {
+                EtherealVoid.LOGGER.error(
+                        "Dimension missing: " + ORBIT_KEY.location()
+                );
+                // 如果服务器还没初始化它，强行让服务器加载它
+                for (ServerLevel level : player.server.getAllLevels()) {
+                    if (level.dimension().equals(ORBIT_KEY)) {
+                        orbitLevel = level;
+                        break;
+                    }
+                }
+            }
+
             if (orbitLevel != null) {
                 COOLDOWN_MAP.put(uuid, currentTime + 60);
-                teleportToDimension(player, orbitLevel, player.getX(), -59.0, player.getZ());
+                teleportToDimension(player, orbitLevel, player.getX(), ORBIT_MIN_Y + 1, player.getZ());
             }
         }
         // 太空 -> 地球
@@ -58,7 +72,7 @@ public class SpaceTransitionHandler {
             ServerLevel earthLevel = player.server.getLevel(EARTH_KEY);
             if (earthLevel != null) {
                 COOLDOWN_MAP.put(uuid, currentTime + 60);
-                teleportToDimension(player, earthLevel, player.getX(), 319.0, player.getZ());
+                teleportToDimension(player, earthLevel, player.getX(), EARTH_MAX_Y - 1, player.getZ());
             }
         }
     }
