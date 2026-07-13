@@ -21,7 +21,7 @@ public class ClientSkyRegister {
     private static final ResourceKey<Level> ORBIT_KEY = ResourceKey.create(Registries.DIMENSION, ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "low_earth_orbit"));
 
     private static final double ATMOSPHERE_START_Y = -64.0D;  // 大气层底部（刚进宇宙的极低空）
-    private static final double ATMOSPHERE_END_Y = 64.0D;    // 大气层完全消散、化为纯净深空的高度
+    private static final double ATMOSPHERE_END_Y = 256.0D;    // 大气层完全消散、化为纯净深空的高度
 
     @SubscribeEvent
 
