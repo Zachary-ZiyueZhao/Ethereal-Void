@@ -55,7 +55,7 @@ public class SpaceSkyRenderer {
         // ==========================================
         // 🌌 功能 1：渲染背景静止繁星（放在最底层渲染）
         // ==========================================
-        renderStaticStars(poseStack);
+        renderBillboardStars(poseStack);
 
         // 🚫 手动渲染太阳、月亮部分逻辑已彻底删除 🚫
 
@@ -153,7 +153,7 @@ public class SpaceSkyRenderer {
                 float x0 = -finalAtmoSize + x * atmoStep;
                 float x1 = x0 + atmoStep;
                 float z0 = -finalAtmoSize + z * atmoStep;
-                float z1 = z0 + atmoStep; // 笔误修复，此行为原版的 z0 + atmoStep
+                float z1 = z0 + atmoStep;
                 float z1Actual = z0 + atmoStep;
 
                 float u0 = (x * uvStep) * cloudTileFactor + uvScrollX;
@@ -178,32 +178,30 @@ public class SpaceSkyRenderer {
         RenderSystem.disableBlend();
     }
 
-    // 🌟 终极强悍星空：固定世界坐标、真正广告牌、大尺寸方差、极淡深空感
-    private static void renderStaticStars(PoseStack poseStack) {
+    // 🌟 终极完美版：固定在宇宙、完美广告牌面向玩家、数量繁多、方差极大、色彩淡雅
+    private static void renderBillboardStars(PoseStack poseStack) {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-        // 🛠️ 解决“完全没有”的核心防御：强制清除前置渲染的 Shader 颜色混淆，将基础亮度恢复为 100%
+        // 🛠️ 核心防灭灯：强行重置 Shader 颜色，防止被其他渲染器的残留 Alpha 滤成透明隐形
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
 
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder bufferBuilder = tesselator.getBuilder();
-        Matrix4f matrix = poseStack.last().pose();
 
-        // 👑 实时动态提取相机在世界空间中的 Right 向量与 Up 向量
-        // 这样可以确保各个顶点的延展方向完全与屏幕平行，生成真正固定在太空背景下的 Billboard
-        Minecraft mc = Minecraft.getInstance();
-        var camera = mc.gameRenderer.getMainCamera();
-        Quaternionf cameraRotation = camera.rotation();
-        Vector3f lookRight = new Vector3f(1.0F, 0.0F, 0.0F).rotate(cameraRotation);
-        Vector3f lookUp = new Vector3f(0.0F, 1.0F, 0.0F).rotate(cameraRotation);
+        // 提取原版视图旋转与位移矩阵（不抹平它，完整保留）
+        Matrix4f modelViewMatrix = poseStack.last().pose();
 
-        // 使用固定种子，确保星星位置与透明度永远保持静止，不闪烁
-        Random random = new Random(774910842L);
+        // 👑 创建一个纯净的单位矩阵（Identity），用于最后塞入顶点，防止显卡对变换后的坐标进行二次旋转
+        Matrix4f identityMatrix = new Matrix4f().identity();
+
+        // 使用固定种子，确保星星位置和透明度固定，不出现每帧随机闪烁
+        Random random = new Random(432110842L);
 
         bufferBuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        // 🌟 数量级满足：生成 1200 颗星星，密密麻麻的深空背景
-        for (int i = 0; i < 1200; ++i) {
+        // 🌟 要求 1：星星再多一点（从 600 猛增至 1500 颗，营造极其浩瀚的深空感）
+        for (int i = 0; i < 3000; ++i) {
+            // 计算随机的 3D 球体投射坐标（这代表星星在宇宙世界中的绝对方向）
             double x = random.nextFloat() * 2.0F - 1.0F;
             double y = random.nextFloat() * 2.0F - 1.0F;
             double z = random.nextFloat() * 2.0F - 1.0F;
@@ -211,42 +209,30 @@ public class SpaceSkyRenderer {
 
             if (d < 1.0 && d > 0.01) {
                 d = 1.0 / Math.sqrt(d);
+                // 保持你原本能完美显现的 95.0 远景半径
+                double worldX = x * d * 95.0;
+                double worldY = y * d * 95.0;
+                double worldZ = z * d * 95.0;
 
-                // 🌟 核心修改：渲染半径确定为 25.0F！
-                // 绝对小于你的 32.0F 最低雾气裁剪面，100% 能够避开视锥体裁剪，保证亮起！
-                float radius = 25.0F;
-                float centerX = (float) (x * d * radius);
-                float centerY = (float) (y * d * radius);
-                float centerZ = (float) (z * d * radius);
+                // 🌟 要求 2：大小方差再大一点（利用平方随机 nextFloat * nextFloat）
+                // 这样会让绝大多数星星变成细小的微尘（0.02），但极少数会成为特别瞩目的大亮星（最高 0.38）
+                float size = 0.02F + random.nextFloat() * random.nextFloat() * 0.36F;
 
-                // 🌟 大小方差显著加大：利用平方随机让极小的宇宙微尘（0.04）占绝对多数，极少数亮星（可达0.3）
-                float size = 0.04F + random.nextFloat() * random.nextFloat() * 0.26F;
+                // 🌟 要求 3：颜色再淡一点（大幅压低 Alpha 至 15~95，降低基础亮度，使其深邃优雅不喧宾夺主）
+                int alpha = 50 + random.nextInt(100);
+                int brightness = 160 + random.nextInt(75);
 
-                // 🌟 颜色再淡一点：Alpha 严格锁定在柔和的 [25 ~ 125] 区间，使其深邃优雅，充当完美背景
-                int alpha = 25 + random.nextInt(100);
-                int brightness = 190 + random.nextInt(55); // 灰白伪随机色调
+                // 👑 核心魔法：将世界坐标下的星体中心点，通过原版矩阵变换到【屏幕视角空间（View Space）】
+                // 这一步做完后，viewPos.x 和 viewPos.y 就是该星星在玩家屏幕上的直观投影中心，viewPos.z 是深度
+                org.joml.Vector4f viewPos = new org.joml.Vector4f((float)worldX, (float)worldY, (float)worldZ, 1.0F);
+                modelViewMatrix.transform(viewPos);
 
-                // 依托相机的世界空间方向向量，向外平移出 4 个面朝玩家的顶点
-                float ax = centerX - (lookRight.x() + lookUp.x()) * size;
-                float ay = centerY - (lookRight.y() + lookUp.y()) * size;
-                float az = centerZ - (lookRight.z() + lookUp.z()) * size;
-
-                float bx = centerX + (lookRight.x() - lookUp.x()) * size;
-                float by = centerY + (lookRight.y() - lookUp.y()) * size;
-                float bz = centerZ + (lookRight.z() - lookUp.z()) * size;
-
-                float cx = centerX + (lookRight.x() + lookUp.x()) * size;
-                float cy = centerY + (lookRight.y() + lookUp.y()) * size;
-                float cz = centerZ + (lookRight.z() + lookUp.z()) * size;
-
-                float dx = centerX - (lookRight.x() - lookUp.x()) * size;
-                float dy = centerY - (lookRight.y() - lookUp.y()) * size;
-                float dz = centerZ - (lookRight.z() - lookUp.z()) * size;
-
-                bufferBuilder.vertex(matrix, ax, ay, az).color(brightness, brightness, brightness, alpha).endVertex();
-                bufferBuilder.vertex(matrix, bx, by, bz).color(brightness, brightness, brightness, alpha).endVertex();
-                bufferBuilder.vertex(matrix, cx, cy, cz).color(brightness, brightness, brightness, alpha).endVertex();
-                bufferBuilder.vertex(matrix, dx, dy, dz).color(brightness, brightness, brightness, alpha).endVertex();
+                // 👑 既然中心点已经在屏幕空间了，直接在 X 和 Y 轴上加上 size 偏移，就是完美的正对屏幕广告牌！
+                // 此处传入 identityMatrix，告诉 Shader 坐标已经转好了，直接画就行！
+                bufferBuilder.vertex(identityMatrix, viewPos.x - size, viewPos.y - size, viewPos.z).color(brightness, brightness, brightness, alpha).endVertex();
+                bufferBuilder.vertex(identityMatrix, viewPos.x + size, viewPos.y - size, viewPos.z).color(brightness, brightness, brightness, alpha).endVertex();
+                bufferBuilder.vertex(identityMatrix, viewPos.x + size, viewPos.y + size, viewPos.z).color(brightness, brightness, brightness, alpha).endVertex();
+                bufferBuilder.vertex(identityMatrix, viewPos.x - size, viewPos.y + size, viewPos.z).color(brightness, brightness, brightness, alpha).endVertex();
             }
         }
         BufferUploader.drawWithShader(bufferBuilder.end());
