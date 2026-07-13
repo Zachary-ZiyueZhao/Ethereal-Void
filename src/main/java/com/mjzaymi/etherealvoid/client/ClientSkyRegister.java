@@ -114,9 +114,12 @@ public class ClientSkyRegister {
         if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_SKY) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.level != null && mc.level.dimension().equals(ORBIT_KEY)) {
+                // 完美保留原有逻辑，同时追加参数以供太阳月亮旋转使用
                 SpaceSkyRenderer.render(
                         mc.level.getGameTime(),
-                        event.getPoseStack()
+                        event.getPartialTick(),
+                        event.getPoseStack(),
+                        mc.level
                 );
             }
         }
