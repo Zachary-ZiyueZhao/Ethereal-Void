@@ -71,9 +71,9 @@ public class ClientSkyRegister {
 
             // 1. 低空：保持你群系或你想呈现的初始雾气颜色（例如淡淡的宇宙灰色/深蓝色）
             // 假设低空初始雾色为 R=0.05, G=0.08, B=0.12 (可以根据喜好自定)
-            float startR = 135.0F/255.0F;
-            float startG = 206.0F/255.0F;
-            float startB = 250.0F/255.0F;
+            float startR = 186.0F/255.0F;
+            float startG = 216.0F/255.0F;
+            float startB = 227.0F/255.0F;
 
             // 2. 高空：完全透明/融入宇宙背景的终点颜色（全黑）
             float endR = 0.0F;

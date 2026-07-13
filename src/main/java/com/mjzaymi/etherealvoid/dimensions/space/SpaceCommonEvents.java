@@ -18,32 +18,29 @@ public class SpaceCommonEvents {
             ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "low_earth_orbit")
     );
 
-    private static final double VANILLA_GRAVITY = 0.08D; // 原版重力常数
-    private static final double PLANET_CENTER_OFFSET = 6739.05D;   // 地心偏移量 R
-    private static final double GRAVITY_K_CONSTANT = 2673384.0D;   // 引力常数 K
     private static final double SPACE_WASD_CONTROL_EFFICIENCY = 0.01D;
     private static final double VACUUM_HEIGHT = 3840.0D;
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) return;
+        if (event.phase != TickEvent.Phase.END) return;
 
         var player = event.player;
         if (player.level().dimension().equals(SPACE_DIMENSION)) {
+            player.setNoGravity(true);
 
             if (!player.getAbilities().flying) {
                 if (!player.onGround() && !player.isInWater() && !player.onClimbable()) {
 
                     double currentY = player.getY();
-
-                    // 1. 计算当前高度对应的动态重力加速度
-                    double r = currentY + PLANET_CENTER_OFFSET;
-                    if (r < 10.0D) r = 10.0D;
-
-                    double dynamicGravity = GRAVITY_K_CONSTANT / (r * r);
-
-                    if (dynamicGravity > 0.06D) dynamicGravity = 0.06D;
-                    if (dynamicGravity < 0.001D) dynamicGravity = 0.001D;
+                    // ==============================
+                    // Ethereal Void 自定义重力曲线
+                    // 0高度 = 0.04g
+                    // 16384高度 = 0g
+                    // ==============================
+                    double heightFactor = 1.0D - (currentY / 16384.0D);
+                    heightFactor = Math.max(0.0D, Math.min(1.0D, heightFactor));
+                    double dynamicGravity = 0.08D * (heightFactor * heightFactor);
 
                     // 2. 计算空气阻力
                     double dragMultiplier;
@@ -57,20 +54,21 @@ public class SpaceCommonEvents {
                         dragMultiplier = 1.0D - (0.02D * dragReduction * dragReduction);
                     }
 
+
                     Vec3 currentVelocity = player.getDeltaMovement();
 
                     double correctedX = currentVelocity.x * dragMultiplier;
                     double correctedZ = currentVelocity.z * dragMultiplier;
                     double correctedY;
 
-                    // 🌟 3. 宇宙维度专属：物理加速下坠逻辑（严格限定仅对鞘翅生效）
+                    // 3. 宇宙维度专属：物理加速下坠逻辑（严格限定仅对鞘翅生效）
                     if (player.isFallFlying()) {
 
                         // 计算当前高度下，宇宙基础的下落趋势常数
-                        double baseSpaceDownwardTrend = VANILLA_GRAVITY - dynamicGravity;
+                        double baseSpaceDownwardTrend = dynamicGravity;
 
                         if (currentVelocity.y > 0.0D) {
-                            // 🚀 场景 A：从主世界开鞘翅冲上来，带着向上惯性
+                            // 场景 A：从主世界开鞘翅冲上来，带着向上惯性
                             // 允许向上冲刺，但没有火箭动力会迅速耗尽
                             correctedY = currentVelocity.y - baseSpaceDownwardTrend;
 
@@ -80,7 +78,7 @@ public class SpaceCommonEvents {
                                 correctedZ = currentVelocity.z * 0.5D;
                             }
                         } else {
-                            // 📉 场景 B：开始下坠，开启真正的【滑翔专享·加速自由落体】
+                            // 场景 B：开始下坠，开启真正的【滑翔专享·加速自由落体】
                             correctedX = 0.0D;
                             correctedZ = 0.0D;
 
@@ -98,9 +96,9 @@ public class SpaceCommonEvents {
                             }
                         }
                     } else {
-                        // 🌟 4. 完美的太空微重力漂浮公式（非滑翔状态）
+                        // 4. 完美的太空微重力漂浮公式（非滑翔状态）
                         // 恢复成你最初调好的物理公式，保证普通的跳跃和漂浮体感绝不改变
-                        correctedY = currentVelocity.y + VANILLA_GRAVITY - dynamicGravity;
+                        correctedY = currentVelocity.y - dynamicGravity;
                     }
 
                     // 削弱空中 WASD 键（非宇宙滑翔状态下生效）
@@ -115,6 +113,8 @@ public class SpaceCommonEvents {
                     player.hasImpulse = true;
                 }
             }
+        } else {
+            player.setNoGravity(false);
         }
     }
 }
