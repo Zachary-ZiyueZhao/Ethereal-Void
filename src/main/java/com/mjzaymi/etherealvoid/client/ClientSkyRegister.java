@@ -86,7 +86,7 @@ public class ClientSkyRegister {
                 event.setBlue(startB);
             }
             else if (currentY >= ATMOSPHERE_END_Y) {
-                // 🌌 达到深空：强制变成纯黑，等同于雾气本体 100% 变全透明隐形
+                // 达到深空：强制变成纯黑，等同于雾气本体 100% 变全透明隐形
                 event.setRed(endR);
                 event.setGreen(endG);
                 event.setBlue(endB);

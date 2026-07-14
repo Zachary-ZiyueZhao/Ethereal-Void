@@ -13,6 +13,6 @@ public class ModBiomes {
     );
 
     public static void register() {
-        EtherealVoid.LOGGER.info("Ethereal Void 生物群系 Key 初始化成功！");
+        EtherealVoid.LOGGER.info("[Ethereal Void] 生物群系 Key 注册完成");
     }
 }
