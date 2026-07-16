@@ -24,7 +24,6 @@ import net.minecraft.world.phys.Vec3;
 import javax.annotation.Nullable;
 
 public class SmallRocketEntity extends Entity {
-    // 使用数据同步器来记录火箭是否处于飞行状态（方便客户端生成粒子特效）
     private static final EntityDataAccessor<Boolean> IS_FLYING = SynchedEntityData.defineId(SmallRocketEntity.class, EntityDataSerializers.BOOLEAN);
 
     private static final ResourceKey<Level> SPACE_DIMENSION = ResourceKey.create(
@@ -45,39 +44,33 @@ public class SmallRocketEntity extends Entity {
     public void tick() {
         super.tick();
 
+        // ─── 1. 特效处理（仅客户端） ───
+        if (this.level().isClientSide && this.isFlying()) {
+            // TODO: 在这里添加你的火箭喷火、冒烟等粒子特效
+            // 例如: this.level().addParticle(ParticleTypes.FLAME, ...);
+        }
+
+        // ─── 2. 核心物理与位移计算（双端运行，消除抖动！） ───
         if (this.isFlying()) {
-            // ─── 1. 纵向升天逻辑 ───
+            // 纵向升天物理逻辑
             Vec3 motion = this.getDeltaMovement();
-            // 每个tick给 Y 轴施加向上的加速度，上限设为 1.5 块/tick（已经非常快了）
             double upwardSpeed = Math.min(motion.y + 0.05D, 1.5D);
 
-            // ─── 2. 横向转向逻辑 ───
+            // 横向保持
             double xSpeed = motion.x;
             double zSpeed = motion.z;
 
-            // 获取坐在火箭上的驾驶员
-            LivingEntity driver = this.getControllingPassenger();
-            if (driver != null) {
-                // 让火箭的朝向（Yaw）跟随玩家的视线转向
-                this.setYRot(driver.getYRot());
-                this.yRotO = this.getYRot();
-
-                // 根据火箭当前的朝向，给它一个微弱的前进速度（0.1D），实现“略微转向”
-                float radians = this.getYRot() * ((float)Math.PI / 180F);
-                xSpeed = -Math.sin(radians) * 0.1D;
-                zSpeed = Math.cos(radians) * 0.1D;
-            }
-
-            // 应用新速度并移动火箭（这会覆盖掉原生重力）
             this.setDeltaMovement(xSpeed, upwardSpeed, zSpeed);
             this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
 
-            // ─── 3. 跨维度检测 ───
-            if (!this.level().isClientSide && this.getY() > 20000) {
-                this.teleportToDimension();
+            // ─── 3. 跨维度检测（严格在服务端执行，防止客户端越权） ───
+            if (!this.level().isClientSide) {
+                if (this.getY() > 20000) {
+                    this.teleportToDimension();
+                }
             }
         } else {
-            // 如果没起飞，应用常规重力，让它能稳稳停在地面上
+            // 未起飞时的重力逻辑（同样双端运行，保证下落平滑）
             if (!this.onGround()) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0, -0.04, 0));
             } else {
@@ -90,35 +83,29 @@ public class SmallRocketEntity extends Entity {
     @Override
     public InteractionResult interact(Player player, InteractionHand hand) {
         if (this.isVehicle()) {
-            return InteractionResult.PASS; // 如果已经有人在上面了，不响应
+            return InteractionResult.PASS;
         }
 
         if (!this.level().isClientSide) {
-            // 在服务端将玩家设为乘客并激活起飞
             player.startRiding(this);
             this.setFlying(true);
         }
 
-        // 返回 sidedSuccess：客户端返回 SUCCESS（触发手臂挥动等效果），服务端返回 CONSUME
         return InteractionResult.sidedSuccess(this.level().isClientSide());
     }
 
     // 跨维度传送逻辑
     private void teleportToDimension() {
-        if (this.getControllingPassenger() instanceof ServerPlayer serverPlayer) {
-            // 这里后续可以加入自定义的 Teleporter 逻辑，带玩家去你的自定义维度
-            // 比如：serverPlayer.changeDimension(targetWorld, new ModTeleporter());
+        if (this.getFirstPassenger() instanceof ServerPlayer serverPlayer) {
             System.out.println("火箭已穿透大气层！准备传送玩家...");
+            // 这里执行你的玩家维度传送逻辑
         }
-        // 传送后销毁主世界的火箭实体，防止留在天上变成高空垃圾
         this.discard();
     }
 
-    // 修正乘客（玩家）在火箭上的坐姿和位置
     @Override
     protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
-            // 这里的 0.5D 是相对于火箭底部的 Y 轴偏移，你可以根据你的模型座舱高度自由调整
             moveFunction.accept(passenger, this.getX(), this.getY() + 0.5D, this.getZ());
         }
     }
@@ -126,15 +113,48 @@ public class SmallRocketEntity extends Entity {
     @Nullable
     @Override
     public LivingEntity getControllingPassenger() {
-        // 获取第一个乘客，如果它是 LivingEntity（如 Player），则作为控制者返回
-        return this.getFirstPassenger() instanceof LivingEntity livingEntity ? livingEntity : null;
+        return null;
     }
 
-    // Getter 和 Setter
+    // 🌟🌟🌟 核心优化 1：过滤由于服务器卡顿导致的微小网络抖动 🌟🌟🌟
+    @Override
+    public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
+        // 如果火箭正在飞行中
+        if (this.level().isClientSide && this.isFlying()) {
+            // 计算当前客户端预测坐标与服务端发来同步坐标的距离平方
+            double distSqr = this.distanceToSqr(x, y, z);
+            // 如果偏差小于 4.0D (也就是距离小于 2 格)，说明只是细微的同步漂移/卡顿
+            // 我们直接忽略服务端的强制修正，使用客户端自己平滑预测的物理轨迹
+            if (distSqr > 4.0D) {
+                // 🌟 这里追加了第 7 个参数 teleport
+                super.lerpTo(x, y, z, yaw, pitch, posRotationIncrements, teleport);
+            }
+        } else {
+            // 如果没起飞，或者差距过大，依然走原版的正常插值逻辑
+            super.lerpTo(x, y, z, yaw, pitch, posRotationIncrements, teleport);
+        }
+    }
+
+    // 🌟🌟🌟 核心优化 2：彻底关闭火箭的实体挤压物理 🌟🌟🌟
+    @Override
+    public boolean isPushable() {
+        return false; // 火箭是重型设备，无法被其他实体推动
+    }
+
+    @Override
+    public void push(Entity entity) {
+        // 空实现：不允许任何实体（包括其他火箭）挤压、反弹这台火箭
+    }
+
+    @Override
+    public boolean canBeCollidedWith() {
+        return false; // 不允许其他实体的物理体积与它发生物理碰撞，穿透即可
+    }
+
+    // Getter 和 Setter 以及其他必要的方法
     public boolean isFlying() { return this.entityData.get(IS_FLYING); }
     public void setFlying(boolean flying) { this.entityData.set(IS_FLYING, flying); }
 
-    // 必须实现的基础 NBT 读写（防止存档读档后状态丢失）
     @Override protected void readAdditionalSaveData(CompoundTag tag) { this.setFlying(tag.getBoolean("Flying")); }
     @Override protected void addAdditionalSaveData(CompoundTag tag) { tag.putBoolean("Flying", this.isFlying()); }
     @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return new ClientboundAddEntityPacket(this); }

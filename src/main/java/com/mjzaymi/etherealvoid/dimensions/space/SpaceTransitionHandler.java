@@ -50,10 +50,7 @@ public class SpaceTransitionHandler {
             ServerLevel orbitLevel = player.server.getLevel(ORBIT_KEY);
 
             if (orbitLevel == null) {
-                EtherealVoid.LOGGER.error(
-                        "Dimension missing: " + ORBIT_KEY.location()
-                );
-                // 如果服务器还没初始化它，强行让服务器加载它
+                EtherealVoid.LOGGER.error("Dimension missing: " + ORBIT_KEY.location());
                 for (ServerLevel level : player.server.getAllLevels()) {
                     if (level.dimension().equals(ORBIT_KEY)) {
                         orbitLevel = level;
@@ -78,28 +75,40 @@ public class SpaceTransitionHandler {
     }
 
     private static void teleportToDimension(ServerPlayer player, ServerLevel targetLevel, double x, double y, double z) {
-        // 1. 🌟 在传送前精准记录玩家当前的动量
-        Vec3 originalVelocity = player.getDeltaMovement();
+        // 🌟【修改点 1】：精准捕获速度。如果是骑乘状态，必须以载具（火箭）的向上速度为准，否则以玩家自身为准。
+        Vec3 originalVelocity = player.isPassenger() && player.getVehicle() != null
+                ? player.getVehicle().getDeltaMovement()
+                : player.getDeltaMovement();
 
         if (player.isPassenger()) {
             Entity vehicle = player.getVehicle();
+
+            // 在传送前让玩家下车，避免原版维度传送系统因“骑乘中跨界”产生死锁或同步崩溃
             player.stopRiding();
+
             if (vehicle != null) {
-                vehicle.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
-            }
-            // 记录跨界后的新玩家实例
-            ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
-            if (telePlayer != null) {
-                // 2. 🌟 恢复玩家跨界后的动量
-                restorePlayerVelocity(telePlayer, originalVelocity);
-                if (vehicle != null) {
-                    telePlayer.startRiding(vehicle, true);
+                // 🌟【修改点 2】：核心修复！
+                // 调用 changeDimension 会克隆并返回目标维度中的【全新火箭实例 (teleVehicle)】。
+                // 我们必须用变量接住它。
+                Entity teleVehicle = vehicle.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
+
+                // 传送玩家自己，返回目标维度中的【新玩家实例 (telePlayer)】
+                ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
+
+                if (telePlayer != null && teleVehicle != null) {
+                    // 🌟【修改点 3】：为新维度的火箭和玩家同时赋予传送前的惯性速度
+                    teleVehicle.setDeltaMovement(originalVelocity);
+                    restorePlayerVelocity(telePlayer, originalVelocity);
+
+                    // 🌟【修改点 4】：核心修复！
+                    // 让新维度的玩家，重新骑乘新维度的火箭，实现无缝对接，玩家不会下车！
+                    telePlayer.startRiding(teleVehicle, true);
                 }
             }
         } else {
+            // 非骑乘状态下的普通传送
             ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
             if (telePlayer != null) {
-                // 2. 🌟 恢复玩家跨界后的动量
                 restorePlayerVelocity(telePlayer, originalVelocity);
             }
         }
@@ -109,13 +118,8 @@ public class SpaceTransitionHandler {
      * 辅助方法：强制恢复并同步玩家的动量
      */
     private static void restorePlayerVelocity(ServerPlayer player, Vec3 velocity) {
-        // 强制写入服务端玩家实例的速度
         player.setDeltaMovement(velocity);
-
-        // 关键：触发脉冲标记，防止原版执行不必要的重置
         player.hasImpulse = true;
-
-        // 🌟 核心：向客户端发送运动量同步数据包，强制刷新客户端的画面，防止两端速度不一致发生瞬移拉扯
         player.connection.send(new ClientboundSetEntityMotionPacket(player));
     }
 }
