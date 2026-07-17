@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.client;
 
-import com.mjzaymi.etherealvoid.entity.SmallRocketEntity;
+import com.mjzaymi.etherealvoid.entity.smallrocket.SmallRocketEntity;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;

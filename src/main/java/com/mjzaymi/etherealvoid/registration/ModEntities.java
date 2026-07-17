@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.registration;
 
-import com.mjzaymi.etherealvoid.entity.SmallRocketEntity;
+import com.mjzaymi.etherealvoid.entity.smallrocket.SmallRocketEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;

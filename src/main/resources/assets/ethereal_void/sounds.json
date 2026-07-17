@@ -1,0 +1,14 @@
+{
+  "rocket_ignite_stage1": {
+    "category": "neutral",
+    "sounds": [
+      "ethereal_void:tick"
+    ]
+  },
+  "rocket_ignite_stage2": {
+    "category": "neutral",
+    "sounds": [
+      "ethereal_void:tick"
+    ]
+  }
+}

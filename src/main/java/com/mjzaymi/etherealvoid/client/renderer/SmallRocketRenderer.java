@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.client.renderer;
 
 import com.mjzaymi.etherealvoid.client.model.SmallRocketModel;
-import com.mjzaymi.etherealvoid.entity.SmallRocketEntity;
+import com.mjzaymi.etherealvoid.entity.smallrocket.SmallRocketEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
