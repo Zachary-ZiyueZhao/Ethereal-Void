@@ -30,7 +30,7 @@ import javax.annotation.Nullable;
 public class SmallRocketEntity extends Entity {
     // 0 = 未点火(IDLE), 1 = 倒计时(COUNTDOWN), 2 = 飞行中(FLYING)
     private static final EntityDataAccessor<Integer> LAUNCH_STAGE = SynchedEntityData.defineId(SmallRocketEntity.class, EntityDataSerializers.INT);
-    // 📊 新增：同步倒计时时间（200 到 0），让客户端也能精准算好时间放粒子
+    // 📊 同步倒计时时间（200 到 0）
     private static final EntityDataAccessor<Integer> COUNTDOWN = SynchedEntityData.defineId(SmallRocketEntity.class, EntityDataSerializers.INT);
 
     private boolean forbidDismount = false;
@@ -60,33 +60,40 @@ public class SmallRocketEntity extends Entity {
         int stage = this.getLaunchStage();
         int timeLeft = this.getCountdown();
 
-        // ─── 1. ✨ 客户端特效处理（全色系超震撼粒子矩阵 - 广域扩散加强版） ───
+        // ─── 1. ✨ 客户端特效与屏幕震动处理 ───
         if (this.level().isClientSide) {
-            // 💨 修改 1：倒计时最后 5 秒（<= 100 ticks）剧烈预热点火（气浪四散开来）
+            // 💨 阶段 1：倒计时最后 5 秒（<= 100 ticks）剧烈预热点火
             if (stage == 1 && timeLeft <= 100) {
-                // 随着时间推进，粒子数量和扩散速度成倍暴增
                 int smokeIntensity = (101 - timeLeft) / 8;
+
+                // 📳 【预热震动】：随着倒计时归零，震动幅度从微颤线性暴增
+                Entity passenger = this.getFirstPassenger();
+                if (passenger instanceof Player player && player.level().isClientSide) {
+                    // 强度随时间推进从 0.05 增至 0.45
+                    float shakeFactor = (101 - timeLeft) * 0.004F + 0.05F;
+                    float shakeX = (this.random.nextFloat() - 0.5F) * shakeFactor;
+                    float shakeY = (this.random.nextFloat() - 0.5F) * shakeFactor;
+                    player.setXRot(player.getXRot() + shakeX);
+                    player.setYRot(player.getYRot() + shakeY);
+                }
 
                 for (int i = 0; i < smokeIntensity + 6; i++) {
                     double angle = this.random.nextDouble() * 2.0D * Math.PI;
-
-                    // 🚀 核心修改：将向外席卷的速度从 0.15 提升至最高 0.8D，让气浪瞬间四散冲开
                     double speed = 0.3D + this.random.nextDouble() * 0.5D;
                     double motionX = Math.cos(angle) * speed;
                     double motionZ = Math.sin(angle) * speed;
 
-                    // 扩大初始生成的圆环半径（从 0.3D 扩大到 0.6D），让粒子群基础体积变大
                     double spawnX = this.getX() + Math.cos(angle) * 0.6D;
                     double spawnZ = this.getZ() + Math.sin(angle) * 0.6D;
 
-                    // 【白色巨型气浪】底座四周滚滚铺开的浅白/灰色浓烟
+                    // 【白色巨型气浪】
                     this.level().addParticle(
                             ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
                             spawnX, this.getY() - 0.2D, spawnZ,
                             motionX, 0.08D, motionZ
                     );
 
-                    // 【深色高压排气】夹杂在白烟中，扩散更远的黑色重烟（给一个更强横向速度）
+                    // 【深色高压排气】
                     if (this.random.nextBoolean()) {
                         this.level().addParticle(
                                 ParticleTypes.LARGE_SMOKE,
@@ -95,11 +102,11 @@ public class SmallRocketEntity extends Entity {
                         );
                     }
 
-                    // 【地表火舌】最后 2 秒（<= 40 ticks）
+                    // 【地表火舌】最后 2 秒
                     if (timeLeft <= 40 && this.random.nextInt(2) == 0) {
                         this.level().addParticle(
                                 ParticleTypes.FLAME,
-                                this.getX() + (this.random.nextDouble() - 0.5D) * 1.2D, // 范围从 0.6 扩大到 1.2
+                                this.getX() + (this.random.nextDouble() - 0.5D) * 1.2D,
                                 this.getY() - 0.2D,
                                 this.getZ() + (this.random.nextDouble() - 0.5D) * 1.2D,
                                 motionX * 0.4D, 0.05D, motionZ * 0.4D
@@ -107,13 +114,22 @@ public class SmallRocketEntity extends Entity {
                     }
                 }
             }
-            // 🔥 修改 2：阶段 2 正式起飞，全功率超大粒子矩阵（大片尾流 + 热浪膨胀 + 广角爆裂）
+            // 🔥 阶段 2：正式起飞，全功率超大粒子矩阵与持续重载震动
             else if (stage == 2) {
-                // 1. 【黄色/明橙色】核心炽热高压火柱（扩散范围更广，向下冲击更猛）
-                for (int i = 0; i < 12; i++) { // 数量从 8 增加到 12
-                    double offsetX = (this.random.nextDouble() - 0.5D) * 0.6D; // 生成半径增大
+                // 📳 【起飞狂震】：模拟高空突破大气层时极强的机身撕裂震动
+                Entity passenger = this.getFirstPassenger();
+                if (passenger instanceof Player player && player.level().isClientSide) {
+                    // 持续保持高频狂震（可以适当根据高度或速度调整，这里给一个稳定的硬核大震动）
+                    float shakeX = (this.random.nextFloat() - 0.5F) * 0.6F;
+                    float shakeY = (this.random.nextFloat() - 0.5F) * 0.6F;
+                    player.setXRot(player.getXRot() + shakeX);
+                    player.setYRot(player.getYRot() + shakeY);
+                }
+
+                // 1. 【黄色/明橙色】核心炽热高压火柱
+                for (int i = 0; i < 12; i++) {
+                    double offsetX = (this.random.nextDouble() - 0.5D) * 0.6D;
                     double offsetZ = (this.random.nextDouble() - 0.5D) * 0.6D;
-                    // 下喷初速度增加到 -1.2D，营造极强动能
                     this.level().addParticle(
                             ParticleTypes.FLAME,
                             this.getX() + offsetX, this.getY() - 0.3D, this.getZ() + offsetZ,
@@ -121,29 +137,29 @@ public class SmallRocketEntity extends Entity {
                     );
                 }
 
-                // 2. 【深灰色/黑色】广角燃料尾气（让黑色烟雾向四周散开，而不是笔直向下）
+                // 2. 【深灰色/黑色】广角燃料尾气
                 for (int i = 0; i < 8; i++) {
                     double offsetX = (this.random.nextDouble() - 0.5D) * 0.8D;
                     double offsetZ = (this.random.nextDouble() - 0.5D) * 0.8D;
                     this.level().addParticle(
                             ParticleTypes.LARGE_SMOKE,
                             this.getX() + offsetX, this.getY() - 0.5D, this.getZ() + offsetZ,
-                            offsetX * 1.5D, -0.6D, offsetZ * 1.5D // 增加了横向扩散速度 (offsetX * 1.5D)
+                            offsetX * 1.5D, -0.6D, offsetZ * 1.5D
                     );
                 }
 
-                // 3. 【浅白色】受尾流冲击剧烈膨胀四散的白烟（视觉积云效果）
+                // 3. 【浅白色】受尾流冲击剧烈膨胀四散的白烟
                 for (int i = 0; i < 5; i++) {
                     double offsetX = (this.random.nextDouble() - 0.5D) * 1.2D;
                     double offsetZ = (this.random.nextDouble() - 0.5D) * 1.2D;
                     this.level().addParticle(
                             ParticleTypes.CAMPFIRE_COSY_SMOKE,
                             this.getX() + offsetX, this.getY() - 0.8D, this.getZ() + offsetZ,
-                            (this.random.nextDouble() - 0.5D) * 1.5D, -0.1D, (this.random.nextDouble() - 0.5D) * 1.5D // 强力横向炸开
+                            (this.random.nextDouble() - 0.5D) * 1.5D, -0.1D, (this.random.nextDouble() - 0.5D) * 1.5D
                     );
                 }
 
-                // 5. 💥【火星弹射】高热火星爆裂（大幅增加弹射速度，让火星飞溅得更远）
+                // 4. 💥【火星弹射】高热火星爆裂
                 for (int i = 0; i < 2; i++) {
                     if (this.random.nextBoolean()) {
                         double offsetX = (this.random.nextDouble() - 0.5D) * 0.5D;
@@ -151,7 +167,7 @@ public class SmallRocketEntity extends Entity {
                         this.level().addParticle(
                                 ParticleTypes.LAVA,
                                 this.getX() + offsetX, this.getY() - 0.4D, this.getZ() + offsetZ,
-                                (this.random.nextDouble() - 0.5D) * 2.0D, -0.4D, (this.random.nextDouble() - 0.5D) * 2.0D // 飞溅速度拉满
+                                (this.random.nextDouble() - 0.5D) * 2.0D, -0.4D, (this.random.nextDouble() - 0.5D) * 2.0D
                         );
                     }
                 }
@@ -164,18 +180,10 @@ public class SmallRocketEntity extends Entity {
                 int newTime = timeLeft - 1;
                 this.setCountdown(newTime);
 
-                // 每 20 刻（1秒）更新一次动作栏大字
                 if (newTime % 20 == 0 && newTime >= 0) {
                     int secondsLeft = newTime / 20;
                     if (this.getFirstPassenger() instanceof ServerPlayer player) {
                         player.displayClientMessage(Component.literal("§c 点火倒计时: §e" + secondsLeft + "秒 §c"), true);
-                    }
-
-                    // 每秒播放对应的音效
-                    if (secondsLeft > 3) {
-                        //this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SOUND_STAGE_1, SoundSource.NEUTRAL, 2.0F, 1.0F);
-                    } else if (secondsLeft > 0) {
-                        //this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SOUND_STAGE_2, SoundSource.NEUTRAL, 3.0F, 1.0F);
                     }
                 }
 
@@ -196,13 +204,8 @@ public class SmallRocketEntity extends Entity {
 
         // ─── 3. 双端共同执行的物理位移计算 ───
         if (stage == 2) {
-            // 🚀 修改 3：实现火箭的真实重载加速度（而不是直接冲上天）
             Vec3 motion = this.getDeltaMovement();
-
-            // 将每步递增量从 0.05D 降低到 0.006D，创造极为沉重的“缓慢离地”感
-            // 随着时间推移，速度会平滑滚雪球增加，最高限速提升至 2.5D 保证后劲十足
             double upwardSpeed = Math.min(motion.y + 0.003D, 5.0D);
-
             this.setDeltaMovement(motion.x, upwardSpeed, motion.z);
             this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
         }
@@ -223,7 +226,7 @@ public class SmallRocketEntity extends Entity {
     public void startCountdown() {
         if (this.getLaunchStage() == 0) {
             this.setLaunchStage(1);
-            this.setCountdown(200); // 充能重置 10秒
+            this.setCountdown(200);
         }
     }
 
@@ -241,7 +244,6 @@ public class SmallRocketEntity extends Entity {
         return InteractionResult.sidedSuccess(this.level().isClientSide());
     }
 
-    // 提供给对外调用修改下车限制
     public void setForbidDismount(boolean forbid) { this.forbidDismount = forbid; }
     public boolean isDismountForbidden() { return this.forbidDismount; }
 
@@ -263,13 +265,9 @@ public class SmallRocketEntity extends Entity {
 
     @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
-        // 🚀 核心修复：当火箭处于全速飞行阶段（stage == 2）时，直接忽略服务器的位置常规同步
-        // 这样可以彻底断开网络延迟造成的拉扯，让火箭以 5.0D 的高速完美平滑升空
         if (this.level().isClientSide && this.getLaunchStage() == 2) {
             return;
         }
-
-        // 阶段 0 和阶段 1 照常保留原版同步，确保玩家在上车、倒计时阶段火箭不会位移错乱
         super.lerpTo(x, y, z, yaw, pitch, posRotationIncrements, teleport);
     }
 
@@ -277,7 +275,6 @@ public class SmallRocketEntity extends Entity {
     @Override public void push(Entity entity) {}
     @Override public boolean canBeCollidedWith() { return false; }
 
-    // 数据同步 Getter / Setter
     public int getLaunchStage() { return this.entityData.get(LAUNCH_STAGE); }
     public void setLaunchStage(int stage) { this.entityData.set(LAUNCH_STAGE, stage); }
     public int getCountdown() { return this.entityData.get(COUNTDOWN); }
