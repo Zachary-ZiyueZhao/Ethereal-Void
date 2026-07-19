@@ -35,6 +35,10 @@ public class SmallRocketEntity extends Entity {
 
     private boolean forbidDismount = false;
 
+    // 📳 客户端缓存：记录点火瞬间的基准朝向，防止随机抖动导致航向漂移
+    private float baseYaw = Float.NaN;
+    private float basePitch = Float.NaN;
+
     private static final ResourceKey<Level> SPACE_DIMENSION = ResourceKey.create(
             Registries.DIMENSION,
             ResourceLocation.fromNamespaceAndPath(EtherealVoid.MOD_ID, "low_earth_orbit")
@@ -60,22 +64,41 @@ public class SmallRocketEntity extends Entity {
         int stage = this.getLaunchStage();
         int timeLeft = this.getCountdown();
 
-        // ─── 1. ✨ 客户端特效与屏幕震动处理 ───
+        // 👤 【无痕隐身控制】：只要火箭处于发射或飞行阶段，强制让座舱内的玩家隐身（不产生任何状态图标）
+        Entity passenger = this.getFirstPassenger();
+        if (passenger instanceof Player player) {
+            if (stage >= 1) {
+                player.setInvisible(true);
+            }
+        }
+
+        // ─── 1. ✨ 客户端特效、本体抖动与屏幕震动处理 ───
         if (this.level().isClientSide) {
+            // 缓存/捕获初始角度基准
+            if (stage == 0) {
+                this.baseYaw = Float.NaN;
+                this.basePitch = Float.NaN;
+            } else if (Float.isNaN(this.baseYaw)) {
+                this.baseYaw = this.getYRot();
+                this.basePitch = this.getXRot();
+            }
+
             // 💨 阶段 1：倒计时最后 5 秒（<= 100 ticks）剧烈预热点火
             if (stage == 1 && timeLeft <= 100) {
                 int smokeIntensity = (101 - timeLeft) / 8;
+                float progress = (101 - timeLeft) / 100.0F; // 0.0F -> 1.0F 渐进系数
 
-                // 📳 【预热震动】：随着倒计时归零，震动幅度从微颤线性暴增
-                Entity passenger = this.getFirstPassenger();
-                if (passenger instanceof Player player && player.level().isClientSide) {
-                    // 强度随时间推进从 0.05 增至 0.45
-                    float shakeFactor = (101 - timeLeft) * 0.004F + 0.05F;
-                    float shakeX = (this.random.nextFloat() - 0.5F) * shakeFactor;
-                    float shakeY = (this.random.nextFloat() - 0.5F) * shakeFactor;
-                    player.setXRot(player.getXRot() + shakeX);
-                    player.setYRot(player.getYRot() + shakeY);
+                // 📳 【玩家视角微颤】：随时间线性加剧
+                if (passenger instanceof Player player) {
+                    float shakeFactor = progress * 0.4F + 0.05F;
+                    player.setXRot(player.getXRot() + (this.random.nextFloat() - 0.5F) * shakeFactor);
+                    player.setYRot(player.getYRot() + (this.random.nextFloat() - 0.5F) * shakeFactor);
                 }
+
+                // 🚀 【火箭本体剧烈抖动】：模拟引擎试车时支架剧烈晃动视觉
+                float entityShake = progress * 5.0F;
+                this.setYRot(this.baseYaw + (this.random.nextFloat() - 0.5F) * entityShake);
+                this.setXRot(this.basePitch + (this.random.nextFloat() - 0.5F) * entityShake);
 
                 for (int i = 0; i < smokeIntensity + 6; i++) {
                     double angle = this.random.nextDouble() * 2.0D * Math.PI;
@@ -86,89 +109,63 @@ public class SmallRocketEntity extends Entity {
                     double spawnX = this.getX() + Math.cos(angle) * 0.6D;
                     double spawnZ = this.getZ() + Math.sin(angle) * 0.6D;
 
-                    // 【白色巨型气浪】
-                    this.level().addParticle(
-                            ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
-                            spawnX, this.getY() - 0.2D, spawnZ,
-                            motionX, 0.08D, motionZ
-                    );
+                    this.level().addParticle(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, spawnX, this.getY() - 0.2D, spawnZ, motionX, 0.08D, motionZ);
 
-                    // 【深色高压排气】
                     if (this.random.nextBoolean()) {
-                        this.level().addParticle(
-                                ParticleTypes.LARGE_SMOKE,
-                                spawnX, this.getY() - 0.1D, spawnZ,
-                                motionX * 1.3D, 0.02D, motionZ * 1.3D
-                        );
+                        this.level().addParticle(ParticleTypes.LARGE_SMOKE, spawnX, this.getY() - 0.1D, spawnZ, motionX * 1.3D, 0.02D, motionZ * 1.3D);
                     }
 
-                    // 【地表火舌】最后 2 秒
                     if (timeLeft <= 40 && this.random.nextInt(2) == 0) {
-                        this.level().addParticle(
-                                ParticleTypes.FLAME,
-                                this.getX() + (this.random.nextDouble() - 0.5D) * 1.2D,
-                                this.getY() - 0.2D,
-                                this.getZ() + (this.random.nextDouble() - 0.5D) * 1.2D,
-                                motionX * 0.4D, 0.05D, motionZ * 0.4D
-                        );
+                        this.level().addParticle(ParticleTypes.FLAME, this.getX() + (this.random.nextDouble() - 0.5D) * 1.2D, this.getY() - 0.2D, this.getZ() + (this.random.nextDouble() - 0.5D) * 1.2D, motionX * 0.4D, 0.05D, motionZ * 0.4D);
                     }
                 }
             }
-            // 🔥 阶段 2：正式起飞，全功率超大粒子矩阵与持续重载震动
+            // 🔥 阶段 2：正式起飞，动力全开（动态衰减震动体系）
             else if (stage == 2) {
-                // 📳 【起飞狂震】：模拟高空突破大气层时极强的机身撕裂震动
-                Entity passenger = this.getFirstPassenger();
-                if (passenger instanceof Player player && player.level().isClientSide) {
-                    // 持续保持高频狂震（可以适当根据高度或速度调整，这里给一个稳定的硬核大震动）
-                    float shakeX = (this.random.nextFloat() - 0.5F) * 0.6F;
-                    float shakeY = (this.random.nextFloat() - 0.5F) * 0.6F;
+                double currentY = this.getY();
+
+                // 📳 【玩家视角动态衰减】：高度超过 8000 后完全归零，防止高空穿梭产生严重3D眩晕
+                double cameraShakeScale = Math.max(0.0, 1.0 - (currentY / 8000.0));
+                if (passenger instanceof Player player && cameraShakeScale > 0.0) {
+                    float shakeX = (this.random.nextFloat() - 0.5F) * 0.6F * (float) cameraShakeScale;
+                    float shakeY = (this.random.nextFloat() - 0.5F) * 0.6F * (float) cameraShakeScale;
                     player.setXRot(player.getXRot() + shakeX);
                     player.setYRot(player.getYRot() + shakeY);
                 }
+
+                // 🚀 【火箭本体动态衰减】：起飞最剧烈，冲入太空（接近20000）时衰减至极其平稳的轻微震颤（0.02最低限度）
+                double rocketShakeScale = Math.max(0.02, 1.0 - (currentY / 18000.0));
+                float entityShakeStage2 = 6.0F * (float) rocketShakeScale;
+                this.setYRot(this.baseYaw + (this.random.nextFloat() - 0.5F) * entityShakeStage2);
+                this.setXRot(this.basePitch + (this.random.nextFloat() - 0.5F) * entityShakeStage2);
 
                 // 1. 【黄色/明橙色】核心炽热高压火柱
                 for (int i = 0; i < 12; i++) {
                     double offsetX = (this.random.nextDouble() - 0.5D) * 0.6D;
                     double offsetZ = (this.random.nextDouble() - 0.5D) * 0.6D;
-                    this.level().addParticle(
-                            ParticleTypes.FLAME,
-                            this.getX() + offsetX, this.getY() - 0.3D, this.getZ() + offsetZ,
-                            offsetX * 0.5D, -1.2D, offsetZ * 0.5D
-                    );
+                    this.level().addParticle(ParticleTypes.FLAME, this.getX() + offsetX, this.getY() - 0.3D, this.getZ() + offsetZ, offsetX * 0.5D, -1.2D, offsetZ * 0.3D);
                 }
 
                 // 2. 【深灰色/黑色】广角燃料尾气
                 for (int i = 0; i < 8; i++) {
                     double offsetX = (this.random.nextDouble() - 0.5D) * 0.8D;
                     double offsetZ = (this.random.nextDouble() - 0.5D) * 0.8D;
-                    this.level().addParticle(
-                            ParticleTypes.LARGE_SMOKE,
-                            this.getX() + offsetX, this.getY() - 0.5D, this.getZ() + offsetZ,
-                            offsetX * 1.5D, -0.6D, offsetZ * 1.5D
-                    );
+                    this.level().addParticle(ParticleTypes.LARGE_SMOKE, this.getX() + offsetX, this.getY() - 0.5D, this.getZ() + offsetZ, offsetX * 1.5D, -0.6D, offsetZ * 1.5D);
                 }
 
-                // 3. 【浅白色】受尾流冲击剧烈膨胀四散的白烟
+                // 3. 【浅白色】伴随白烟
                 for (int i = 0; i < 5; i++) {
                     double offsetX = (this.random.nextDouble() - 0.5D) * 1.2D;
                     double offsetZ = (this.random.nextDouble() - 0.5D) * 1.2D;
-                    this.level().addParticle(
-                            ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                            this.getX() + offsetX, this.getY() - 0.8D, this.getZ() + offsetZ,
-                            (this.random.nextDouble() - 0.5D) * 1.5D, -0.1D, (this.random.nextDouble() - 0.5D) * 1.5D
-                    );
+                    this.level().addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE, this.getX() + offsetX, this.getY() - 0.8D, this.getZ() + offsetZ, (this.random.nextDouble() - 0.5D) * 1.5D, -0.1D, (this.random.nextDouble() - 0.5D) * 1.5D);
                 }
 
-                // 4. 💥【火星弹射】高热火星爆裂
+                // 4. 💥【火星弹射】
                 for (int i = 0; i < 2; i++) {
                     if (this.random.nextBoolean()) {
                         double offsetX = (this.random.nextDouble() - 0.5D) * 0.5D;
                         double offsetZ = (this.random.nextDouble() - 0.5D) * 0.5D;
-                        this.level().addParticle(
-                                ParticleTypes.LAVA,
-                                this.getX() + offsetX, this.getY() - 0.4D, this.getZ() + offsetZ,
-                                (this.random.nextDouble() - 0.5D) * 2.0D, -0.4D, (this.random.nextDouble() - 0.5D) * 2.0D
-                        );
+                        this.level().addParticle(ParticleTypes.LAVA, this.getX() + offsetX, this.getY() - 0.4D, this.getZ() + offsetZ, (this.random.nextDouble() - 0.5D) * 2.0D, -0.4D, (this.random.nextDouble() - 0.5D) * 2.0D);
                     }
                 }
             }
@@ -205,7 +202,7 @@ public class SmallRocketEntity extends Entity {
         // ─── 3. 双端共同执行的物理位移计算 ───
         if (stage == 2) {
             Vec3 motion = this.getDeltaMovement();
-            double upwardSpeed = Math.min(motion.y + 0.003D, 5.0D);
+            double upwardSpeed = Math.min(motion.y + 0.005D, 5.0D);
             this.setDeltaMovement(motion.x, upwardSpeed, motion.z);
             this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
         }
@@ -221,6 +218,15 @@ public class SmallRocketEntity extends Entity {
             }
             this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
         }
+    }
+
+    // 👤 安全卸载钩子：当玩家走下火箭或火箭被销毁移出玩家时，瞬间恢复玩家的可见度
+    @Override
+    protected void removePassenger(Entity passenger) {
+        if (passenger instanceof Player player) {
+            player.setInvisible(false);
+        }
+        super.removePassenger(passenger);
     }
 
     public void startCountdown() {
@@ -261,7 +267,15 @@ public class SmallRocketEntity extends Entity {
         }
     }
 
-    @Nullable @Override public LivingEntity getControllingPassenger() { return null; }
+    // 🚀【核心修改点】：指定首位乘车实体（即玩家）为火箭的控制者，将客户端精准物理坐标强行推给服务端同步
+    @Nullable
+    @Override
+    public LivingEntity getControllingPassenger() {
+        if (this.getFirstPassenger() instanceof LivingEntity living) {
+            return living;
+        }
+        return null;
+    }
 
     @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
@@ -294,6 +308,10 @@ public class SmallRocketEntity extends Entity {
         tag.putBoolean("ForbidDismount", this.forbidDismount);
     }
 
-    @Override public Packet<ClientGamePacketListener> getAddEntityPacket() { return new ClientboundAddEntityPacket(this); }
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return new ClientboundAddEntityPacket(this);
+    }
+
     @Override public boolean isPickable() { return !this.isRemoved(); }
 }
