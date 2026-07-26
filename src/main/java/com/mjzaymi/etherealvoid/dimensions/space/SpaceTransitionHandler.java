@@ -50,7 +50,6 @@ public class SpaceTransitionHandler {
             ServerLevel orbitLevel = player.server.getLevel(ORBIT_KEY);
 
             if (orbitLevel == null) {
-                EtherealVoid.LOGGER.error("Dimension missing: " + ORBIT_KEY.location());
                 for (ServerLevel level : player.server.getAllLevels()) {
                     if (level.dimension().equals(ORBIT_KEY)) {
                         orbitLevel = level;
@@ -75,48 +74,44 @@ public class SpaceTransitionHandler {
     }
 
     private static void teleportToDimension(ServerPlayer player, ServerLevel targetLevel, double x, double y, double z) {
-        // 🌟【修改点 1】：精准捕获速度。如果是骑乘状态，必须以载具（火箭）的向上速度为准，否则以玩家自身为准。
         Vec3 originalVelocity = player.isPassenger() && player.getVehicle() != null
                 ? player.getVehicle().getDeltaMovement()
                 : player.getDeltaMovement();
 
+        SpaceTeleporter teleporter = new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z);
+
         if (player.isPassenger()) {
             Entity vehicle = player.getVehicle();
 
-            // 在传送前让玩家下车，避免原版维度传送系统因“骑乘中跨界”产生死锁或同步崩溃
+            // 1. 玩家先下车
             player.stopRiding();
 
             if (vehicle != null) {
-                // 🌟【修改点 2】：核心修复！
-                // 调用 changeDimension 会克隆并返回目标维度中的【全新火箭实例 (teleVehicle)】。
-                // 我们必须用变量接住它。
-                Entity teleVehicle = vehicle.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
-
-                // 传送玩家自己，返回目标维度中的【新玩家实例 (telePlayer)】
-                ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
+                // 2. 传送火箭（此时会走我们重写的 placeEntity，绝对精准）
+                Entity teleVehicle = vehicle.changeDimension(targetLevel, teleporter);
+                // 3. 传送玩家
+                ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, teleporter);
 
                 if (telePlayer != null && teleVehicle != null) {
-                    // 🌟【修改点 3】：为新维度的火箭和玩家同时赋予传送前的惯性速度
+                    // 删除强行的 teleVehicle.moveTo 和 telePlayer.connection.teleport
+                    // 因为原版 changeDimension 结合我们的 teleporter 已经把他们放在了精确的位置
+
+                    // 4. 恢复向上惯性速度
                     teleVehicle.setDeltaMovement(originalVelocity);
                     restorePlayerVelocity(telePlayer, originalVelocity);
 
-                    // 🌟【修改点 4】：核心修复！
-                    // 让新维度的玩家，重新骑乘新维度的火箭，实现无缝对接，玩家不会下车！
+                    // 5. 在太空重新挂载骑乘
                     telePlayer.startRiding(teleVehicle, true);
                 }
             }
         } else {
-            // 非骑乘状态下的普通传送
-            ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, new SpaceTeleporter(x, y, z, originalVelocity.x, originalVelocity.y, originalVelocity.z));
+            ServerPlayer telePlayer = (ServerPlayer) player.changeDimension(targetLevel, teleporter);
             if (telePlayer != null) {
                 restorePlayerVelocity(telePlayer, originalVelocity);
             }
         }
     }
 
-    /**
-     * 辅助方法：强制恢复并同步玩家的动量
-     */
     private static void restorePlayerVelocity(ServerPlayer player, Vec3 velocity) {
         player.setDeltaMovement(velocity);
         player.hasImpulse = true;

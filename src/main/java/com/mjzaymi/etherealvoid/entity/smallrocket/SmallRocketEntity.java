@@ -279,6 +279,13 @@ public class SmallRocketEntity extends Entity {
 
     @Override
     public void lerpTo(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean teleport) {
+        // 🌟【关键修复 2】：如果是跨维度/强制传送 (teleport = true)，必须允许客户端更新坐标！
+        if (teleport) {
+            super.lerpTo(x, y, z, yaw, pitch, posRotationIncrements, true);
+            return;
+        }
+
+        // 普通平滑插值在阶段 2 屏蔽，防止视觉抖动
         if (this.level().isClientSide && this.getLaunchStage() == 2) {
             return;
         }
