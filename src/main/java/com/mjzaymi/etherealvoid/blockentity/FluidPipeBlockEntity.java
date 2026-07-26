@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid.blockentity;
 
 import com.mjzaymi.etherealvoid.block.FluidPipe;
+import com.mjzaymi.etherealvoid.blockentity.FluidPipeNetwork;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,93 +16,96 @@ import java.util.Set;
 
 public class FluidPipeBlockEntity extends BlockEntity {
 
-    // 💡 彻底移除了原先的 bufferTank 和 neighborCache！管道现在是纯虚拟路径，零 tick 负载。
+    // 💡 存储当前管道所属的网络组
+    public FluidPipeNetwork currentNetwork = null;
+
     public FluidPipeBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FLUID_PIPE_BE.get(), pos, state);
     }
 
-    /**
-     * 💡 核心寻路算法：每当管网变化，由发生改变的节点发起广度优先搜索 (BFS)
-     */
     public static void updateVirtualNetwork(Level level, BlockPos startPos) {
         if (level.isClientSide()) return;
 
-        Set<BlockPos> visited = new HashSet<>();
+        Set<BlockPos> visitedPipes = new HashSet<>();
         Set<ReactionPoolFluidIOBlockEntity> foundIOs = new HashSet<>();
         Queue<BlockPos> queue = new LinkedList<>();
 
         queue.add(startPos);
-        visited.add(startPos);
+        visitedPipes.add(startPos);
 
-        // 1. 广度优先搜索探测整条管道能触及的所有方块
         while (!queue.isEmpty()) {
             BlockPos current = queue.poll();
             BlockState currentState = level.getBlockState(current);
 
-            if (visited.size() > 1024) break;
+            if (visitedPipes.size() > 2048) break; // 防止死循环或超大管网卡顿
 
             for (Direction dir : Direction.values()) {
-                BlockPos neighborPos = current.relative(dir);
-
-                // 检查当前方块如果为管道，其朝向该邻居的接口是否开放
+                // 1. 检查当前方块朝该方向的口是否处于开放状态
                 if (currentState.getBlock() instanceof FluidPipe) {
                     var prop = FluidPipe.getPropertyForDirection(dir);
                     if (currentState.hasProperty(prop) && !currentState.getValue(prop)) {
-                        continue;
+                        continue; // 该面未连接，跳过
                     }
                 }
 
-                if (visited.contains(neighborPos)) continue;
+                BlockPos neighborPos = current.relative(dir);
+                if (visitedPipes.contains(neighborPos)) continue;
 
                 BlockState neighborState = level.getBlockState(neighborPos);
 
-                // 情况 A：邻居也是管道，继续延伸搜索
                 if (neighborState.getBlock() instanceof FluidPipe) {
-                    // 双向验证：邻居连向当前方块的口也必须是开着的
                     var oppProp = FluidPipe.getPropertyForDirection(dir.getOpposite());
                     if (neighborState.hasProperty(oppProp) && neighborState.getValue(oppProp)) {
-                        visited.add(neighborPos);
+                        visitedPipes.add(neighborPos);
                         queue.add(neighborPos);
                     }
-                }
-                // 情况 B：邻居是 IO 口，抓取它
-                else {
+                } else {
                     BlockEntity be = level.getBlockEntity(neighborPos);
                     if (be instanceof ReactionPoolFluidIOBlockEntity ioBE) {
-                        visited.add(neighborPos);
                         foundIOs.add(ioBE);
                     }
                 }
             }
         }
 
-        // 2. 预先断开所有在这条管网覆盖范围内的旧虚拟连接（洗牌复位）
+        // 2. 解绑所有涉及到的 IO 口的旧网络
         for (ReactionPoolFluidIOBlockEntity io : foundIOs) {
-            io.breakVirtualLink();
+            io.setNetwork(null, 0);
         }
 
-        // 3. 筛选合法的唯一 I 口和唯一 O 口
-        ReactionPoolFluidIOBlockEntity inputIO = null;
-        ReactionPoolFluidIOBlockEntity outputIO = null;
+        // 3. 构建新的管网对象 (Network Group)
+        FluidPipeNetwork newNetwork = new FluidPipeNetwork();
+        newNetwork.pipePositions.addAll(visitedPipes);
+
+        boolean hasInput = false;
+        boolean hasOutput = false;
 
         for (ReactionPoolFluidIOBlockEntity io : foundIOs) {
-            // 💡 核心安全验证：必须属于一个完整合法的多方块水槽结构 (由你们的多方块逻辑决定)
             if (!io.hasValidPool()) continue;
 
             if (io.isInputMode()) {
-                if (inputIO == null) inputIO = io;
-                else return; // 发现多个输入口，不合法，不建立连接
+                newNetwork.inputs.add(io);
+                hasInput = true;
             } else if (io.isOutputMode()) {
-                if (outputIO == null) outputIO = io;
-                else return; // 发现多个输出口，不合法，不建立连接
+                newNetwork.outputs.add(io);
+                hasOutput = true;
             }
         }
 
-        // 4. 验证最终条件：必须同时存在一个I口一个O口
-        if (inputIO != null && outputIO != null) {
-            // 如果允许跨水槽传输，去掉这个 if 条件（或者改为不等于）
-            if (inputIO.getPoolController() != null && outputIO.getPoolController() != null) {
-                outputIO.establishVirtualLink(inputIO, 50);
+        // 4. 将新的管网组下发给所有的管道和 IO (这里设定传输速率为 50)
+        for (BlockPos pos : visitedPipes) {
+            if (level.getBlockEntity(pos) instanceof FluidPipeBlockEntity pipeBE) {
+                pipeBE.currentNetwork = newNetwork;
+            }
+        }
+
+        // 只有在至少存在一个Input和一个Output时，IO才加入网络
+        if (hasInput && hasOutput) {
+            for (ReactionPoolFluidIOBlockEntity io : newNetwork.inputs) {
+                io.setNetwork(newNetwork, 50);
+            }
+            for (ReactionPoolFluidIOBlockEntity io : newNetwork.outputs) {
+                io.setNetwork(newNetwork, 50);
             }
         }
     }

@@ -25,6 +25,7 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
     @Nullable
     private ReactionPoolFluidIOBlockEntity virtualTargetInput = null;
     private int transferRatePerTick = 0;
+    private FluidPipeNetwork connectedNetwork = null;
 
     private final LazyOptional<IFluidHandler> fluidHandlerProxy = LazyOptional.of(() -> new IFluidHandler() {
 
@@ -197,44 +198,10 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
     public static void tick(Level level, BlockPos pos, BlockState state, ReactionPoolFluidIOBlockEntity io) {
         if (level.isClientSide) return;
 
-        if (io.isOutputMode() && io.virtualTargetInput != null) {
-
-            if (io.virtualTargetInput.isRemoved() || !io.virtualTargetInput.isInputMode() || io.getPoolController() != io.virtualTargetInput.getPoolController()) {
-                io.breakVirtualLink();
-                return;
-            }
-
-            IFluidHandler myHandler = io.fluidHandlerProxy.orElse(null);
-            IFluidHandler targetHandler = io.virtualTargetInput.fluidHandlerProxy.orElse(null);
-
-            if (myHandler != null && targetHandler != null) {
-                boolean transferSuccess = false;
-
-                // 💡 升级：遍历自己储罐里的每一种液体（氯气、氢氧化钠、氢气等），谁能传就传谁
-                for (int i = 0; i < myHandler.getTanks(); i++) {
-                    FluidStack fluidInTank = myHandler.getFluidInTank(i);
-                    if (fluidInTank.isEmpty() || fluidInTank.getAmount() <= 0) continue;
-
-                    // 准备抽取该种液体，最大限制为流速限制
-                    int amountToDrain = Math.min(io.transferRatePerTick, fluidInTank.getAmount());
-                    FluidStack targetDrain = new FluidStack(fluidInTank.getFluid(), amountToDrain, fluidInTank.getTag());
-
-                    // 模拟抽取与注入
-                    FluidStack simulatedDrain = myHandler.drain(targetDrain, IFluidHandler.FluidAction.SIMULATE);
-                    if (!simulatedDrain.isEmpty()) {
-                        int accepted = targetHandler.fill(simulatedDrain, IFluidHandler.FluidAction.SIMULATE);
-
-                        if (accepted > 0) {
-                            // 真正执行扣除与注入
-                            FluidStack realDrained = myHandler.drain(new FluidStack(simulatedDrain.getFluid(), accepted), IFluidHandler.FluidAction.EXECUTE);
-                            targetHandler.fill(realDrained, IFluidHandler.FluidAction.EXECUTE);
-
-                            transferSuccess = true;
-                            break; // 这一 tick 成功传输了，结束本 tick 的传输，等待下一 tick
-                        }
-                    }
-                }
-            }
+        // 只需要让 Output 模式的方块去触发网络 Tick 即可
+        // 网络内部有防重复机制，就算有 10 个 Output，每 Tick 网络也只会跑一次传输逻辑
+        if (io.isOutputMode() && io.connectedNetwork != null) {
+            io.connectedNetwork.tickTransfer(level, io.transferRatePerTick);
         }
     }
 
@@ -250,5 +217,14 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
     public void invalidateCaps() {
         super.invalidateCaps();
         fluidHandlerProxy.invalidate();
+    }
+
+    public LazyOptional<IFluidHandler> getFluidHandlerProxy() {
+        return this.fluidHandlerProxy;
+    }
+
+    public void setNetwork(@Nullable FluidPipeNetwork network, int rate) {
+        this.connectedNetwork = network;
+        this.transferRatePerTick = rate;
     }
 }

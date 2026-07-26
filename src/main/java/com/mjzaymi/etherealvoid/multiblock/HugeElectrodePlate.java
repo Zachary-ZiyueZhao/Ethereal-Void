@@ -16,7 +16,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import java.util.Optional;
 
 public class HugeElectrodePlate {
-    public static final ResourceLocation STRUCTURE_RL = new ResourceLocation("ethereal_void", "huge_electrode_plate");
+    public static final ResourceLocation STRUCTURE_RL = ResourceLocation.fromNamespaceAndPath("ethereal_void", "huge_electrode_plate");
 
     /**
      * 当玩家放置一个电极板时，尝试以此方块为基础，寻找并验证 3x3x3 巨型电极板
