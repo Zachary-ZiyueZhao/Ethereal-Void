@@ -92,9 +92,13 @@ public class FluidPipeBlockEntity extends BlockEntity {
             }
         }
 
-        // 4. 将新的管网组下发给所有的管道和 IO (这里设定传输速率为 50)
-        for (BlockPos pos : visitedPipes) {
-            if (level.getBlockEntity(pos) instanceof FluidPipeBlockEntity pipeBE) {
+        // 4. 将新的管网组下发给所有的管道，并【彻底清理遗留的旧网络】
+        for (BlockPos p : visitedPipes) {
+            if (level.getBlockEntity(p) instanceof FluidPipeBlockEntity pipeBE) {
+                // 如果这个管道身上还有之前的网络，而且不是当前正在建的这个，立刻作废它！
+                if (pipeBE.currentNetwork != null && pipeBE.currentNetwork != newNetwork) {
+                    pipeBE.currentNetwork.invalidate();
+                }
                 pipeBE.currentNetwork = newNetwork;
             }
         }

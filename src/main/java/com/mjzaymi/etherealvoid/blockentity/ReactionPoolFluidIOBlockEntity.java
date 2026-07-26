@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid.blockentity;
 
 import com.mjzaymi.etherealvoid.block.FluidIOMode;
+import com.mjzaymi.etherealvoid.block.FluidPipe;
 import com.mjzaymi.etherealvoid.block.ReactionPoolFluidIO;
 import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
@@ -192,15 +193,43 @@ public class ReactionPoolFluidIOBlockEntity extends BlockEntity {
         this.transferRatePerTick = 0;
     }
 
-    // ==========================================
-    // 💡 核心传输 Tick：由 Ticker 高效驱动虚拟长连接
-    // ==========================================
+    // 在 ReactionPoolFluidIOBlockEntity 类中新增以下字段
+    private boolean lastWasInput = false;
+    private boolean lastWasOutput = false;
+
+    // 💡 替换原来的 tick 方法
     public static void tick(Level level, BlockPos pos, BlockState state, ReactionPoolFluidIOBlockEntity io) {
         if (level.isClientSide) return;
 
-        // 只需要让 Output 模式的方块去触发网络 Tick 即可
-        // 网络内部有防重复机制，就算有 10 个 Output，每 Tick 网络也只会跑一次传输逻辑
-        if (io.isOutputMode() && io.connectedNetwork != null) {
+        boolean currentIsInput = io.isInputMode();
+        boolean currentIsOutput = io.isOutputMode();
+
+        // 💡 核心机制：侦测到模式发生翻转（玩家用扳手切了模式等）
+        if (currentIsInput != io.lastWasInput || currentIsOutput != io.lastWasOutput) {
+            io.lastWasInput = currentIsInput;
+            io.lastWasOutput = currentIsOutput;
+
+            // 1. 立刻作废当前绑定的旧网络
+            if (io.connectedNetwork != null) {
+                io.connectedNetwork.invalidate();
+            }
+
+            // 2. 环顾四周，通知所有贴着这个 IO 的管道立刻重新启动 BFS 组网！
+            for (Direction dir : Direction.values()) {
+                BlockPos neighborPos = pos.relative(dir);
+                if (level.getBlockState(neighborPos).getBlock() instanceof FluidPipe) {
+                    FluidPipeBlockEntity.updateVirtualNetwork(level, neighborPos);
+                }
+            }
+        }
+
+        // 清理死掉的网络引用
+        if (io.connectedNetwork != null && !io.connectedNetwork.isValid) {
+            io.setNetwork(null, 0);
+        }
+
+        // 正常的网络传输 Tick
+        if (currentIsOutput && io.connectedNetwork != null) {
             io.connectedNetwork.tickTransfer(level, io.transferRatePerTick);
         }
     }
