@@ -92,10 +92,31 @@ public class FluidPipeBlockEntity extends BlockEntity {
             }
         }
 
+        // 💡 检查是否存在【自环】：同一水槽既作为输出又作为输入
+        boolean selfLoop = false;
+        for (ReactionPoolFluidIOBlockEntity inIO : newNetwork.inputs) {
+            var inStructOpt = com.mjzaymi.etherealvoid.reactionpool.CuboidStructure.findFromWallAndCorner(level, inIO.getBlockPos());
+            if (inStructOpt.isEmpty()) continue;
+
+            for (ReactionPoolFluidIOBlockEntity outIO : newNetwork.outputs) {
+                var outStructOpt = com.mjzaymi.etherealvoid.reactionpool.CuboidStructure.findFromWallAndCorner(level, outIO.getBlockPos());
+                if (outStructOpt.isEmpty()) continue;
+
+                // 比对 min 和 max，如果完全重合，说明来自于同一个多方块水槽
+                if (inStructOpt.get().min().equals(outStructOpt.get().min()) &&
+                        inStructOpt.get().max().equals(outStructOpt.get().max())) {
+                    selfLoop = true;
+                    break;
+                }
+            }
+            if (selfLoop) break;
+        }
+
+        newNetwork.hasSelfLoop = selfLoop;
+
         // 4. 将新的管网组下发给所有的管道，并【彻底清理遗留的旧网络】
         for (BlockPos p : visitedPipes) {
             if (level.getBlockEntity(p) instanceof FluidPipeBlockEntity pipeBE) {
-                // 如果这个管道身上还有之前的网络，而且不是当前正在建的这个，立刻作废它！
                 if (pipeBE.currentNetwork != null && pipeBE.currentNetwork != newNetwork) {
                     pipeBE.currentNetwork.invalidate();
                 }
@@ -103,8 +124,8 @@ public class FluidPipeBlockEntity extends BlockEntity {
             }
         }
 
-        // 只有在至少存在一个Input和一个Output时，IO才加入网络
-        if (hasInput && hasOutput) {
+        // 只有在没有自环，且同时存在Input和Output时，才激活IO
+        if (!selfLoop && hasInput && hasOutput) {
             for (ReactionPoolFluidIOBlockEntity io : newNetwork.inputs) {
                 io.setNetwork(newNetwork, 50);
             }

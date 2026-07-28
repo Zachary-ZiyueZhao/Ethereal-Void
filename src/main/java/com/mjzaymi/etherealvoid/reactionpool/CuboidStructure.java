@@ -20,28 +20,22 @@ public class CuboidStructure {
 
     private final BlockPos min;
     private final BlockPos max;
-
     private final Set<BlockPos> members;
-
     private final Set<BlockPos> interiors;
 
-    public CuboidStructure(
-            BlockPos min,
-            BlockPos max,
-            Set<BlockPos> members) {
-
-        this.min=min;
-        this.max=max;
-        this.members=members;
+    public CuboidStructure(BlockPos min, BlockPos max, Set<BlockPos> members) {
+        this.min = min;
+        this.max = max;
+        this.members = members;
         Set<BlockPos> blockPosSet = new HashSet<>();
-        for (int x = min.getX()+1; x < max.getX(); x++) {
-            for (int y = min.getY()+1; y < max.getY(); y++) {
-                for (int z = min.getZ()+1; z < max.getZ(); z++) {
+        for (int x = min.getX() + 1; x < max.getX(); x++) {
+            for (int y = min.getY() + 1; y < max.getY(); y++) {
+                for (int z = min.getZ() + 1; z < max.getZ(); z++) {
                     blockPosSet.add(new BlockPos(x, y, z));
                 }
             }
         }
-        this.interiors=blockPosSet;
+        this.interiors = blockPosSet;
     }
 
     public static Optional<CuboidStructure> findFromInterior(Level level, BlockPos interiorPos) {
@@ -80,80 +74,51 @@ public class CuboidStructure {
         return structure.isValid(level) ? Optional.of(structure) : Optional.empty();
     }
 
+    // 💡 修复核心：统一搜索 3x3x3 (26个邻居方向)
+    // 完美覆盖 面 (1D)、棱 (2D)、角 (3D) 的最后一块方块放置！
     public static Optional<CuboidStructure> findFromWallAndCorner(Level level, BlockPos pos) {
-        var result = findFromWall(level, pos);
-        if (result.isPresent()) return result;
-        return findFromCorner(level, pos);
-    }
-
-    public static Optional<CuboidStructure> findFromWall(Level level, BlockPos wallPos) {
-
-        BlockState state = level.getBlockState(wallPos);
-
-        if (!isWallPanel(state) && !isSteelCasing(state)) {
-            return Optional.empty();
-        }
-
-        for (Direction dir : Direction.values()) {
-
-            BlockPos adjacent = wallPos.relative(dir);
-
-            if (!isInterior(level, adjacent)) {
-                continue;
-            }
-
-            Optional<CuboidStructure> result =
-                    findFromInterior(level, adjacent);
-
-            if (result.isPresent()
-                    && result.get().members().contains(wallPos)) {
-
-                return result;
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    public static Optional<CuboidStructure> findFromCorner(Level level, BlockPos pos) {
-
         BlockState state = level.getBlockState(pos);
 
         if (!isWallPanel(state) && !isSteelCasing(state)) {
             return Optional.empty();
         }
 
-        for (int i=-1;i<1;i+=2)
-            for (int j=-1;j<1;j+=2)
-                for (int k=-1;k<1;k+=2) {
-                    BlockPos adjacent = pos.offset(-i, -j, -k);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    if (dx == 0 && dy == 0 && dz == 0) continue;
+
+                    BlockPos adjacent = pos.offset(dx, dy, dz);
                     if (!isInterior(level, adjacent)) continue;
 
-                    Optional<CuboidStructure> result =
-                            findFromInterior(level, adjacent);
-
-                    if (result.isPresent()
-                            && result.get().members().contains(pos)) {
-
+                    Optional<CuboidStructure> result = findFromInterior(level, adjacent);
+                    if (result.isPresent() && result.get().members().contains(pos)) {
                         return result;
                     }
                 }
+            }
+        }
 
         return Optional.empty();
     }
 
-    // 计算加热器数量
+    public static Optional<CuboidStructure> findFromWall(Level level, BlockPos wallPos) {
+        return findFromWallAndCorner(level, wallPos);
+    }
+
+    public static Optional<CuboidStructure> findFromCorner(Level level, BlockPos pos) {
+        return findFromWallAndCorner(level, pos);
+    }
+
     public int countHeatersBelow(Level level) {
         int heaterCount = 0;
         int targetY = this.min.getY() - 1;
 
-        // 遍历多方块底盘所占的 XZ 平面投影
         for (int x = this.min.getX(); x <= this.max.getX(); x++) {
             for (int z = this.min.getZ(); z <= this.max.getZ(); z++) {
                 BlockPos checkPos = new BlockPos(x, targetY, z);
                 BlockState state = level.getBlockState(checkPos);
 
-                // 检查方块类型，并且必须具有 ENABLED 属性且值为 true
                 if (state.is(ModBlocks.RESISTIVE_HEATER.get())) {
                     if (state.hasProperty(com.mjzaymi.etherealvoid.block.ResistiveHeater.ENABLED)
                             && state.getValue(com.mjzaymi.etherealvoid.block.ResistiveHeater.ENABLED)) {
@@ -165,7 +130,6 @@ public class CuboidStructure {
         return heaterCount;
     }
 
-    // 计算电极片集群数量，纯粹的 BFS
     public int countIndependentElectromines(Level level) {
         Set<BlockPos> allElectrodes = new HashSet<>();
         for (BlockPos pos : this.members) {
@@ -187,7 +151,6 @@ public class CuboidStructure {
 
                 while (!queue.isEmpty()) {
                     BlockPos current = queue.poll();
-                    // 四联通
                     for (Direction dir : Direction.values()) {
                         BlockPos neighbor = current.relative(dir);
                         if (allElectrodes.contains(neighbor) && !visited.contains(neighbor)) {
@@ -202,57 +165,22 @@ public class CuboidStructure {
         return clusterCount;
     }
 
-    public int width() {
-        return max.getX()-min.getX()+1;
-    }
-
-    public int height() {
-        return max.getY()-min.getY()+1;
-    }
-
-    public int depth() {
-        return max.getZ()-min.getZ()+1;
-    }
-
-    public BlockPos min() {
-        return min;
-    }
-
-    public BlockPos max() {
-        return max;
-    }
-
-    public BlockPos interiorMin() {
-        return min.offset(1 ,1 ,1);
-    }
-
-    public BlockPos interiorMax() {
-        return max.offset(-1, -1, -1);
-    }
-
-    public BlockPos interiorFloorMin() {
-        return interiorMin();
-    }
-
-    public BlockPos interiorFloorMax() {
-        return interiorMax().atY(interiorFloorMin().getY());
-    }
-
-    public Set<BlockPos> members() {
-        return Set.copyOf(members);
-    }
-
-    public Set<BlockPos> interiors() {
-        return Set.copyOf(interiors);
-    }
+    public int width() { return max.getX() - min.getX() + 1; }
+    public int height() { return max.getY() - min.getY() + 1; }
+    public int depth() { return max.getZ() - min.getZ() + 1; }
+    public BlockPos min() { return min; }
+    public BlockPos max() { return max; }
+    public BlockPos interiorMin() { return min.offset(1, 1, 1); }
+    public BlockPos interiorMax() { return max.offset(-1, -1, -1); }
+    public BlockPos interiorFloorMin() { return interiorMin(); }
+    public BlockPos interiorFloorMax() { return interiorMax().atY(interiorFloorMin().getY()); }
+    public Set<BlockPos> members() { return Set.copyOf(members); }
+    public Set<BlockPos> interiors() { return Set.copyOf(interiors); }
 
     public boolean containsInterior(BlockPos pos) {
-        return pos.getX() > min.getX()
-                && pos.getX() < max.getX()
-                && pos.getY() > min.getY()
-                && pos.getY() < max.getY()
-                && pos.getZ() > min.getZ()
-                && pos.getZ() < max.getZ();
+        return pos.getX() > min.getX() && pos.getX() < max.getX()
+                && pos.getY() > min.getY() && pos.getY() < max.getY()
+                && pos.getZ() > min.getZ() && pos.getZ() < max.getZ();
     }
 
     public boolean isValid(Level level) {
@@ -281,12 +209,8 @@ public class CuboidStructure {
             boolean edge = isEdge(pos, min, max);
             boolean roof = pos.getY() == max.getY();
 
-            // 在整体结构校验中强制执行 Monitor 的位置和方向规则
             if (state.is(ModBlocks.POOL_MONITOR.get())) {
-                if (roof || bottom) {
-                    return false;
-                }
-                // 朝向必须向外
+                if (roof || bottom) return false;
                 Direction facing = state.getValue(com.mjzaymi.etherealvoid.block.PoolMonitor.FACING);
                 if (!isValidMonitorFacing(pos.getX(), pos.getZ(), min.getX(), max.getX(), min.getZ(), max.getZ(), facing)) {
                     return false;
@@ -314,7 +238,6 @@ public class CuboidStructure {
 
     private static Integer findWall(Level level, BlockPos start, Direction direction) {
         BlockPos.MutableBlockPos cursor = start.mutable();
-
         for (int distance = 1; distance <= MAX_DIMENSION; distance++) {
             cursor.move(direction);
             BlockState state = level.getBlockState(cursor);
@@ -322,35 +245,24 @@ public class CuboidStructure {
             if (isWallPanel(state)) {
                 return direction.getAxis() == Direction.Axis.X ? cursor.getX() : cursor.getZ();
             }
-
-            if (!isInterior(level, cursor)) {
-                return null;
-            }
+            if (!isInterior(level, cursor)) return null;
         }
-
         return null;
     }
 
     private static Integer findBottom(Level level, BlockPos start) {
         BlockPos.MutableBlockPos cursor = start.mutable();
-
         for (int distance = 1; distance <= MAX_DIMENSION; distance++) {
             cursor.move(Direction.DOWN);
             BlockState state = level.getBlockState(cursor);
 
-            if (isSteelCasing(state)) {
-                return cursor.getY();
-            }
-
-            if (!isInterior(level, cursor)) {
-                return null;
-            }
+            if (isSteelCasing(state)) return cursor.getY();
+            if (!isInterior(level, cursor)) return null;
         }
-
         return null;
     }
 
-    private static Integer findWallTop(Level level,int minX, int maxX, int bottomY, int minZ, int maxZ) {
+    private static Integer findWallTop(Level level, int minX, int maxX, int bottomY, int minZ, int maxZ) {
         for (int y = bottomY + 1; y <= bottomY + MAX_DIMENSION - 1; y++) {
             if (isRoofLayer(level, minX, maxX, y, minZ, maxZ)) return y;
             if (!isWallLayer(level, minX, maxX, y, minZ, maxZ)) return null;
@@ -360,14 +272,9 @@ public class CuboidStructure {
 
     private static boolean isEdge(BlockPos pos, BlockPos min, BlockPos max) {
         int count = 0;
-
-        if (pos.getX() == min.getX() || pos.getX() == max.getX())
-            count++;
-        if (pos.getY() == min.getY() || pos.getY() == max.getY())
-            count++;
-        if (pos.getZ() == min.getZ() || pos.getZ() == max.getZ())
-            count++;
-
+        if (pos.getX() == min.getX() || pos.getX() == max.getX()) count++;
+        if (pos.getY() == min.getY() || pos.getY() == max.getY()) count++;
+        if (pos.getZ() == min.getZ() || pos.getZ() == max.getZ()) count++;
         return count >= 2;
     }
 
@@ -377,17 +284,12 @@ public class CuboidStructure {
                 boolean edgeX = x == minX || x == maxX;
                 boolean edgeZ = z == minZ || z == maxZ;
 
-                if (!edgeX && !edgeZ) {
-                    continue;
-                }
+                if (!edgeX && !edgeZ) continue;
 
                 BlockState state = level.getBlockState(new BlockPos(x, y, z));
-
                 if (state.is(ModBlocks.POOL_MONITOR.get())) {
                     Direction facing = state.getValue(com.mjzaymi.etherealvoid.block.PoolMonitor.FACING);
-                    if (!isValidMonitorFacing(x, z, minX, maxX, minZ, maxZ, facing)) {
-                        return false;
-                    }
+                    if (!isValidMonitorFacing(x, z, minX, maxX, minZ, maxZ, facing)) return false;
                 }
 
                 if (edgeX && edgeZ) {
@@ -412,7 +314,7 @@ public class CuboidStructure {
     }
 
     private static boolean isInterior(Level level, BlockPos pos) {
-        return true;//level.getBlockState(pos).isAir();
+        return true;
     }
 
     private static boolean isWallPanel(BlockState state) {
@@ -443,11 +345,13 @@ public class CuboidStructure {
         minTag.putInt("y", min.getY());
         minTag.putInt("z", min.getZ());
         root.put("min", minTag);
+
         CompoundTag maxTag = new CompoundTag();
         maxTag.putInt("x", max.getX());
         maxTag.putInt("y", max.getY());
         maxTag.putInt("z", max.getZ());
         root.put("max", maxTag);
+
         ListTag list = new ListTag();
         for (BlockPos pos : members) {
             CompoundTag tag = new CompoundTag();
@@ -461,26 +365,16 @@ public class CuboidStructure {
     }
 
     public static CuboidStructure deserializeNBT(CompoundTag root) {
-        if (root == null || root.isEmpty())
-            return null;
+        if (root == null || root.isEmpty()) return null;
         Set<BlockPos> members = new HashSet<>();
         ListTag list = root.getList("members", Tag.TAG_COMPOUND);
         for (Tag t : list) {
             CompoundTag tag = (CompoundTag) t;
-
-            members.add(new BlockPos(
-                    tag.getInt("x"),
-                    tag.getInt("y"),
-                    tag.getInt("z")
-            ));
+            members.add(new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z")));
         }
         return new CuboidStructure(
-                new BlockPos(root.getCompound("min").getInt("x"),
-                        root.getCompound("min").getInt("y"),
-                        root.getCompound("min").getInt("z")),
-                new BlockPos(root.getCompound("max").getInt("x"),
-                        root.getCompound("max").getInt("y"),
-                        root.getCompound("max").getInt("z")),
+                new BlockPos(root.getCompound("min").getInt("x"), root.getCompound("min").getInt("y"), root.getCompound("min").getInt("z")),
+                new BlockPos(root.getCompound("max").getInt("x"), root.getCompound("max").getInt("y"), root.getCompound("max").getInt("z")),
                 members);
     }
 
@@ -491,9 +385,7 @@ public class CuboidStructure {
                 boolean edgeZ = z == minZ || z == maxZ;
                 BlockState state = level.getBlockState(new BlockPos(x, y, z));
 
-                if (state.is(ModBlocks.POOL_MONITOR.get())) {
-                    return false;
-                }
+                if (state.is(ModBlocks.POOL_MONITOR.get())) return false;
 
                 if (edgeX && edgeZ) {
                     if (!isSteelCasing(state)) return false;

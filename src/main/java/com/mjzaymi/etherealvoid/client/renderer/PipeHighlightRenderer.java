@@ -1,6 +1,8 @@
 package com.mjzaymi.etherealvoid.client.renderer;
 
 import com.mjzaymi.etherealvoid.block.FluidPipe;
+import com.mjzaymi.etherealvoid.blockentity.ReactionPoolFluidIOBlockEntity;
+import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
@@ -11,6 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -23,21 +26,24 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.joml.Matrix4f;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class PipeHighlightRenderer {
 
     private static BlockPos lastLookedPos = null;
-    // 💡 关键修复：缓存位置 + BlockState 的映射，确保状态变化时能感知到
     private static final Map<BlockPos, BlockState> cachedNetworkStates = new HashMap<>();
+
+    // 💡 修复核心：新增 IO 节点的动态状态缓存 (坐标 -> 模式状态位)
+    private static final Map<BlockPos, Integer> cachedIOStates = new HashMap<>();
+
     private static BlockPos networkOrigin = null;
     private static VoxelShape mergedNetworkShape = Shapes.empty();
 
-    // 淡入淡出控制
+    private static boolean isSelfLoopDetected = false;
+    private static final List<VoxelShape> loopingPoolShapes = new ArrayList<>();
+
+    // 淡入淡出动画控制
     private static float currentFade = 0.0f;
     private static long lastFrameTime = System.currentTimeMillis();
 
@@ -71,7 +77,7 @@ public class PipeHighlightRenderer {
             checkAndUpdateNetworkCache(level, targetPos);
         }
 
-        // 线性淡入淡出插值
+        // 线性淡入淡出
         float fadeSpeed = 6.0f;
         if (isLookingAtPipe) {
             currentFade = Math.min(1.0f, currentFade + fadeSpeed * deltaTime);
@@ -86,12 +92,13 @@ public class PipeHighlightRenderer {
         renderNetworkHighlight(event, mc, level);
     }
 
-    /**
-     * 💡 深度检查：比对坐标 + 方块状态 (BlockState)
-     */
     private static void checkAndUpdateNetworkCache(Level level, BlockPos startPos) {
         Map<BlockPos, BlockState> currentFoundStates = new HashMap<>();
+        Map<BlockPos, Integer> currentIOStates = new HashMap<>();
+
         Queue<BlockPos> queue = new LinkedList<>();
+        Set<ReactionPoolFluidIOBlockEntity> inputIOs = new HashSet<>();
+        Set<ReactionPoolFluidIOBlockEntity> outputIOs = new HashSet<>();
 
         BlockState startState = level.getBlockState(startPos);
         queue.add(startPos);
@@ -107,23 +114,46 @@ public class PipeHighlightRenderer {
                     BlockPos neighbor = curr.relative(dir);
                     BlockState neighborState = level.getBlockState(neighbor);
 
-                    if (!currentFoundStates.containsKey(neighbor) && neighborState.getBlock() instanceof FluidPipe) {
-                        currentFoundStates.put(neighbor, neighborState);
-                        queue.add(neighbor);
+                    if (!currentFoundStates.containsKey(neighbor)) {
+                        if (neighborState.getBlock() instanceof FluidPipe) {
+                            currentFoundStates.put(neighbor, neighborState);
+                            queue.add(neighbor);
+                        } else {
+                            BlockEntity be = level.getBlockEntity(neighbor);
+                            if (be instanceof ReactionPoolFluidIOBlockEntity ioBE) {
+                                // 💡 记录当前 IO 口的状态标志位（输入/输出/水槽有效性）
+                                int flags = (ioBE.isInputMode() ? 1 : 0)
+                                        | (ioBE.isOutputMode() ? 2 : 0)
+                                        | (ioBE.hasValidPool() ? 4 : 0);
+                                currentIOStates.put(neighbor, flags);
+
+                                if (ioBE.isInputMode()) inputIOs.add(ioBE);
+                                else if (ioBE.isOutputMode()) outputIOs.add(ioBE);
+                            }
+                        }
                     }
                 }
             }
         }
 
-        // 💡 只有当网络位置集 OR 任何位置上的 BlockState 发生改变时，才重新渲染
-        if (!currentFoundStates.equals(cachedNetworkStates) || !startPos.equals(lastLookedPos)) {
+        // 💡 条件判定：管道 BlockState、IO 口模式标志位或瞄准位置变动时，立刻全盘重构！
+        if (!currentFoundStates.equals(cachedNetworkStates)
+                || !currentIOStates.equals(cachedIOStates)
+                || !startPos.equals(lastLookedPos)) {
+
             lastLookedPos = startPos;
             cachedNetworkStates.clear();
             cachedNetworkStates.putAll(currentFoundStates);
 
+            cachedIOStates.clear();
+            cachedIOStates.putAll(currentIOStates);
+
             networkOrigin = startPos;
             mergedNetworkShape = Shapes.empty();
+            loopingPoolShapes.clear();
+            isSelfLoopDetected = false;
 
+            // 1. 构建管道图层 Shape
             for (Map.Entry<BlockPos, BlockState> entry : cachedNetworkStates.entrySet()) {
                 BlockPos pos = entry.getKey();
                 BlockState state = entry.getValue();
@@ -135,6 +165,38 @@ public class PipeHighlightRenderer {
                     double offsetZ = pos.getZ() - networkOrigin.getZ();
                     mergedNetworkShape = Shapes.or(mergedNetworkShape, localShape.move(offsetX, offsetY, offsetZ));
                 }
+            }
+
+            // 2. 客户端自环检测与水槽结构收集
+            Set<CuboidStructure> matchedStructures = new HashSet<>();
+            for (ReactionPoolFluidIOBlockEntity inIO : inputIOs) {
+                Optional<CuboidStructure> inStruct = CuboidStructure.findFromWallAndCorner(level, inIO.getBlockPos());
+                if (inStruct.isEmpty()) continue;
+
+                for (ReactionPoolFluidIOBlockEntity outIO : outputIOs) {
+                    Optional<CuboidStructure> outStruct = CuboidStructure.findFromWallAndCorner(level, outIO.getBlockPos());
+                    if (outStruct.isEmpty()) continue;
+
+                    if (inStruct.get().min().equals(outStruct.get().min()) && inStruct.get().max().equals(outStruct.get().max())) {
+                        isSelfLoopDetected = true;
+                        matchedStructures.add(inStruct.get());
+                    }
+                }
+            }
+
+            // 3. 将自环水槽的外框转换为相对 Shape，准备渲染大红框
+            for (CuboidStructure struct : matchedStructures) {
+                BlockPos min = struct.min();
+                BlockPos max = struct.max();
+                VoxelShape poolShape = Shapes.box(
+                        min.getX() - networkOrigin.getX(),
+                        min.getY() - networkOrigin.getY(),
+                        min.getZ() - networkOrigin.getZ(),
+                        max.getX() + 1 - networkOrigin.getX(),
+                        max.getY() + 1 - networkOrigin.getY(),
+                        max.getZ() + 1 - networkOrigin.getZ()
+                );
+                loopingPoolShapes.add(poolShape);
             }
         }
     }
@@ -150,7 +212,7 @@ public class PipeHighlightRenderer {
         long time = level.getGameTime();
         float partialTicks = event.getPartialTick();
 
-        // 呼吸感系数
+        // 呼吸感计算
         float rawBreathe = 0.35f + 0.25f * (float) Math.sin((time + partialTicks) * 0.22f);
         float finalFaceAlpha = rawBreathe * 0.45f * currentFade;
         float finalFrameAlpha = Math.min(1.0f, (rawBreathe + 0.35f)) * currentFade;
@@ -161,12 +223,22 @@ public class PipeHighlightRenderer {
 
         VertexConsumer quadConsumer = bufferSource.getBuffer(RenderType.debugQuads());
 
-        float faceR = 0.25f, faceG = 0.50f, faceB = 0.38f;
-        float frameR = 0.35f, frameG = 0.70f, frameB = 0.52f;
+        float faceR, faceG, faceB;
+        float frameR, frameG, frameB;
+
+        if (isSelfLoopDetected) {
+            // 🚨 自环报警红 (Alert Red)
+            faceR = 0.85f; faceG = 0.15f; faceB = 0.15f;
+            frameR = 1.00f; frameG = 0.25f; frameB = 0.25f;
+        } else {
+            // 🟢 正常莫兰迪青绿 (Teal)
+            faceR = 0.25f; faceG = 0.50f; faceB = 0.38f;
+            frameR = 0.35f; frameG = 0.70f; frameB = 0.52f;
+        }
 
         float zOffset = 0.001f;
 
-        // 1. 绘制半透明填充面
+        // 1. 绘制管道网络半透明面
         mergedNetworkShape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
             renderCustomFaces(
                     matrix, quadConsumer,
@@ -176,11 +248,21 @@ public class PipeHighlightRenderer {
             );
         });
 
-        // 2. 绘制 3D 粗线条包边
+        // 2. 绘制管道网络 3D 粗线框
         ThickOutlineRenderer.renderThickEdges(
                 matrix, quadConsumer, mergedNetworkShape,
                 0.015f, frameR, frameG, frameB, finalFrameAlpha
         );
+
+        // 3. 绘制自环水槽外部的 3D 红色巨型长方体包边
+        if (isSelfLoopDetected && !loopingPoolShapes.isEmpty()) {
+            for (VoxelShape poolShape : loopingPoolShapes) {
+                ThickOutlineRenderer.renderThickEdges(
+                        matrix, quadConsumer, poolShape,
+                        0.035f, 1.0f, 0.15f, 0.15f, finalFrameAlpha
+                );
+            }
+        }
 
         bufferSource.endBatch(RenderType.debugQuads());
 
@@ -191,21 +273,45 @@ public class PipeHighlightRenderer {
         float x1 = (float) minX, y1 = (float) minY, z1 = (float) minZ;
         float x2 = (float) maxX, y2 = (float) maxY, z2 = (float) maxZ;
 
-        // Down
-        addVertex(consumer, matrix, x1, y1, z1, r, g, b, a, 0, -1, 0); addVertex(consumer, matrix, x2, y1, z1, r, g, b, a, 0, -1, 0); addVertex(consumer, matrix, x2, y1, z2, r, g, b, a, 0, -1, 0); addVertex(consumer, matrix, x1, y1, z2, r, g, b, a, 0, -1, 0);
-        // Up
-        addVertex(consumer, matrix, x1, y2, z1, r, g, b, a, 0, 1, 0); addVertex(consumer, matrix, x1, y2, z2, r, g, b, a, 0, 1, 0); addVertex(consumer, matrix, x2, y2, z2, r, g, b, a, 0, 1, 0); addVertex(consumer, matrix, x2, y2, z1, r, g, b, a, 0, 1, 0);
-        // North
-        addVertex(consumer, matrix, x1, y1, z1, r, g, b, a, 0, 0, -1); addVertex(consumer, matrix, x1, y2, z1, r, g, b, a, 0, 0, -1); addVertex(consumer, matrix, x2, y2, z1, r, g, b, a, 0, 0, -1); addVertex(consumer, matrix, x2, y1, z1, r, g, b, a, 0, 0, -1);
-        // South
-        addVertex(consumer, matrix, x1, y1, z2, r, g, b, a, 0, 0, 1); addVertex(consumer, matrix, x2, y1, z2, r, g, b, a, 0, 0, 1); addVertex(consumer, matrix, x2, y2, z2, r, g, b, a, 0, 0, 1); addVertex(consumer, matrix, x1, y2, z2, r, g, b, a, 0, 0, 1);
-        // West
-        addVertex(consumer, matrix, x1, y1, z1, r, g, b, a, -1, 0, 0); addVertex(consumer, matrix, x1, y1, z2, r, g, b, a, -1, 0, 0); addVertex(consumer, matrix, x1, y2, z2, r, g, b, a, -1, 0, 0); addVertex(consumer, matrix, x1, y2, z1, r, g, b, a, -1, 0, 0);
-        // East
-        addVertex(consumer, matrix, x2, y1, z1, r, g, b, a, 1, 0, 0); addVertex(consumer, matrix, x2, y2, z1, r, g, b, a, 1, 0, 0); addVertex(consumer, matrix, x2, y2, z2, r, g, b, a, 1, 0, 0); addVertex(consumer, matrix, x2, y1, z2, r, g, b, a, 1, 0, 0);
+        // Down (-Y) - 修正绕序
+        addVertex(consumer, matrix, x1, y1, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y1, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y1, z1, r, g, b, a);
+        addVertex(consumer, matrix, x1, y1, z1, r, g, b, a);
+
+        // Up (+Y) - 修正绕序
+        addVertex(consumer, matrix, x1, y2, z1, r, g, b, a);
+        addVertex(consumer, matrix, x1, y2, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y2, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y2, z1, r, g, b, a);
+
+        // North (-Z) - 修正绕序
+        addVertex(consumer, matrix, x1, y2, z1, r, g, b, a);
+        addVertex(consumer, matrix, x2, y2, z1, r, g, b, a);
+        addVertex(consumer, matrix, x2, y1, z1, r, g, b, a);
+        addVertex(consumer, matrix, x1, y1, z1, r, g, b, a);
+
+        // South (+Z) - 修正绕序
+        addVertex(consumer, matrix, x1, y1, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y1, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y2, z2, r, g, b, a);
+        addVertex(consumer, matrix, x1, y2, z2, r, g, b, a);
+
+        // West (-X) - 修正绕序
+        addVertex(consumer, matrix, x1, y1, z1, r, g, b, a);
+        addVertex(consumer, matrix, x1, y1, z2, r, g, b, a);
+        addVertex(consumer, matrix, x1, y2, z2, r, g, b, a);
+        addVertex(consumer, matrix, x1, y2, z1, r, g, b, a);
+
+        // East (+X) - 修正绕序
+        addVertex(consumer, matrix, x2, y1, z2, r, g, b, a);
+        addVertex(consumer, matrix, x2, y1, z1, r, g, b, a);
+        addVertex(consumer, matrix, x2, y2, z1, r, g, b, a);
+        addVertex(consumer, matrix, x2, y2, z2, r, g, b, a);
     }
 
-    private static void addVertex(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z, float r, float g, float b, float a, float nx, float ny, float nz) {
-        consumer.vertex(matrix, x, y, z).color(r, g, b, a).normal(nx, ny, nz).endVertex();
+    // 💡 移除不匹配的 .normal() 调用，确保与 POSITION_COLOR 格式完美契合
+    private static void addVertex(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z, float r, float g, float b, float a) {
+        consumer.vertex(matrix, x, y, z).color(r, g, b, a).endVertex();
     }
 }
