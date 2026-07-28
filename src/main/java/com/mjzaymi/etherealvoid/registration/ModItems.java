@@ -3,6 +3,7 @@ package com.mjzaymi.etherealvoid.registration;
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.blockentity.VirtualMinerItem;
 import com.mjzaymi.etherealvoid.common.item.BaseItem;
+import com.mjzaymi.etherealvoid.item.FluidPipeFilterItem;
 import com.mjzaymi.etherealvoid.item.Multimeter;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -54,6 +55,7 @@ public class ModItems {
     public static final RegistryObject<Item> MAGNESIUM_INGOT = ITEMS.register("magnesium_ingot", BaseItem::new);
     public static final RegistryObject<Item> MULTIMETER = ITEMS.register("multimeter", Multimeter::new);
     public static final RegistryObject<Item> FLUID_STORAGE_TANK = ITEMS.register("fluid_storage_tank", () -> new FluidStorageTankItem(new Item.Properties()));
+    public static final RegistryObject<Item> FLUID_PIPE_FILTER = ITEMS.register("fluid_pipe_filter", () -> new FluidPipeFilterItem(new Item.Properties()));
 
 
 

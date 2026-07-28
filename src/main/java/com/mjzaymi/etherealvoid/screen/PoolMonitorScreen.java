@@ -4,6 +4,9 @@ import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
+import com.mjzaymi.etherealvoid.network.ModMessages;
+import com.mjzaymi.etherealvoid.network.packet.SetFilterFluidC2SPacket;
+import com.mjzaymi.etherealvoid.registration.ModItems;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -11,8 +14,10 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemStack;
@@ -20,6 +25,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -363,5 +369,90 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
             }
             gasY += fluidHeight;
         }
+    }
+
+    // 在类中新增获取当前鼠标悬浮流体的方法
+    @Nullable
+    private FluidStack getHoveredFluid(double mouseX, double mouseY) {
+        if (poolBlockEntity == null) return null;
+
+        int barX = leftPos + 8;
+        int barWidth = 110;
+        int fluidsTotalHeight = 106;
+        int currentY = topPos + 121;
+
+        // 根据沉淀物调整可用高度
+        if (!precipitates.isEmpty()) {
+            fluidsTotalHeight -= 6;
+            currentY -= 6;
+        }
+
+        float currentAirDensity = 0.0012f;
+        List<FluidStack> liquids = new ArrayList<>();
+        List<FluidStack> gases = new ArrayList<>();
+        for (FluidStack fs : fluids) {
+            ResourceLocation rl = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getKey(fs.getFluid());
+            float density = rl != null && FluidSorter.DENSITY_MAP.containsKey(rl.getPath())
+                    ? FluidSorter.DENSITY_MAP.get(rl.getPath()) : 1.0f;
+            if (density < currentAirDensity) gases.add(fs);
+            else liquids.add(fs);
+        }
+
+        final int capacity = poolBlockEntity.getTankAll().getCapacity();
+
+        // 检测液体碰撞
+        int liquidY = currentY;
+        for (FluidStack fluid : liquids) {
+            int fluidHeight = Math.round(((float)fluid.getAmount() / capacity) * fluidsTotalHeight);
+            if (mouseX >= barX && mouseX < barX+barWidth && mouseY >= liquidY-fluidHeight+1 && mouseY < liquidY+1) {
+                return fluid;
+            }
+            liquidY -= fluidHeight;
+        }
+
+        // 检测气体碰撞
+        int gasY = topPos + 16;
+        for (FluidStack fluid : gases) {
+            int fluidHeight = Math.round(((float)fluid.getAmount() / capacity) * fluidsTotalHeight);
+            if (mouseX >= barX && mouseX < barX+barWidth && mouseY >= gasY && mouseY < gasY+fluidHeight) {
+                return fluid;
+            }
+            gasY += fluidHeight;
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean mouseClicked(double pMouseX, double pMouseY, int pButton) {
+        if (pButton == 0) { // 左键点击
+            ItemStack filterStack = this.menu.getCarried();
+            boolean isCarried = true;
+
+            // 如果鼠标上没抓着，检查主手
+            if (filterStack.getItem() != ModItems.FLUID_PIPE_FILTER.get()) {
+                filterStack = this.minecraft.player.getMainHandItem();
+                isCarried = false;
+            }
+
+            // 如果手执的是过滤器
+            if (filterStack.getItem() == ModItems.FLUID_PIPE_FILTER.get()) {
+                FluidStack clickedFluid = getHoveredFluid(pMouseX, pMouseY);
+                if (clickedFluid != null) {
+                    ResourceLocation fluidRes = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getKey(clickedFluid.getFluid());
+                    if (fluidRes != null) {
+                        // 1. 播放音效
+                        Minecraft.getInstance().getSoundManager().play(
+                                SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
+                        );
+
+                        // 🟢 2. 核心修改：取消注释！正式向服务端发包写入 NBT！
+                        ModMessages.sendToServer(new SetFilterFluidC2SPacket(fluidRes.toString(), isCarried));
+                        return true;
+                    }
+                }
+            }
+        }
+        return super.mouseClicked(pMouseX, pMouseY, pButton);
     }
 }

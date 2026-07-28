@@ -1,6 +1,7 @@
 package com.mjzaymi.etherealvoid;
 
 import com.mjzaymi.etherealvoid.dimensions.space.SpaceTransitionHandler;
+import com.mjzaymi.etherealvoid.network.ModMessages;
 import com.mjzaymi.etherealvoid.registration.*;
 import com.mjzaymi.etherealvoid.screen.GemPolishingStationScreen;
 import com.mjzaymi.etherealvoid.screen.PoolMonitorMenu;
@@ -57,7 +58,9 @@ public class EtherealVoid {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)  {
-
+        event.enqueueWork(() -> {
+            ModMessages.register();
+        });
     }
 
     // Add the example block item to the building blocks tab

@@ -33,8 +33,6 @@ public class PipeHighlightRenderer {
 
     private static BlockPos lastLookedPos = null;
     private static final Map<BlockPos, BlockState> cachedNetworkStates = new HashMap<>();
-
-    // 💡 修复核心：新增 IO 节点的动态状态缓存 (坐标 -> 模式状态位)
     private static final Map<BlockPos, Integer> cachedIOStates = new HashMap<>();
 
     private static BlockPos networkOrigin = null;
@@ -121,7 +119,6 @@ public class PipeHighlightRenderer {
                         } else {
                             BlockEntity be = level.getBlockEntity(neighbor);
                             if (be instanceof ReactionPoolFluidIOBlockEntity ioBE) {
-                                // 💡 记录当前 IO 口的状态标志位（输入/输出/水槽有效性）
                                 int flags = (ioBE.isInputMode() ? 1 : 0)
                                         | (ioBE.isOutputMode() ? 2 : 0)
                                         | (ioBE.hasValidPool() ? 4 : 0);
@@ -136,7 +133,7 @@ public class PipeHighlightRenderer {
             }
         }
 
-        // 💡 条件判定：管道 BlockState、IO 口模式标志位或瞄准位置变动时，立刻全盘重构！
+        // 条件判定：管道状态、IO状态或瞄准位置变动时重新构建
         if (!currentFoundStates.equals(cachedNetworkStates)
                 || !currentIOStates.equals(cachedIOStates)
                 || !startPos.equals(lastLookedPos)) {
@@ -184,7 +181,7 @@ public class PipeHighlightRenderer {
                 }
             }
 
-            // 3. 将自环水槽的外框转换为相对 Shape，准备渲染大红框
+            // 3. 将自环水槽的外框转换为相对 Shape
             for (CuboidStructure struct : matchedStructures) {
                 BlockPos min = struct.min();
                 BlockPos max = struct.max();
@@ -231,7 +228,7 @@ public class PipeHighlightRenderer {
             faceR = 0.85f; faceG = 0.15f; faceB = 0.15f;
             frameR = 1.00f; frameG = 0.25f; frameB = 0.25f;
         } else {
-            // 🟢 正常莫兰迪青绿 (Teal)
+            // 🟢 正常状态：莫兰迪青绿 (Teal / Available)
             faceR = 0.25f; faceG = 0.50f; faceB = 0.38f;
             frameR = 0.35f; frameG = 0.70f; frameB = 0.52f;
         }
@@ -273,44 +270,43 @@ public class PipeHighlightRenderer {
         float x1 = (float) minX, y1 = (float) minY, z1 = (float) minZ;
         float x2 = (float) maxX, y2 = (float) maxY, z2 = (float) maxZ;
 
-        // Down (-Y) - 修正绕序
+        // Down (-Y)
         addVertex(consumer, matrix, x1, y1, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y1, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y1, z1, r, g, b, a);
         addVertex(consumer, matrix, x1, y1, z1, r, g, b, a);
 
-        // Up (+Y) - 修正绕序
+        // Up (+Y)
         addVertex(consumer, matrix, x1, y2, z1, r, g, b, a);
         addVertex(consumer, matrix, x1, y2, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y2, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y2, z1, r, g, b, a);
 
-        // North (-Z) - 修正绕序
+        // North (-Z)
         addVertex(consumer, matrix, x1, y2, z1, r, g, b, a);
         addVertex(consumer, matrix, x2, y2, z1, r, g, b, a);
         addVertex(consumer, matrix, x2, y1, z1, r, g, b, a);
         addVertex(consumer, matrix, x1, y1, z1, r, g, b, a);
 
-        // South (+Z) - 修正绕序
+        // South (+Z)
         addVertex(consumer, matrix, x1, y1, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y1, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y2, z2, r, g, b, a);
         addVertex(consumer, matrix, x1, y2, z2, r, g, b, a);
 
-        // West (-X) - 修正绕序
+        // West (-X)
         addVertex(consumer, matrix, x1, y1, z1, r, g, b, a);
         addVertex(consumer, matrix, x1, y1, z2, r, g, b, a);
         addVertex(consumer, matrix, x1, y2, z2, r, g, b, a);
         addVertex(consumer, matrix, x1, y2, z1, r, g, b, a);
 
-        // East (+X) - 修正绕序
+        // East (+X)
         addVertex(consumer, matrix, x2, y1, z2, r, g, b, a);
         addVertex(consumer, matrix, x2, y1, z1, r, g, b, a);
         addVertex(consumer, matrix, x2, y2, z1, r, g, b, a);
         addVertex(consumer, matrix, x2, y2, z2, r, g, b, a);
     }
 
-    // 💡 移除不匹配的 .normal() 调用，确保与 POSITION_COLOR 格式完美契合
     private static void addVertex(VertexConsumer consumer, Matrix4f matrix, float x, float y, float z, float r, float g, float b, float a) {
         consumer.vertex(matrix, x, y, z).color(r, g, b, a).endVertex();
     }

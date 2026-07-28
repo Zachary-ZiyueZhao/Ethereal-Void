@@ -82,21 +82,17 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
         return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
-    // 💡 替代 getBlockTickQueue 方法的更稳妥、标准的邻居状态改变监听
     @Override
     public BlockState updateShape(BlockState state, Direction dir, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos) {
         if (!level.isClientSide()) {
-            // 使用原版标准的计划刻度：在 1 个游戏刻（1 tick）后触发下面的 tick(..) 回调方法
             level.scheduleTick(pos, this, 1);
         }
         return super.updateShape(state, dir, neighborState, level, pos, neighborPos);
     }
 
-    // 💡 当延迟的计划刻度到达时，触发该方法。用于安全打破物理更新引起的网路死锁
     @Override
     public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         super.tick(state, level, pos, random);
-        // 解开此注释：当 IO 口模式切换或物理更新时，强制刷新其周围邻居管网
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = pos.relative(dir);
             if (level.getBlockState(neighborPos).getBlock() instanceof FluidPipe) {
@@ -109,8 +105,37 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
     public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
         ItemStack heldItem = pPlayer.getItemInHand(pHand);
 
-        var itemFluidCap = heldItem.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
+        // =========================================================================
+        // 1. 手持管道 (FluidPipe)：无需下蹲直接交互
+        // =========================================================================
+        if (heldItem.getItem() instanceof net.minecraft.world.item.BlockItem blockItem && blockItem.getBlock() instanceof FluidPipe) {
+            Direction clickedFace = pHit.getDirection();
+            BlockPos pipePos = pPos.relative(clickedFace);
+            BlockState pipeState = pLevel.getBlockState(pipePos);
 
+            // 如果该方向已经有管道，则直接建立连接（不消耗管道）
+            if (pipeState.getBlock() instanceof FluidPipe) {
+                Direction pipeFacingDir = clickedFace.getOpposite();
+                var prop = FluidPipe.getPropertyForDirection(pipeFacingDir);
+
+                if (pipeState.hasProperty(prop) && !pipeState.getValue(prop)) {
+                    if (!pLevel.isClientSide()) {
+                        BlockState newPipeState = pipeState.setValue(prop, true);
+                        pLevel.setBlock(pipePos, newPipeState, 3);
+                        FluidPipeBlockEntity.updateVirtualNetwork(pLevel, pipePos);
+                    }
+                    pLevel.playSound(pPlayer, pipePos, net.minecraft.sounds.SoundEvents.ITEM_FRAME_ADD_ITEM, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.2F);
+                    return InteractionResult.sidedSuccess(pLevel.isClientSide());
+                }
+            }
+            // 如果该方向没有管道，返回 PASS，让原版 BlockItem 直接放置新管道
+            return InteractionResult.PASS;
+        }
+
+        // =========================================================================
+        // 2. 手持流体容器交互
+        // =========================================================================
+        var itemFluidCap = heldItem.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
         if (itemFluidCap.isPresent()) {
             if (!pLevel.isClientSide()) {
                 BlockEntity blockEntity = pLevel.getBlockEntity(pPos);
@@ -130,6 +155,16 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
             return InteractionResult.sidedSuccess(pLevel.isClientSide());
         }
 
+        // =========================================================================
+        // 3. 手持其他任何物品：禁止调整模式
+        // =========================================================================
+        if (!heldItem.isEmpty()) {
+            return InteractionResult.PASS;
+        }
+
+        // =========================================================================
+        // 4. 必须【绝对空手】右键：才能切换 INPUT / OUTPUT 模式
+        // =========================================================================
         if (!pLevel.isClientSide()) {
             FluidIOMode currentMode = pState.getValue(MODE);
             FluidIOMode nextMode = currentMode == FluidIOMode.INPUT ? FluidIOMode.OUTPUT : FluidIOMode.INPUT;
@@ -183,10 +218,8 @@ public class ReactionPoolFluidIO extends Block implements EntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        // 只有服务端才允许执行虚拟搬运计算
         if (level.isClientSide()) return null;
 
-        // 验证当前 BlockEntityType 是否匹配我们的 IO 块实体
         if (type == ModBlockEntities.REACTION_POOL_FLUID_IO_BE.get()) {
             return (level1, pos, state1, blockEntity) -> {
                 if (blockEntity instanceof ReactionPoolFluidIOBlockEntity ioBe) {
