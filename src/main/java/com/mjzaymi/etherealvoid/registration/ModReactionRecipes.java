@@ -1,10 +1,11 @@
 package com.mjzaymi.etherealvoid.registration;
 
-import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.ResultOrCost;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.SyncType;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.Condition;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.TemperatureCondition;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.condition.ElectrodeCountCondition;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.ReactionRecipe;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.ResultOrCost;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.SyncType;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.condition.Condition;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.condition.TemperatureCondition;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.math.Range;
 import net.minecraft.world.item.ItemStack;
@@ -143,7 +144,7 @@ public class ModReactionRecipes {
                     new FluidStack(ModFluids.SOURCE_SODIUM_HYDROXIDE_SOLUTION.get(), 100))),
             Condition.ALWAYS_TRUE
                     .and(new TemperatureCondition(new Range(273.15, 373.15)))
-                    .and(new com.mjzaymi.etherealvoid.reactionpool.recipe.condition.ElectrodeCountCondition(2))
+                    .and(new ElectrodeCountCondition(2))
     ));
 
     public static ReactionRecipe BAUXITE_CALCINATION = register(new ReactionRecipe(

@@ -1,7 +1,7 @@
-package com.mjzaymi.etherealvoid.reactionpool.recipe;
+package com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe;
 
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.condition.Checker;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.condition.Checker;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;

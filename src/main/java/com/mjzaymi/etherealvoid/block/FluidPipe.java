@@ -99,9 +99,7 @@ public class FluidPipe extends Block implements EntityBlock {
                 network.setFilter(heldItem);
                 FluidPipeBlockEntity.updateVirtualNetwork(level, pos);
 
-                if (!player.isCreative()) {
-                    heldItem.shrink(1);
-                }
+                heldItem.shrink(1);
 
                 level.playSound(null, pos, SoundEvents.ITEM_FRAME_ADD_ITEM, SoundSource.BLOCKS, 1.0F, 1.2F);
                 return InteractionResult.SUCCESS;

@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.common.util;
 
-import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.ReactionRecipe;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.item.ItemEntity;

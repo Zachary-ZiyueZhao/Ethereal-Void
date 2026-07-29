@@ -2,7 +2,7 @@ package com.mjzaymi.etherealvoid.client.renderer;
 
 import com.mjzaymi.etherealvoid.block.FluidPipe;
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolFluidIOBlockEntity;
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;

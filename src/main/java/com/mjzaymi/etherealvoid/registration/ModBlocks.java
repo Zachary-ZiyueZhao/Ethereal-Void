@@ -5,8 +5,6 @@ import com.mjzaymi.etherealvoid.block.*;
 import com.mjzaymi.etherealvoid.block.electricity.FluidPump;
 import com.mjzaymi.etherealvoid.block.electricity.HydraulicGenerator;
 import com.mjzaymi.etherealvoid.block.electricity.ThreeWireCable;
-import com.mjzaymi.etherealvoid.reactionpool.ReactionPoolStructureDetector;
-import com.mojang.text2speech.OperatingSystem;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;

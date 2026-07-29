@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.client.renderer;
 
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.common.util.fluid.MultiFluidTank;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import net.minecraft.core.BlockPos;

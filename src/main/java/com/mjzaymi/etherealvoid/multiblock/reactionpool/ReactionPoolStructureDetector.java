@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.reactionpool;
+package com.mjzaymi.etherealvoid.multiblock.reactionpool;
 
 import com.mjzaymi.etherealvoid.EtherealVoid;
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;

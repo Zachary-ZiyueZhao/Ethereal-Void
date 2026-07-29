@@ -2,9 +2,9 @@ package com.mjzaymi.etherealvoid.blockentity;
 
 import com.mjzaymi.etherealvoid.client.renderer.PoolEffectHandler;
 import com.mjzaymi.etherealvoid.common.blockentity.UpdateBaseBlockEntity;
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.ReactionRecipe;
-import com.mjzaymi.etherealvoid.reactionpool.recipe.SyncType;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.ReactionRecipe;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.SyncType;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModReactionRecipes;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;

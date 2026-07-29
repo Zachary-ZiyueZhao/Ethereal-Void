@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.client.renderer;
 
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.common.util.GameUtil;
 import com.mjzaymi.etherealvoid.common.util.fluid.FluidSorter;
 import com.mjzaymi.etherealvoid.common.util.render.RenderFace;

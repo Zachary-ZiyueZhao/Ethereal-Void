@@ -1,7 +1,7 @@
 package com.mjzaymi.etherealvoid.block;
 
-import com.mjzaymi.etherealvoid.multiblock.HugeElectrodePlate;
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.hugeelectrodeplate.HugeElectrodePlateManager;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -9,9 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -134,7 +132,7 @@ public class ElectrodePlate extends Block {
         level.setBlock(pos, state.setValue(MODE, nextMode), 3);
 
         if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
-            com.mjzaymi.etherealvoid.multiblock.HugeElectrodePlateManager.markBlockChanged(serverLevel, pos);
+            HugeElectrodePlateManager.markBlockChanged(serverLevel, pos);
         }
 
         /*
@@ -207,7 +205,7 @@ public class ElectrodePlate extends Block {
         super.onPlace(pState, pLevel, pPos, pOldState, pIsMoving);
         // 只有当放下的不是同一种方块（防止右键切换 MODE 时误触发重算）且处于服务端时
         if (!pState.is(pOldState.getBlock()) && !pLevel.isClientSide() && pLevel instanceof ServerLevel serverLevel) {
-            com.mjzaymi.etherealvoid.multiblock.HugeElectrodePlateManager.markBlockChanged(serverLevel, pPos);
+            HugeElectrodePlateManager.markBlockChanged(serverLevel, pPos);
         }
     }
 
@@ -216,7 +214,7 @@ public class ElectrodePlate extends Block {
         // 只有当变成的不是同一种方块（防止右键切换 MODE 时误触发重算）且处于服务端时
         if (!pState.is(pNewState.getBlock())) {
             if (!pLevel.isClientSide() && pLevel instanceof ServerLevel serverLevel) {
-                com.mjzaymi.etherealvoid.multiblock.HugeElectrodePlateManager.markBlockChanged(serverLevel, pPos);
+                HugeElectrodePlateManager.markBlockChanged(serverLevel, pPos);
             }
             super.onRemove(pState, pLevel, pPos, pNewState, pIsMoved);
         }

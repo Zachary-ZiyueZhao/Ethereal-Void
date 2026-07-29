@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.reactionpool.recipe;
+package com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe;
 
 public class SyncType {
     public static final int ASYNC = 0;

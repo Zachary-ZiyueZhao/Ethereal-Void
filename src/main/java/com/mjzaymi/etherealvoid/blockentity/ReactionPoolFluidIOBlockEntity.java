@@ -4,7 +4,7 @@ import com.mjzaymi.etherealvoid.block.FluidIOMode;
 import com.mjzaymi.etherealvoid.block.FluidPipe;
 import com.mjzaymi.etherealvoid.block.ReactionPoolFluidIO;
 import com.mjzaymi.etherealvoid.fluidpipe.FluidPipeNetwork;
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

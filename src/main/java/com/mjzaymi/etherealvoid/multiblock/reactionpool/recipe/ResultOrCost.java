@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.reactionpool.recipe;
+package com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe;
 
 import java.util.HashMap;
 import java.util.List;

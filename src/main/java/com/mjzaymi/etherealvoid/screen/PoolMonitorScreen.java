@@ -441,12 +441,9 @@ public class PoolMonitorScreen extends AbstractContainerScreen<PoolMonitorMenu> 
                 if (clickedFluid != null) {
                     ResourceLocation fluidRes = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getKey(clickedFluid.getFluid());
                     if (fluidRes != null) {
-                        // 1. 播放音效
                         Minecraft.getInstance().getSoundManager().play(
                                 SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F)
                         );
-
-                        // 🟢 2. 核心修改：取消注释！正式向服务端发包写入 NBT！
                         ModMessages.sendToServer(new SetFilterFluidC2SPacket(fluidRes.toString(), isCarried));
                         return true;
                     }

@@ -25,7 +25,6 @@ public class ModMessages {
 
         INSTANCE = net;
 
-        // 💡 注册我们的过滤器流体设置数据包
         net.messageBuilder(SetFilterFluidC2SPacket.class, id(), NetworkDirection.PLAY_TO_SERVER)
                 .decoder(SetFilterFluidC2SPacket::new)
                 .encoder(SetFilterFluidC2SPacket::toBytes)

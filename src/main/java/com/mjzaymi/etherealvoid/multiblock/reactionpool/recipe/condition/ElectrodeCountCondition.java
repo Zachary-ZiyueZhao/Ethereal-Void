@@ -1,7 +1,7 @@
-package com.mjzaymi.etherealvoid.reactionpool.recipe.condition;
+package com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.condition;
 
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 
 public class ElectrodeCountCondition implements Checker {
     private final int requiredCount;

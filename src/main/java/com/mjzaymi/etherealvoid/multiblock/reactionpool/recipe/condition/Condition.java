@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.reactionpool.recipe.condition;
+package com.mjzaymi.etherealvoid.multiblock.reactionpool.recipe.condition;
 
 import com.mjzaymi.etherealvoid.blockentity.ReactionPoolBlockEntity;
 

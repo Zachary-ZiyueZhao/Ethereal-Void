@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.multiblock;
+package com.mjzaymi.etherealvoid.multiblock.hugeelectrodeplate;
 
 import com.mjzaymi.etherealvoid.block.ElectrodePlate;
 import net.minecraft.core.BlockPos;

@@ -2,6 +2,7 @@ package com.mjzaymi.etherealvoid.blockentity;
 
 import com.mjzaymi.etherealvoid.block.FluidPipe;
 import com.mjzaymi.etherealvoid.fluidpipe.FluidPipeNetwork;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.registration.ModItems;
 import net.minecraft.core.BlockPos;
@@ -24,7 +25,7 @@ import java.util.*;
 public class FluidPipeBlockEntity extends BlockEntity {
 
     public FluidPipeNetwork currentNetwork = null;
-    // 🟢 只有被玩家亲自放入 Filter 的那个 BE 才会持有这个物品实体！
+    // 只有被玩家亲自放入 Filter 的那个 BE 才会持有这个物品实体
     public ItemStack savedFilter = ItemStack.EMPTY;
 
     public FluidPipeBlockEntity(BlockPos pos, BlockState state) {
@@ -115,7 +116,7 @@ public class FluidPipeBlockEntity extends BlockEntity {
             }
         }
 
-        // 🟢 4. 收集管网内真正存有实体 Filter 的管道 BlockEntity
+        // 4. 收集管网内真正存有实体 Filter 的管道 BlockEntity
         List<FluidPipeBlockEntity> filterContainerBEs = new ArrayList<>();
         Set<String> uniqueFluidIds = new HashSet<>();
 
@@ -136,7 +137,7 @@ public class FluidPipeBlockEntity extends BlockEntity {
             }
         }
 
-        // 🟢 5. 处理 Filter 冲突、同化与多余弹出
+        // 5. 处理 Filter 冲突、同化与多余弹出
         if (uniqueFluidIds.size() > 1) {
             // 冲突：把所有 BE 里存的实体 Filter 统统吐出来，并彻底清空它们的 savedFilter！
             for (FluidPipeBlockEntity be : filterContainerBEs) {
@@ -168,11 +169,11 @@ public class FluidPipeBlockEntity extends BlockEntity {
         // 6. 检查自环
         boolean selfLoop = false;
         for (ReactionPoolFluidIOBlockEntity inIO : newNetwork.inputs) {
-            var inStructOpt = com.mjzaymi.etherealvoid.reactionpool.CuboidStructure.findFromWallAndCorner(level, inIO.getBlockPos());
+            var inStructOpt = CuboidStructure.findFromWallAndCorner(level, inIO.getBlockPos());
             if (inStructOpt.isEmpty()) continue;
 
             for (ReactionPoolFluidIOBlockEntity outIO : newNetwork.outputs) {
-                var outStructOpt = com.mjzaymi.etherealvoid.reactionpool.CuboidStructure.findFromWallAndCorner(level, outIO.getBlockPos());
+                var outStructOpt = CuboidStructure.findFromWallAndCorner(level, outIO.getBlockPos());
                 if (outStructOpt.isEmpty()) continue;
 
                 if (inStructOpt.get().min().equals(outStructOpt.get().min()) &&

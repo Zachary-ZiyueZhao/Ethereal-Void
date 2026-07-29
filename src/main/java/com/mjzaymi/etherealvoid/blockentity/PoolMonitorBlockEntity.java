@@ -1,6 +1,6 @@
 package com.mjzaymi.etherealvoid.blockentity;
 
-import com.mjzaymi.etherealvoid.reactionpool.CuboidStructure;
+import com.mjzaymi.etherealvoid.multiblock.reactionpool.CuboidStructure;
 import com.mjzaymi.etherealvoid.registration.ModBlockEntities;
 import com.mjzaymi.etherealvoid.screen.PoolMonitorMenu;
 import net.minecraft.core.BlockPos;

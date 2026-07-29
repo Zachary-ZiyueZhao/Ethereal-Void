@@ -1,4 +1,4 @@
-package com.mjzaymi.etherealvoid.multiblock;
+package com.mjzaymi.etherealvoid.multiblock.hugeelectrodeplate;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
